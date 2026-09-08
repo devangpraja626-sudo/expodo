@@ -1996,3 +1996,11 @@ footer {
     padding: 25px 20px;
   }
 }
+.employee-field,
+.employer-field {
+  transition: opacity .2s ease;
+}
+
+.edit-field[style*="display: none"] {
+  display: none !important;
+}
