@@ -3509,3 +3509,377 @@ a {
   }
 
 }
+
+/* =========================================================
+   CONNECTIONS
+========================================================= */
+
+.connections-card {
+  grid-column: 1 / -1;
+  padding: 30px;
+  margin-top: 0;
+}
+
+.connections-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.connections-header h2 {
+  margin-top: 10px;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.connections-header p {
+  max-width: 520px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.connections-count {
+  flex-shrink: 0;
+  padding: 8px 11px;
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255,255,255,.035);
+  border: 1px solid var(--line);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.connections-group {
+  margin-top: 25px;
+}
+
+.connections-group + .connections-group {
+  margin-top: 35px;
+}
+
+.connections-group-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.connections-label {
+  display: block;
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .17em;
+}
+
+.connections-group-heading h3 {
+  margin-top: 6px;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: -.025em;
+}
+
+.connections-badge {
+  min-width: 27px;
+  height: 27px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(157,124,255,.2);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.connections-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.connection-card {
+  position: relative;
+  min-width: 0;
+  padding: 17px;
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(22,22,29,.9),
+      rgba(8,8,12,.9)
+    );
+  border: 1px solid var(--line);
+  transition:
+    transform .25s ease,
+    border-color .25s ease,
+    background .25s ease;
+}
+
+.connection-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(157,124,255,.28);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(25,25,33,.94),
+      rgba(9,9,13,.94)
+    );
+}
+
+.connection-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connection-avatar {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      145deg,
+      #282431,
+      #09090d
+    );
+  border: 1px solid var(--line-strong);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.connection-identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.connection-identity strong {
+  display: block;
+  overflow: hidden;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-identity span {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.connection-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  transition:
+    transform .2s ease,
+    background .2s ease,
+    border-color .2s ease;
+}
+
+.connection-btn:hover {
+  transform: translateY(-1px);
+}
+
+.connection-btn-primary {
+  color: #050507;
+  background: var(--white);
+}
+
+.connection-btn-primary:hover {
+  background: #ffffff;
+}
+
+.connection-btn-secondary {
+  color: var(--white);
+  background: rgba(255,255,255,.045);
+  border: 1px solid var(--line);
+}
+
+.connection-btn-secondary:hover {
+  background: rgba(255,255,255,.08);
+  border-color: var(--line-strong);
+}
+
+.connection-btn-danger {
+  color: var(--danger);
+  background: rgba(255,143,159,.045);
+  border: 1px solid rgba(255,143,159,.12);
+}
+
+.connection-btn-danger:hover {
+  background: rgba(255,143,159,.08);
+}
+
+.connection-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--success);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.connection-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 10px rgba(159,255,194,.35);
+}
+
+.connections-empty {
+  grid-column: 1 / -1;
+  padding: 30px 20px;
+  text-align: center;
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.025),
+      rgba(255,255,255,.012)
+    );
+  border: 1px dashed var(--line-strong);
+}
+
+.connections-empty-icon {
+  margin-bottom: 9px;
+  color: var(--accent);
+  font-size: 20px;
+}
+
+.connections-empty strong {
+  display: block;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.connections-empty p {
+  max-width: 400px;
+  margin: 7px auto 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   CONNECTION BUTTONS ON MATCH CARDS
+========================================================= */
+
+.match-connection-action {
+  width: 100%;
+  margin-top: 15px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  color: #050507;
+  background: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    background .2s ease;
+}
+
+.match-connection-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(255,255,255,.08);
+}
+
+.match-connection-action.pending {
+  color: var(--silver);
+  background: rgba(255,255,255,.045);
+  border: 1px solid var(--line);
+  cursor: default;
+  box-shadow: none;
+}
+
+.match-connection-action.connected {
+  color: var(--success);
+  background: rgba(159,255,194,.045);
+  border: 1px solid rgba(159,255,194,.13);
+  cursor: default;
+  box-shadow: none;
+}
+
+.match-connection-action.respond {
+  color: var(--white);
+  background: var(--accent);
+}
+
+
+/* =========================================================
+   CONNECTIONS RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .connections-card {
+    padding: 22px;
+  }
+
+  .connections-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  .connections-list {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+@media (max-width: 450px) {
+
+  .connections-card {
+    padding: 20px;
+  }
+
+  .connection-card {
+    padding: 15px;
+  }
+
+}
