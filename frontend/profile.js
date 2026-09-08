@@ -1,7 +1,47 @@
+/* =========================================================
+   EXPO GO — PROFILE CONTROLLER
+   Supabase Auth + Render Backend + Local Storage
+========================================================= */
+
 const API_BASE_URL = "https://expodo.onrender.com";
 const PROFILE_STORAGE_KEY = "expoGoProfile";
 
+const SUPABASE_URL =
+  "https://inhxlwsjlddhnpalbocl.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
+
+let supabaseClient = null;
 let profile = null;
+let currentAuthUser = null;
+
+/* =========================================================
+   SUPABASE
+========================================================= */
+
+function initializeSupabase() {
+  if (!window.supabase) {
+    console.error("Supabase library is not loaded.");
+    return false;
+  }
+
+  try {
+    supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Supabase initialization error:",
+      error
+    );
+
+    return false;
+  }
+}
 
 /* =========================================================
    HELPERS
@@ -27,37 +67,59 @@ function normalizeArray(value) {
 function normalizeProfile(data = {}) {
   return {
     id: data.id || "",
+    authUserId:
+      data.authUserId ||
+      data.auth_user_id ||
+      currentAuthUser?.id ||
+      "",
+
     name: data.name || "",
     role: data.role || "",
     headline: data.headline || "",
 
     skills: normalizeArray(data.skills),
-    education: data.education || "",
-    experience: data.experience || "",
+
+    education:
+      data.education || "",
+
+    experience:
+      data.experience || "",
+
     desiredPosition:
       data.desiredPosition ||
       data.desired_position ||
       "",
-    location: data.location || "",
+
+    location:
+      data.location || "",
+
     workPreference:
       data.workPreference ||
       data.work_preference ||
       "",
-    about: data.about || "",
 
-    company: data.company || "",
+    about:
+      data.about || "",
+
+    company:
+      data.company || "",
+
     hiringPosition:
       data.hiringPosition ||
       data.hiring_position ||
       "",
-    requiredSkills: normalizeArray(
-      data.requiredSkills ||
-      data.required_skills
-    ),
+
+    requiredSkills:
+      normalizeArray(
+        data.requiredSkills ||
+        data.required_skills
+      ),
+
     experienceRequired:
       data.experienceRequired ||
       data.experience_required ||
       "",
+
     workType:
       data.workType ||
       data.work_type ||
@@ -76,6 +138,8 @@ function normalizeProfile(data = {}) {
 }
 
 function saveLocalProfile() {
+  if (!profile) return;
+
   localStorage.setItem(
     PROFILE_STORAGE_KEY,
     JSON.stringify(profile)
@@ -83,7 +147,8 @@ function saveLocalProfile() {
 }
 
 function setText(id, value) {
-  const element = document.getElementById(id);
+  const element =
+    document.getElementById(id);
 
   if (element) {
     element.textContent =
@@ -92,7 +157,8 @@ function setText(id, value) {
 }
 
 function setValue(id, value) {
-  const element = document.getElementById(id);
+  const element =
+    document.getElementById(id);
 
   if (element) {
     element.value = value || "";
@@ -100,31 +166,150 @@ function setValue(id, value) {
 }
 
 /* =========================================================
+   AUTHENTICATED USER
+========================================================= */
+
+async function getAuthenticatedUser() {
+  if (!supabaseClient) {
+    return null;
+  }
+
+  try {
+    const {
+      data,
+      error
+    } = await supabaseClient.auth.getUser();
+
+    if (error) {
+      console.error(
+        "Auth user error:",
+        error
+      );
+
+      return null;
+    }
+
+    return data?.user || null;
+
+  } catch (error) {
+    console.error(
+      "Auth lookup error:",
+      error
+    );
+
+    return null;
+  }
+}
+
+/* =========================================================
    LOAD PROFILE
 ========================================================= */
 
-function loadProfile() {
+async function loadProfile() {
   try {
+    let localProfile = null;
+
     const saved =
       localStorage.getItem(
         PROFILE_STORAGE_KEY
       );
 
-    if (!saved) {
-      window.location.href = "index.html";
-      return false;
+    if (saved) {
+      try {
+        localProfile =
+          normalizeProfile(
+            JSON.parse(saved)
+          );
+      } catch (error) {
+        console.warn(
+          "Invalid local profile.",
+          error
+        );
+      }
     }
 
-    profile = normalizeProfile(
-      JSON.parse(saved)
-    );
+    /*
+      Try authenticated Supabase user first.
+    */
 
-    if (!profile.id || !profile.role) {
-      window.location.href = "index.html";
-      return false;
+    if (supabaseClient) {
+      currentAuthUser =
+        await getAuthenticatedUser();
     }
 
-    return true;
+    /*
+      If authenticated, try loading the
+      authoritative profile from backend.
+    */
+
+    if (currentAuthUser) {
+      try {
+        const response =
+          await fetch(
+            `${API_BASE_URL}/api/profiles/me/${currentAuthUser.id}`
+          );
+
+        if (response.ok) {
+          const result =
+            await response.json();
+
+          if (
+            result.success &&
+            result.profile
+          ) {
+            profile =
+              normalizeProfile(
+                result.profile
+              );
+
+            saveLocalProfile();
+
+            return true;
+          }
+        }
+      } catch (error) {
+        console.warn(
+          "Backend profile lookup unavailable.",
+          error
+        );
+      }
+    }
+
+    /*
+      Fallback to local profile.
+    */
+
+    if (
+      localProfile &&
+      localProfile.role
+    ) {
+      profile =
+        normalizeProfile(
+          localProfile
+        );
+
+      if (
+        currentAuthUser &&
+        !profile.authUserId
+      ) {
+        profile.authUserId =
+          currentAuthUser.id;
+
+        saveLocalProfile();
+      }
+
+      return true;
+    }
+
+    /*
+      No profile available.
+      Return to home.
+    */
+
+    window.location.href =
+      "index.html";
+
+    return false;
 
   } catch (error) {
     console.error(
@@ -132,7 +317,25 @@ function loadProfile() {
       error
     );
 
-    window.location.href = "index.html";
+    const saved =
+      localStorage.getItem(
+        PROFILE_STORAGE_KEY
+      );
+
+    if (saved) {
+      try {
+        profile =
+          normalizeProfile(
+            JSON.parse(saved)
+          );
+
+        return !!profile.role;
+      } catch (_) {}
+    }
+
+    window.location.href =
+      "index.html";
+
     return false;
   }
 }
@@ -142,7 +345,11 @@ function loadProfile() {
 ========================================================= */
 
 function renderProfile() {
-  setText("profileName", profile.name);
+  setText(
+    "profileName",
+    profile.name
+  );
+
   setText(
     "profileHeadline",
     profile.headline
@@ -247,14 +454,18 @@ function updateRoleSections() {
     profile.role === "employer";
 
   document
-    .querySelectorAll("[data-employee-only]")
+    .querySelectorAll(
+      "[data-employee-only]"
+    )
     .forEach(element => {
       element.style.display =
         employee ? "" : "none";
     });
 
   document
-    .querySelectorAll("[data-employer-only]")
+    .querySelectorAll(
+      "[data-employer-only]"
+    )
     .forEach(element => {
       element.style.display =
         employer ? "" : "none";
@@ -314,7 +525,8 @@ function updateCompletion() {
   const completed =
     fields.filter(Boolean).length;
 
-  const total = fields.length;
+  const total =
+    fields.length;
 
   const percentage =
     Math.round(
@@ -418,7 +630,9 @@ async function loadMatches() {
       "matchesSubtitle"
     );
 
-  if (!grid) return;
+  if (!grid || !profile) {
+    return;
+  }
 
   if (title) {
     title.textContent =
@@ -444,21 +658,29 @@ async function loadMatches() {
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/match`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(profile)
-      }
-    );
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/match`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(profile)
+        }
+      );
 
     const result =
       await response.json();
 
-    if (!response.ok || !result.success) {
+    if (
+      !response.ok ||
+      !result.success
+    ) {
       throw new Error(
         result.message ||
         "Matching failed."
@@ -520,6 +742,7 @@ function renderMatches(matches) {
   if (!matches.length) {
     if (empty) {
       empty.style.display = "";
+
       empty.innerHTML = `
         <div class="matches-empty-icon">✦</div>
         <h3>No strong matches yet</h3>
@@ -535,14 +758,17 @@ function renderMatches(matches) {
   }
 
   if (empty) {
-    empty.style.display = "none";
+    empty.style.display =
+      "none";
   }
 
   grid
     .querySelectorAll(
       ".match-result-card"
     )
-    .forEach(card => card.remove());
+    .forEach(card =>
+      card.remove()
+    );
 
   matches.forEach(match => {
     const candidate =
@@ -551,7 +777,9 @@ function renderMatches(matches) {
       );
 
     const card =
-      document.createElement("article");
+      document.createElement(
+        "article"
+      );
 
     card.className =
       "match-result-card";
@@ -584,7 +812,9 @@ function renderMatches(matches) {
 
     const skillText =
       skills.length
-        ? skills.slice(0, 4).join(" · ")
+        ? skills
+            .slice(0, 4)
+            .join(" · ")
         : "Skills not added";
 
     const matchedText =
@@ -610,7 +840,10 @@ function renderMatches(matches) {
           </span>
 
           <h3>
-            ${escapeHtml(company || candidate.name)}
+            ${escapeHtml(
+              company ||
+              candidate.name
+            )}
           </h3>
 
           <p>
@@ -621,7 +854,9 @@ function renderMatches(matches) {
 
         <div class="match-score">
           <strong>
-            ${Number(match.matchScore) || 0}%
+            ${Number(
+              match.matchScore
+            ) || 0}%
           </strong>
 
           <span>
@@ -636,7 +871,9 @@ function renderMatches(matches) {
         <div class="match-detail">
           <span>Skills</span>
           <strong>
-            ${escapeHtml(skillText)}
+            ${escapeHtml(
+              skillText
+            )}
           </strong>
         </div>
 
@@ -655,7 +892,10 @@ function renderMatches(matches) {
       <div class="match-card-footer">
 
         <span>
-          Matched on ${escapeHtml(matchedText)}
+          Matched on
+          ${escapeHtml(
+            matchedText
+          )}
         </span>
 
       </div>
@@ -671,11 +911,26 @@ function renderMatches(matches) {
 
 function escapeHtml(value) {
   return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
 /* =========================================================
@@ -683,6 +938,8 @@ function escapeHtml(value) {
 ========================================================= */
 
 function openEditModal() {
+  if (!profile) return;
+
   setValue(
     "editName",
     profile.name
@@ -760,7 +1017,9 @@ function openEditModal() {
 
   document
     .getElementById("editModal")
-    ?.classList.add("active");
+    ?.classList.add(
+      "active"
+    );
 
   document.body.classList.add(
     "modal-open"
@@ -770,7 +1029,9 @@ function openEditModal() {
 function closeEditModal() {
   document
     .getElementById("editModal")
-    ?.classList.remove("active");
+    ?.classList.remove(
+      "active"
+    );
 
   document.body.classList.remove(
     "modal-open"
@@ -782,31 +1043,60 @@ function closeEditModal() {
 ========================================================= */
 
 async function saveProfile() {
+  if (!profile) return;
+
+  /*
+    Refresh Supabase user before saving.
+  */
+
+  if (supabaseClient) {
+    currentAuthUser =
+      await getAuthenticatedUser();
+  }
+
+  if (
+    currentAuthUser &&
+    !profile.authUserId
+  ) {
+    profile.authUserId =
+      currentAuthUser.id;
+  }
+
   profile.name =
     document
-      .getElementById("editName")
+      .getElementById(
+        "editName"
+      )
       ?.value.trim() || "";
 
   profile.headline =
     document
-      .getElementById("editHeadline")
+      .getElementById(
+        "editHeadline"
+      )
       ?.value.trim() || "";
 
   profile.skills =
     normalizeArray(
       document
-        .getElementById("editSkills")
+        .getElementById(
+          "editSkills"
+        )
         ?.value
     );
 
   profile.education =
     document
-      .getElementById("editEducation")
+      .getElementById(
+        "editEducation"
+      )
       ?.value.trim() || "";
 
   profile.experience =
     document
-      .getElementById("editExperience")
+      .getElementById(
+        "editExperience"
+      )
       ?.value.trim() || "";
 
   profile.desiredPosition =
@@ -838,7 +1128,9 @@ async function saveProfile() {
 
   profile.company =
     document
-      .getElementById("editCompany")
+      .getElementById(
+        "editCompany"
+      )
       ?.value.trim() || "";
 
   profile.hiringPosition =
@@ -866,12 +1158,16 @@ async function saveProfile() {
 
   profile.workType =
     document
-      .getElementById("editWorkType")
+      .getElementById(
+        "editWorkType"
+      )
       ?.value.trim() || "";
 
   profile.about =
     document
-      .getElementById("editAbout")
+      .getElementById(
+        "editAbout"
+      )
       ?.value.trim() || "";
 
   profile.updatedAt =
@@ -901,17 +1197,31 @@ async function saveProfile() {
         `${API_BASE_URL}/api/profiles`,
         {
           method: "POST",
+
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type":
+              "application/json"
           },
-          body: JSON.stringify(profile)
+
+          body:
+            JSON.stringify({
+              ...profile,
+
+              authUserId:
+                currentAuthUser?.id ||
+                profile.authUserId ||
+                null
+            })
         }
       );
 
     const result =
       await response.json();
 
-    if (!response.ok || !result.success) {
+    if (
+      !response.ok ||
+      !result.success
+    ) {
       throw new Error(
         result.message ||
         "Unable to save profile."
@@ -921,7 +1231,13 @@ async function saveProfile() {
     profile =
       normalizeProfile({
         ...profile,
-        ...result.profile
+        ...result.profile,
+
+        authUserId:
+          currentAuthUser?.id ||
+          profile.authUserId ||
+          result.profile?.auth_user_id ||
+          ""
       });
 
     saveLocalProfile();
@@ -931,6 +1247,7 @@ async function saveProfile() {
     if (status) {
       status.textContent =
         "Profile saved successfully.";
+
       status.className =
         "edit-status success";
     }
@@ -948,13 +1265,17 @@ async function saveProfile() {
       error
     );
 
-    saveLocalProfile();
+    /*
+      Local save still remains available.
+    */
 
+    saveLocalProfile();
     renderProfile();
 
     if (status) {
       status.textContent =
         "Saved locally. Server sync unavailable.";
+
       status.className =
         "edit-status error";
     }
@@ -962,6 +1283,7 @@ async function saveProfile() {
   } finally {
     if (button) {
       button.disabled = false;
+
       button.textContent =
         "Save profile";
     }
@@ -1006,7 +1328,9 @@ document
   });
 
 document
-  .getElementById("editModal")
+  .getElementById(
+    "editModal"
+  )
   ?.addEventListener(
     "click",
     event => {
@@ -1068,13 +1392,28 @@ document.addEventListener(
 ========================================================= */
 
 async function initialize() {
-  if (!loadProfile()) {
+  /*
+    Supabase is optional for the page to render.
+    This prevents the profile page from becoming
+    dependent on a global "Expo ready" controller.
+  */
+
+  initializeSupabase();
+
+  const loaded =
+    await loadProfile();
+
+  if (!loaded) {
     return;
   }
 
   renderProfile();
 
   await loadMatches();
+
+  console.log(
+    "Expo Go profile is ready."
+  );
 }
 
 initialize();
