@@ -1,10 +1,11 @@
+"use strict";
+
 /* =========================================================
-   EXPO GO
-   FRONTEND CONTROLLER
-   MVP V1
+   EXPO GO — SIMPLE PROFILE MVP
+   Frontend only
+   LocalStorage profile system
 ========================================================= */
 
-"use strict";
 
 /* =========================================================
    ELEMENTS
@@ -19,17 +20,16 @@ const joinBtn = document.getElementById("joinBtn");
 
 const employeeBtn = document.getElementById("employeeBtn");
 const employerBtn = document.getElementById("employerBtn");
+const bottomJoinBtn = document.getElementById("bottomJoinBtn");
 
 const authTitle = document.getElementById("authTitle");
 const authSubtitle = document.getElementById("authSubtitle");
 
 const authForm = document.getElementById("authForm");
 
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-const togglePassword = document.getElementById("togglePassword");
-const resetPassword = document.getElementById("resetPassword");
+const fullNameInput = document.getElementById("fullName");
+const profileHeadlineInput =
+  document.getElementById("profileHeadline");
 
 const authStatus = document.getElementById("authStatus");
 
@@ -38,36 +38,48 @@ const roleOptions =
 
 
 /* =========================================================
-   APP STATE
+   STORAGE
 ========================================================= */
 
-let selectedRole = "employee";
-let authMode = "signup";
+const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 
 /* =========================================================
-   OPEN AUTH MODAL
+   STATE
 ========================================================= */
 
-function openAuth(mode = "signup", role = "employee") {
+let selectedRole = "employee";
 
-  authMode = mode;
+
+/* =========================================================
+   OPEN PROFILE MODAL
+========================================================= */
+
+function openProfile(role = "employee") {
+
   selectedRole = role;
 
   authModal.classList.remove("hidden");
 
   document.body.style.overflow = "hidden";
 
+  authStatus.textContent = "";
+
   updateAuthUI();
 
   setTimeout(() => {
-    emailInput.focus();
-  }, 250);
+
+    if (fullNameInput) {
+      fullNameInput.focus();
+    }
+
+  }, 200);
+
 }
 
 
 /* =========================================================
-   CLOSE AUTH MODAL
+   CLOSE MODAL
 ========================================================= */
 
 function closeAuth() {
@@ -78,47 +90,33 @@ function closeAuth() {
 
   authStatus.textContent = "";
 
-  authForm.reset();
-
-  passwordInput.type = "password";
-
-  togglePassword.textContent = "Show";
 }
 
 
 /* =========================================================
-   UPDATE AUTH INTERFACE
+   UPDATE MODAL UI
 ========================================================= */
 
 function updateAuthUI() {
 
-  if (authMode === "login") {
+  if (selectedRole === "employee") {
 
-    authTitle.textContent = "Welcome back";
+    authTitle.textContent =
+      "Create your profile";
 
     authSubtitle.textContent =
-      "Continue where you left off.";
+      "Tell us who you are and what you do.";
 
   } else {
 
-    if (selectedRole === "employee") {
+    authTitle.textContent =
+      "Create your hiring profile";
 
-      authTitle.textContent =
-        "Create your profile";
+    authSubtitle.textContent =
+      "Tell us who you are and what you are hiring for.";
 
-      authSubtitle.textContent =
-        "Start building your professional profile.";
-
-    } else {
-
-      authTitle.textContent =
-        "Create your hiring account";
-
-      authSubtitle.textContent =
-        "Find the people your business needs.";
-
-    }
   }
+
 
   roleOptions.forEach(option => {
 
@@ -128,6 +126,24 @@ function updateAuthUI() {
     );
 
   });
+
+
+  if (profileHeadlineInput) {
+
+    if (selectedRole === "employee") {
+
+      profileHeadlineInput.placeholder =
+        "e.g. Software Engineer";
+
+    } else {
+
+      profileHeadlineInput.placeholder =
+        "e.g. Founder / Hiring Manager";
+
+    }
+
+  }
+
 }
 
 
@@ -139,7 +155,8 @@ roleOptions.forEach(option => {
 
   option.addEventListener("click", () => {
 
-    selectedRole = option.dataset.role;
+    selectedRole =
+      option.dataset.role;
 
     updateAuthUI();
 
@@ -152,55 +169,106 @@ roleOptions.forEach(option => {
    NAVIGATION BUTTONS
 ========================================================= */
 
-loginBtn.addEventListener("click", () => {
+if (joinBtn) {
 
-  openAuth("login", selectedRole);
+  joinBtn.addEventListener("click", () => {
 
-});
+    openProfile("employee");
 
+  });
 
-joinBtn.addEventListener("click", () => {
-
-  openAuth("signup", "employee");
-
-});
+}
 
 
-/* =========================================================
-   HERO BUTTONS
-========================================================= */
+if (employeeBtn) {
 
-employeeBtn.addEventListener("click", () => {
+  employeeBtn.addEventListener("click", () => {
 
-  openAuth("signup", "employee");
+    openProfile("employee");
 
-});
+  });
+
+}
 
 
-employerBtn.addEventListener("click", () => {
+if (employerBtn) {
 
-  openAuth("signup", "employer");
+  employerBtn.addEventListener("click", () => {
 
-});
+    openProfile("employer");
+
+  });
+
+}
+
+
+if (bottomJoinBtn) {
+
+  bottomJoinBtn.addEventListener("click", () => {
+
+    openProfile("employee");
+
+  });
+
+}
+
+
+/*
+   For now, Log in simply opens the profile flow.
+   Real authentication will be added later.
+*/
+
+if (loginBtn) {
+
+  loginBtn.addEventListener("click", () => {
+
+    const existingProfile =
+      getSavedProfile();
+
+    if (existingProfile) {
+
+      showProfile(existingProfile);
+
+    } else {
+
+      openProfile("employee");
+
+    }
+
+  });
+
+}
 
 
 /* =========================================================
    CLOSE EVENTS
 ========================================================= */
 
-closeModal.addEventListener("click", closeAuth);
+if (closeModal) {
 
-modalBackdrop.addEventListener("click", closeAuth);
+  closeModal.addEventListener(
+    "click",
+    closeAuth
+  );
+
+}
 
 
-/* =========================================================
-   ESCAPE KEY
-========================================================= */
+if (modalBackdrop) {
+
+  modalBackdrop.addEventListener(
+    "click",
+    closeAuth
+  );
+
+}
+
 
 document.addEventListener("keydown", event => {
 
   if (
     event.key === "Escape" &&
+    authModal &&
     !authModal.classList.contains("hidden")
   ) {
 
@@ -212,113 +280,267 @@ document.addEventListener("keydown", event => {
 
 
 /* =========================================================
-   PASSWORD VISIBILITY
-========================================================= */
-
-togglePassword.addEventListener("click", () => {
-
-  const passwordIsHidden =
-    passwordInput.type === "password";
-
-  passwordInput.type =
-    passwordIsHidden
-      ? "text"
-      : "password";
-
-  togglePassword.textContent =
-    passwordIsHidden
-      ? "Hide"
-      : "Show";
-
-});
-
-
-/* =========================================================
-   AUTH FORM
+   CREATE PROFILE
 ========================================================= */
 
 authForm.addEventListener("submit", event => {
 
   event.preventDefault();
 
-  const email =
-    emailInput.value.trim();
 
-  const password =
-    passwordInput.value;
+  const name =
+    fullNameInput.value.trim();
 
-  /* Basic frontend validation */
+  const headline =
+    profileHeadlineInput.value.trim();
 
-  if (!email || !password) {
+
+  if (!name) {
 
     showStatus(
-      "Please complete the fields."
+      "Please enter your name."
     );
+
+    fullNameInput.focus();
 
     return;
+
   }
 
-  if (password.length < 6) {
+
+  if (!headline) {
 
     showStatus(
-      "Password must contain at least 6 characters."
+      "Please tell us what you do."
     );
+
+    profileHeadlineInput.focus();
 
     return;
-  }
-
-  /*
-    Authentication will be connected
-    to the backend in the next stage.
-  */
-
-  if (authMode === "login") {
-
-    showStatus(
-      "Login system ready to connect."
-    );
-
-  } else {
-
-    showStatus(
-      "Account system ready to connect."
-    );
 
   }
+
+
+  const profile = {
+
+    id:
+      "expo_" +
+      Date.now(),
+
+    name,
+
+    headline,
+
+    role:
+      selectedRole,
+
+    createdAt:
+      new Date().toISOString()
+
+  };
+
+
+  saveProfile(profile);
+
+  showProfile(profile);
 
 });
 
 
 /* =========================================================
-   RESET PASSWORD
+   SAVE PROFILE
 ========================================================= */
 
-resetPassword.addEventListener("click", () => {
+function saveProfile(profile) {
 
-  const email =
-    emailInput.value.trim();
+  localStorage.setItem(
+    PROFILE_STORAGE_KEY,
+    JSON.stringify(profile)
+  );
 
-  if (!email) {
+}
 
-    showStatus(
-      "Enter your email first."
+
+/* =========================================================
+   GET PROFILE
+========================================================= */
+
+function getSavedProfile() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        PROFILE_STORAGE_KEY
+      );
+
+    if (!saved) {
+      return null;
+    }
+
+    return JSON.parse(saved);
+
+  } catch (error) {
+
+    console.error(
+      "Unable to load Expo Go profile:",
+      error
     );
 
-    emailInput.focus();
+    return null;
 
+  }
+
+}
+
+
+/* =========================================================
+   SHOW PROFILE
+========================================================= */
+
+function showProfile(profile) {
+
+  const roleLabel =
+    profile.role === "employer"
+      ? "EMPLOYER"
+      : "EMPLOYEE";
+
+
+  const roleText =
+    profile.role === "employer"
+      ? "Hiring profile"
+      : "Professional profile";
+
+
+  authTitle.textContent =
+    "Your Expo Go profile";
+
+
+  authSubtitle.textContent =
+    "Your profile is saved on this device.";
+
+
+  roleOptions.forEach(option => {
+
+    option.style.display = "none";
+
+  });
+
+
+  authForm.innerHTML = `
+
+    <div class="profile-preview">
+
+      <div class="profile-preview-avatar">
+        ${escapeHtml(
+          profile.name.charAt(0).toUpperCase()
+        )}
+      </div>
+
+      <div class="profile-preview-info">
+
+        <div class="profile-preview-role">
+          ${roleLabel}
+        </div>
+
+        <h3>
+          ${escapeHtml(profile.name)}
+        </h3>
+
+        <p>
+          ${escapeHtml(profile.headline)}
+        </p>
+
+        <span>
+          ${roleText}
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="primary-btn auth-submit"
+      id="continueProfileBtn"
+    >
+      Continue
+      <span>→</span>
+    </button>
+
+  `;
+
+
+  authStatus.textContent =
+    "Profile created successfully.";
+
+
+  const continueButton =
+    document.getElementById(
+      "continueProfileBtn"
+    );
+
+
+  if (continueButton) {
+
+    continueButton.addEventListener(
+      "click",
+      () => {
+
+        closeAuth();
+
+        showStatusOnPage();
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RESET MODAL TO CREATE PROFILE STATE
+========================================================= */
+
+function resetProfileForm() {
+
+  if (!authForm) {
     return;
   }
 
+  location.reload();
+
+}
+
+
+/* =========================================================
+   PAGE PROFILE INDICATOR
+========================================================= */
+
+function showStatusOnPage() {
+
+  const profile =
+    getSavedProfile();
+
+  if (!profile) {
+    return;
+  }
+
+
   /*
-    Secure password-reset flow will be
-    connected when authentication is added.
+     We intentionally keep the landing page unchanged.
+     The saved profile can be used by the next dashboard/profile
+     stage without redesigning the homepage.
   */
 
-  showStatus(
-    "Password reset system ready to connect."
+  console.log(
+    "Expo Go profile:",
+    profile
   );
 
-});
+}
 
 
 /* =========================================================
@@ -327,38 +549,30 @@ resetPassword.addEventListener("click", () => {
 
 function showStatus(message) {
 
-  authStatus.textContent = message;
+  authStatus.textContent =
+    message;
 
 }
 
 
 /* =========================================================
-   MOUSE PARALLAX
+   BASIC HTML ESCAPE
 ========================================================= */
 
-const matchVisual =
-  document.querySelector(".match-visual");
+function escapeHtml(value) {
 
-if (matchVisual && window.innerWidth > 900) {
-
-  document.addEventListener("mousemove", event => {
-
-    const x =
-      (event.clientX / window.innerWidth - 0.5) * 10;
-
-    const y =
-      (event.clientY / window.innerHeight - 0.5) * 10;
-
-    matchVisual.style.transform =
-      `translate(${x}px, ${y}px)`;
-
-  });
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 
 }
 
 
 /* =========================================================
-   INITIALIZE
+   INITIAL STATE
 ========================================================= */
 
 updateAuthUI();
