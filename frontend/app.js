@@ -3,24 +3,7 @@ const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 /* =========================================================
    HELPERS
-   ========================================================= */
-
-function getStoredProfile() {
-  try {
-    const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
-    return saved ? normalizeProfile(JSON.parse(saved)) : null;
-  } catch (error) {
-    console.error("Unable to read stored profile:", error);
-    return null;
-  }
-}
-
-function saveLocalProfile(profile) {
-  localStorage.setItem(
-    PROFILE_STORAGE_KEY,
-    JSON.stringify(normalizeProfile(profile))
-  );
-}
+========================================================= */
 
 function normalizeArray(value) {
   if (Array.isArray(value)) {
@@ -49,36 +32,95 @@ function normalizeProfile(profile = {}) {
     skills: normalizeArray(profile.skills),
     education: profile.education || "",
     experience: profile.experience || "",
-    desiredPosition: profile.desiredPosition || "",
+    desiredPosition:
+      profile.desiredPosition ||
+      profile.desired_position ||
+      "",
     location: profile.location || "",
-    workPreference: profile.workPreference || "",
+    workPreference:
+      profile.workPreference ||
+      profile.work_preference ||
+      "",
     about: profile.about || "",
 
     company: profile.company || "",
-    hiringPosition: profile.hiringPosition || "",
-    requiredSkills: normalizeArray(profile.requiredSkills),
-    experienceRequired: profile.experienceRequired || "",
-    workType: profile.workType || "",
+    hiringPosition:
+      profile.hiringPosition ||
+      profile.hiring_position ||
+      "",
 
-    createdAt: profile.createdAt || new Date().toISOString(),
-    updatedAt: profile.updatedAt || new Date().toISOString()
+    requiredSkills: normalizeArray(
+      profile.requiredSkills ||
+      profile.required_skills
+    ),
+
+    experienceRequired:
+      profile.experienceRequired ||
+      profile.experience_required ||
+      "",
+
+    workType:
+      profile.workType ||
+      profile.work_type ||
+      "",
+
+    createdAt:
+      profile.createdAt ||
+      profile.created_at ||
+      new Date().toISOString(),
+
+    updatedAt:
+      profile.updatedAt ||
+      profile.updated_at ||
+      new Date().toISOString()
   };
 }
 
+function getStoredProfile() {
+  try {
+    const saved =
+      localStorage.getItem(PROFILE_STORAGE_KEY);
+
+    return saved
+      ? normalizeProfile(JSON.parse(saved))
+      : null;
+
+  } catch (error) {
+    console.error(
+      "Unable to read stored profile:",
+      error
+    );
+
+    return null;
+  }
+}
+
+function saveLocalProfile(profile) {
+  localStorage.setItem(
+    PROFILE_STORAGE_KEY,
+    JSON.stringify(
+      normalizeProfile(profile)
+    )
+  );
+}
+
 /* =========================================================
-   SAVE PROFILE TO BACKEND
-   ========================================================= */
+   BACKEND
+========================================================= */
 
 async function saveProfileToBackend(profile) {
-  const normalized = normalizeProfile(profile);
+  const normalized =
+    normalizeProfile(profile);
 
   const response = await fetch(
     `${API_BASE_URL}/api/profiles`,
     {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json"
       },
+
       body: JSON.stringify(normalized)
     }
   );
@@ -91,9 +133,13 @@ async function saveProfileToBackend(profile) {
     result = null;
   }
 
-  if (!response.ok || !result?.success) {
+  if (
+    !response.ok ||
+    !result?.success
+  ) {
     throw new Error(
-      result?.message || "Unable to save profile."
+      result?.message ||
+      "Unable to save profile."
     );
   }
 
@@ -102,59 +148,87 @@ async function saveProfileToBackend(profile) {
 
 /* =========================================================
    ELEMENTS
-   ========================================================= */
+========================================================= */
 
-const authModal = document.getElementById("authModal");
-const authStatus = document.getElementById("authStatus");
+const authModal =
+  document.getElementById("authModal");
 
-const employeeBtn = document.getElementById("employeeBtn");
-const employerBtn = document.getElementById("employerBtn");
+const authStatus =
+  document.getElementById("authStatus");
+
+const employeeBtn =
+  document.getElementById("employeeBtn");
+
+const employerBtn =
+  document.getElementById("employerBtn");
 
 const continueProfileBtn =
-  document.getElementById("continueProfileBtn");
+  document.getElementById(
+    "continueProfileBtn"
+  );
 
 const fullNameInput =
   document.getElementById("fullName");
 
 const profileHeadlineInput =
-  document.getElementById("profileHeadline");
+  document.getElementById(
+    "profileHeadline"
+  );
 
 const profilePreviewName =
-  document.getElementById("profilePreviewName");
+  document.getElementById(
+    "profilePreviewName"
+  );
 
 const profilePreviewHeadline =
-  document.getElementById("profilePreviewHeadline");
+  document.getElementById(
+    "profilePreviewHeadline"
+  );
 
 const roleOptions =
-  document.querySelectorAll(".role-option");
+  document.querySelectorAll(
+    ".role-option"
+  );
 
 const bottomJoinBtn =
-  document.getElementById("bottomJoinBtn");
+  document.getElementById(
+    "bottomJoinBtn"
+  );
 
 const mobileMenuBtn =
-  document.getElementById("mobileMenuBtn");
+  document.getElementById(
+    "mobileMenuBtn"
+  );
 
 const mobileNav =
-  document.getElementById("mobileNav");
+  document.getElementById(
+    "mobileNav"
+  );
 
 const mobileHowLink =
-  document.getElementById("mobileHowLink");
+  document.getElementById(
+    "mobileHowLink"
+  );
 
 const mobileLoginBtn =
-  document.getElementById("mobileLoginBtn");
+  document.getElementById(
+    "mobileLoginBtn"
+  );
 
 const mobileJoinBtn =
-  document.getElementById("mobileJoinBtn");
+  document.getElementById(
+    "mobileJoinBtn"
+  );
 
 /* =========================================================
    STATE
-   ========================================================= */
+========================================================= */
 
 let selectedRole = null;
 
 /* =========================================================
    MODAL
-   ========================================================= */
+========================================================= */
 
 function openCreateModal(role = null) {
   if (!authModal) return;
@@ -162,16 +236,17 @@ function openCreateModal(role = null) {
   resetCreateView();
 
   authModal.classList.add("active");
-  document.body.classList.add("modal-open");
+
+  document.body.classList.add(
+    "modal-open"
+  );
 
   if (role) {
     selectRole(role);
   }
 
   setTimeout(() => {
-    if (fullNameInput) {
-      fullNameInput.focus();
-    }
+    fullNameInput?.focus();
   }, 150);
 }
 
@@ -179,7 +254,10 @@ function closeCreateModal() {
   if (!authModal) return;
 
   authModal.classList.remove("active");
-  document.body.classList.remove("modal-open");
+
+  document.body.classList.remove(
+    "modal-open"
+  );
 }
 
 function resetCreateView() {
@@ -195,21 +273,31 @@ function resetCreateView() {
 
   if (authStatus) {
     authStatus.textContent = "";
-    authStatus.className = "";
+    authStatus.className =
+      "auth-status";
   }
 
   roleOptions.forEach(option => {
-    option.classList.remove("selected");
+    option.classList.remove(
+      "selected",
+      "active"
+    );
   });
 
   const createForm =
-    document.querySelector(".create-form");
+    document.querySelector(
+      ".create-form"
+    );
 
   const roleSelector =
-    document.querySelector(".role-selector");
+    document.querySelector(
+      ".role-selector"
+    );
 
   const profilePreview =
-    document.querySelector(".profile-preview");
+    document.querySelector(
+      ".profile-preview"
+    );
 
   if (createForm) {
     createForm.style.display = "";
@@ -220,30 +308,45 @@ function resetCreateView() {
   }
 
   if (profilePreview) {
-    profilePreview.style.display = "";
+    profilePreview.style.display =
+      "";
   }
 
   if (continueProfileBtn) {
-    continueProfileBtn.style.display = "";
-    continueProfileBtn.disabled = false;
+    continueProfileBtn.style.display =
+      "";
+
+    continueProfileBtn.disabled =
+      false;
   }
 }
 
 /* =========================================================
-   ROLE
-   ========================================================= */
+   ROLE SELECTION
+========================================================= */
 
 function selectRole(role) {
-  if (!["employee", "employer"].includes(role)) {
+  if (
+    !["employee", "employer"]
+      .includes(role)
+  ) {
     return;
   }
 
   selectedRole = role;
 
   roleOptions.forEach(option => {
+    const active =
+      option.dataset.role === role;
+
     option.classList.toggle(
       "selected",
-      option.dataset.role === role
+      active
+    );
+
+    option.classList.toggle(
+      "active",
+      active
     );
   });
 
@@ -251,18 +354,24 @@ function selectRole(role) {
 }
 
 roleOptions.forEach(option => {
-  option.addEventListener("click", () => {
-    selectRole(option.dataset.role);
-  });
+  option.addEventListener(
+    "click",
+    () => {
+      selectRole(
+        option.dataset.role
+      );
+    }
+  );
 });
 
 /* =========================================================
    PREVIEW
-   ========================================================= */
+========================================================= */
 
 function updatePreview() {
   const name =
-    fullNameInput?.value.trim() || "Your name";
+    fullNameInput?.value.trim() ||
+    "Your name";
 
   const headline =
     profileHeadlineInput?.value.trim() ||
@@ -273,11 +382,13 @@ function updatePreview() {
     );
 
   if (profilePreviewName) {
-    profilePreviewName.textContent = name;
+    profilePreviewName.textContent =
+      name;
   }
 
   if (profilePreviewHeadline) {
-    profilePreviewHeadline.textContent = headline;
+    profilePreviewHeadline.textContent =
+      headline;
   }
 }
 
@@ -293,21 +404,26 @@ profileHeadlineInput?.addEventListener(
 
 /* =========================================================
    CREATE PROFILE
-   ========================================================= */
+========================================================= */
 
 async function createProfile() {
   const name =
-    fullNameInput?.value.trim() || "";
+    fullNameInput?.value.trim() ||
+    "";
 
   const headline =
-    profileHeadlineInput?.value.trim() || "";
+    profileHeadlineInput?.value.trim() ||
+    "";
 
   if (!selectedRole) {
     if (authStatus) {
       authStatus.textContent =
         "Please select Employee or Employer.";
-      authStatus.className = "error";
+
+      authStatus.className =
+        "auth-status error";
     }
+
     return;
   }
 
@@ -315,70 +431,94 @@ async function createProfile() {
     if (authStatus) {
       authStatus.textContent =
         "Please enter your name.";
-      authStatus.className = "error";
+
+      authStatus.className =
+        "auth-status error";
     }
 
     fullNameInput?.focus();
+
     return;
   }
 
-  const existingProfile = getStoredProfile();
+  const existingProfile =
+    getStoredProfile();
 
-  const profile = normalizeProfile({
-    ...(existingProfile || {}),
+  const profile =
+    normalizeProfile({
+      ...(existingProfile || {}),
 
-    id:
-      existingProfile?.id ||
-      `expo_${Date.now()}`,
+      id:
+        existingProfile?.id ||
+        `expo_${Date.now()}`,
 
-    name,
-    role: selectedRole,
-    headline,
+      name,
 
-    createdAt:
-      existingProfile?.createdAt ||
-      new Date().toISOString(),
+      role: selectedRole,
 
-    updatedAt:
-      new Date().toISOString()
-  });
+      headline,
+
+      createdAt:
+        existingProfile?.createdAt ||
+        new Date().toISOString(),
+
+      updatedAt:
+        new Date().toISOString()
+    });
 
   if (continueProfileBtn) {
-    continueProfileBtn.disabled = true;
+    continueProfileBtn.disabled =
+      true;
   }
 
   if (authStatus) {
     authStatus.textContent =
       "Creating your Expo Go profile...";
-    authStatus.className = "";
+
+    authStatus.className =
+      "auth-status";
   }
 
   try {
-    /*
-      Save locally first.
 
-      This means the profile page still works
-      even if the backend is temporarily unavailable.
-    */
+    /* -----------------------------------------
+       SAVE LOCALLY FIRST
+    ----------------------------------------- */
+
     saveLocalProfile(profile);
 
-    /*
-      Then sync with Supabase through the backend.
-    */
-    const savedProfile =
-      await saveProfileToBackend(profile);
 
-    /*
-      Convert Supabase field names back into
-      the frontend format.
-    */
+    /* -----------------------------------------
+       SAVE TO BACKEND / SUPABASE
+    ----------------------------------------- */
+
+    const savedProfile =
+      await saveProfileToBackend(
+        profile
+      );
+
+
+    /* -----------------------------------------
+       NORMALIZE BACKEND RESPONSE
+    ----------------------------------------- */
+
     const frontendProfile =
       normalizeProfile({
+
         ...profile,
 
-        id: savedProfile?.id || profile.id,
-        name: savedProfile?.name || profile.name,
-        role: savedProfile?.role || profile.role,
+        id:
+          savedProfile?.id ||
+          profile.id,
+
+        name:
+          savedProfile?.name ||
+          profile.name,
+
+        role:
+          savedProfile?.role ||
+          profile.role,
+
         headline:
           savedProfile?.headline ||
           profile.headline,
@@ -431,43 +571,92 @@ async function createProfile() {
           savedProfile?.work_type ||
           profile.workType,
 
+        createdAt:
+          savedProfile?.created_at ||
+          profile.createdAt,
+
         updatedAt:
           savedProfile?.updated_at ||
           profile.updatedAt
       });
 
-    saveLocalProfile(frontendProfile);
+
+    saveLocalProfile(
+      frontendProfile
+    );
+
+
+    /* -----------------------------------------
+       SUCCESS
+    ----------------------------------------- */
 
     if (authStatus) {
       authStatus.textContent =
         "Profile created successfully.";
-      authStatus.className = "success";
+
+      authStatus.className =
+        "auth-status success";
     }
 
+
+    /* -----------------------------------------
+       RELIABLE PROFILE REDIRECT
+    ----------------------------------------- */
+
     setTimeout(() => {
-      window.location.href = "profile.html";
+
+      const profileUrl =
+        new URL(
+          "profile.html",
+          window.location.href
+        ).href;
+
+      window.location.assign(
+        profileUrl
+      );
+
     }, 350);
 
   } catch (error) {
+
     console.error(
       "Backend profile save failed:",
       error
     );
 
-    /*
-      Keep local profile so the prototype doesn't
-      become unusable just because the API is down.
-    */
+
+    /* -----------------------------------------
+       KEEP LOCAL PROFILE
+    ----------------------------------------- */
+
     saveLocalProfile(profile);
+
 
     if (authStatus) {
       authStatus.textContent =
         "Profile saved locally. We couldn't sync with the server yet.";
-      authStatus.className = "error";
+
+      authStatus.className =
+        "auth-status error";
     }
 
+
+    /* -----------------------------------------
+       STILL OPEN PROFILE PAGE
+    ----------------------------------------- */
+
     setTimeout(() => {
-      window.location.href = "profile.html";
+
+      const profileUrl =
+        new URL(
+          "profile.html",
+          window.location.href
+        ).href;
+
+      window.location.assign(
+        profileUrl
+      );
+
     }, 900);
   }
 }
@@ -478,30 +667,51 @@ continueProfileBtn?.addEventListener(
 );
 
 /* =========================================================
-   BUTTONS
-   ========================================================= */
+   MAIN BUTTONS
+========================================================= */
 
-employeeBtn?.addEventListener("click", () => {
-  openCreateModal("employee");
-});
+employeeBtn?.addEventListener(
+  "click",
+  () => {
+    openCreateModal("employee");
+  }
+);
 
-employerBtn?.addEventListener("click", () => {
-  openCreateModal("employer");
-});
+employerBtn?.addEventListener(
+  "click",
+  () => {
+    openCreateModal("employer");
+  }
+);
 
-bottomJoinBtn?.addEventListener("click", () => {
-  openCreateModal();
-});
+bottomJoinBtn?.addEventListener(
+  "click",
+  () => {
+    openCreateModal();
+  }
+);
 
 /* =========================================================
    LOGIN
-   ========================================================= */
+========================================================= */
 
 function handleLogin() {
-  const existingProfile = getStoredProfile();
+
+  const existingProfile =
+    getStoredProfile();
 
   if (existingProfile) {
-    window.location.href = "profile.html";
+
+    const profileUrl =
+      new URL(
+        "profile.html",
+        window.location.href
+      ).href;
+
+    window.location.assign(
+      profileUrl
+    );
+
     return;
   }
 
@@ -513,138 +723,210 @@ document
     '[data-action="login"], .login-btn'
   )
   .forEach(button => {
+
     button.addEventListener(
       "click",
       handleLogin
     );
+
   });
 
 mobileLoginBtn?.addEventListener(
   "click",
   () => {
+
     closeMobileMenu();
+
     handleLogin();
+
   }
 );
 
 /* =========================================================
    MOBILE MENU
-   ========================================================= */
+========================================================= */
 
 function closeMobileMenu() {
+
   if (!mobileNav) return;
 
-  mobileNav.classList.remove("active");
+  mobileNav.classList.remove(
+    "active"
+  );
 
-  if (mobileMenuBtn) {
-    mobileMenuBtn.classList.remove("active");
-  }
+  mobileMenuBtn?.classList.remove(
+    "active"
+  );
 }
 
-mobileMenuBtn?.addEventListener("click", () => {
-  mobileNav?.classList.toggle("active");
-  mobileMenuBtn.classList.toggle("active");
-});
+mobileMenuBtn?.addEventListener(
+  "click",
+  () => {
 
-mobileHowLink?.addEventListener("click", () => {
-  closeMobileMenu();
+    mobileNav?.classList.toggle(
+      "active"
+    );
 
-  document
-    .getElementById("how-it-works")
-    ?.scrollIntoView({
-      behavior: "smooth"
-    });
-});
+    mobileMenuBtn.classList.toggle(
+      "active"
+    );
 
-mobileJoinBtn?.addEventListener("click", () => {
-  closeMobileMenu();
-  openCreateModal();
-});
+  }
+);
+
+mobileHowLink?.addEventListener(
+  "click",
+  () => {
+
+    closeMobileMenu();
+
+    document
+      .getElementById(
+        "how-it-works"
+      )
+      ?.scrollIntoView({
+        behavior: "smooth"
+      });
+
+  }
+);
+
+mobileJoinBtn?.addEventListener(
+  "click",
+  () => {
+
+    closeMobileMenu();
+
+    openCreateModal();
+
+  }
+);
 
 /* =========================================================
    MODAL CLOSE
-   ========================================================= */
+========================================================= */
 
-authModal?.addEventListener("click", event => {
-  if (event.target === authModal) {
-    closeCreateModal();
+authModal?.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target === authModal
+    ) {
+      closeCreateModal();
+    }
+
   }
-});
+);
 
 document
   .querySelectorAll(
     "[data-close-modal], .modal-close"
   )
   .forEach(button => {
+
     button.addEventListener(
       "click",
       closeCreateModal
     );
+
   });
 
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape") {
-    closeCreateModal();
-    closeMobileMenu();
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "Escape") {
+
+      closeCreateModal();
+
+      closeMobileMenu();
+
+    }
+
   }
-});
+);
 
 /* =========================================================
    SMOOTH SCROLL
-   ========================================================= */
+========================================================= */
 
 document
-  .querySelectorAll('a[href^="#"]')
+  .querySelectorAll(
+    'a[href^="#"]'
+  )
   .forEach(link => {
-    link.addEventListener("click", event => {
-      const targetId =
-        link.getAttribute("href");
 
-      if (!targetId || targetId === "#") {
-        return;
+    link.addEventListener(
+      "click",
+      event => {
+
+        const targetId =
+          link.getAttribute(
+            "href"
+          );
+
+        if (
+          !targetId ||
+          targetId === "#"
+        ) {
+          return;
+        }
+
+        const target =
+          document.querySelector(
+            targetId
+          );
+
+        if (!target) return;
+
+        event.preventDefault();
+
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+        closeMobileMenu();
+
       }
+    );
 
-      const target =
-        document.querySelector(targetId);
-
-      if (!target) return;
-
-      event.preventDefault();
-
-      target.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-
-      closeMobileMenu();
-    });
   });
 
 /* =========================================================
-   MATCH VISUAL MICRO-INTERACTION
-   ========================================================= */
+   MATCH VISUAL
+========================================================= */
 
 const matchVisual =
-  document.querySelector(".match-visual");
+  document.querySelector(
+    ".match-visual"
+  );
 
 if (matchVisual) {
+
   matchVisual.addEventListener(
     "mouseenter",
     () => {
-      matchVisual.classList.add("is-active");
+      matchVisual.classList.add(
+        "is-active"
+      );
     }
   );
 
   matchVisual.addEventListener(
     "mouseleave",
     () => {
-      matchVisual.classList.remove("is-active");
+      matchVisual.classList.remove(
+        "is-active"
+      );
     }
   );
+
 }
 
 /* =========================================================
    INITIAL PREVIEW
-   ========================================================= */
+========================================================= */
 
 updatePreview();
