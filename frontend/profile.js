@@ -1,6 +1,6 @@
 /* =========================================================
    EXPO GO — PROFILE CONTROLLER
-   Supabase Auth + Render Backend + Local Storage
+   Supabase Auth + Render Backend + Persistent Profile
 ========================================================= */
 
 const API_BASE_URL = "https://expodo.onrender.com";
@@ -10,7 +10,7 @@ const SUPABASE_URL =
   "https://inhxlwsjlddhnpalbocl.supabase.co";
 
 const SUPABASE_ANON_KEY =
-  "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
+  "sb_publishable_EoecvlHpO_r1ZJdJWl5Q_VEgr0dOw";
 
 let supabaseClient = null;
 let profile = null;
@@ -22,17 +22,21 @@ let currentAuthUser = null;
 
 function initializeSupabase() {
   if (!window.supabase) {
-    console.error("Supabase library is not loaded.");
+    console.error(
+      "Supabase library is not loaded."
+    );
     return false;
   }
 
   try {
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+    supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
 
     return true;
+
   } catch (error) {
     console.error(
       "Supabase initialization error:",
@@ -66,18 +70,26 @@ function normalizeArray(value) {
 
 function normalizeProfile(data = {}) {
   return {
-    id: data.id || "",
+    id:
+      data.id || "",
+
     authUserId:
       data.authUserId ||
       data.auth_user_id ||
       currentAuthUser?.id ||
       "",
 
-    name: data.name || "",
-    role: data.role || "",
-    headline: data.headline || "",
+    name:
+      data.name || "",
 
-    skills: normalizeArray(data.skills),
+    role:
+      data.role || "",
+
+    headline:
+      data.headline || "",
+
+    skills:
+      normalizeArray(data.skills),
 
     education:
       data.education || "",
@@ -166,7 +178,7 @@ function setValue(id, value) {
 }
 
 /* =========================================================
-   AUTHENTICATED USER
+   AUTH
 ========================================================= */
 
 async function getAuthenticatedUser() {
@@ -178,7 +190,8 @@ async function getAuthenticatedUser() {
     const {
       data,
       error
-    } = await supabaseClient.auth.getUser();
+    } =
+      await supabaseClient.auth.getUser();
 
     if (error) {
       console.error(
@@ -202,11 +215,158 @@ async function getAuthenticatedUser() {
 }
 
 /* =========================================================
+   BACKEND PROFILE
+========================================================= */
+
+async function fetchServerProfile(userId) {
+  try {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles/me/${userId}`
+      );
+
+    let result = {};
+
+    try {
+      result = await response.json();
+    } catch (_) {
+      result = {};
+    }
+
+    if (
+      response.ok &&
+      result.success &&
+      result.profile
+    ) {
+      return result.profile;
+    }
+
+    return null;
+
+  } catch (error) {
+    console.warn(
+      "Backend profile lookup unavailable.",
+      error
+    );
+
+    return null;
+  }
+}
+
+/* =========================================================
+   SYNC PROFILE TO BACKEND
+========================================================= */
+
+async function syncProfileToBackend() {
+  if (!profile || !currentAuthUser) {
+    return false;
+  }
+
+  const payload = {
+    ...profile,
+
+    id:
+      profile.id ||
+      currentAuthUser.id,
+
+    authUserId:
+      currentAuthUser.id,
+
+    auth_user_id:
+      currentAuthUser.id
+  };
+
+  try {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Accept":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(payload)
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "Profile sync failed."
+      );
+    }
+
+    if (result.profile) {
+      profile =
+        normalizeProfile({
+          ...profile,
+          ...result.profile,
+
+          authUserId:
+            currentAuthUser.id
+        });
+
+      saveLocalProfile();
+    }
+
+    return true;
+
+  } catch (error) {
+    console.error(
+      "Profile sync error:",
+      error
+    );
+
+    return false;
+  }
+}
+
+/* =========================================================
    LOAD PROFILE
 ========================================================= */
 
 async function loadProfile() {
   try {
+    /*
+      1. Get authenticated Supabase user.
+    */
+
+    currentAuthUser =
+      await getAuthenticatedUser();
+
+    /*
+      A profile page should belong to
+      an authenticated account.
+    */
+
+    if (!currentAuthUser) {
+      console.warn(
+        "No authenticated user."
+      );
+
+      window.location.href =
+        "index.html";
+
+      return false;
+    }
+
+    /*
+      2. Read local profile.
+    */
+
     let localProfile = null;
 
     const saved =
@@ -229,54 +389,31 @@ async function loadProfile() {
     }
 
     /*
-      Try authenticated Supabase user first.
+      3. Backend is authoritative.
     */
 
-    if (supabaseClient) {
-      currentAuthUser =
-        await getAuthenticatedUser();
+    const serverProfile =
+      await fetchServerProfile(
+        currentAuthUser.id
+      );
+
+    if (serverProfile) {
+      profile =
+        normalizeProfile({
+          ...serverProfile,
+
+          authUserId:
+            currentAuthUser.id
+        });
+
+      saveLocalProfile();
+
+      return true;
     }
 
     /*
-      If authenticated, try loading the
-      authoritative profile from backend.
-    */
-
-    if (currentAuthUser) {
-      try {
-        const response =
-          await fetch(
-            `${API_BASE_URL}/api/profiles/me/${currentAuthUser.id}`
-          );
-
-        if (response.ok) {
-          const result =
-            await response.json();
-
-          if (
-            result.success &&
-            result.profile
-          ) {
-            profile =
-              normalizeProfile(
-                result.profile
-              );
-
-            saveLocalProfile();
-
-            return true;
-          }
-        }
-      } catch (error) {
-        console.warn(
-          "Backend profile lookup unavailable.",
-          error
-        );
-      }
-    }
-
-    /*
-      Fallback to local profile.
+      4. Backend profile missing.
+      Recover local profile.
     */
 
     if (
@@ -284,26 +421,68 @@ async function loadProfile() {
       localProfile.role
     ) {
       profile =
-        normalizeProfile(
-          localProfile
-        );
+        normalizeProfile({
+          ...localProfile,
 
-      if (
-        currentAuthUser &&
-        !profile.authUserId
-      ) {
-        profile.authUserId =
-          currentAuthUser.id;
+          authUserId:
+            currentAuthUser.id
+        });
 
-        saveLocalProfile();
-      }
+      saveLocalProfile();
+
+      /*
+        Recreate backend profile.
+      */
+
+      await syncProfileToBackend();
 
       return true;
     }
 
     /*
-      No profile available.
-      Return to home.
+      5. No backend or local profile.
+      Build a minimal profile from
+      Supabase metadata.
+    */
+
+    const metadata =
+      currentAuthUser.user_metadata ||
+      {};
+
+    const role =
+      metadata.role || "";
+
+    if (role) {
+      profile =
+        normalizeProfile({
+          id:
+            currentAuthUser.id,
+
+          authUserId:
+            currentAuthUser.id,
+
+          name:
+            metadata.name ||
+            currentAuthUser.email ||
+            "",
+
+          role,
+
+          headline:
+            metadata.headline ||
+            ""
+        });
+
+      saveLocalProfile();
+
+      await syncProfileToBackend();
+
+      return true;
+    }
+
+    /*
+      Truly no profile information.
+      Only now return home.
     */
 
     window.location.href =
@@ -317,19 +496,31 @@ async function loadProfile() {
       error
     );
 
+    /*
+      Last-resort local recovery.
+      Never send an authenticated user
+      into profile creation.
+    */
+
     const saved =
       localStorage.getItem(
         PROFILE_STORAGE_KEY
       );
 
-    if (saved) {
+    if (saved && currentAuthUser) {
       try {
         profile =
           normalizeProfile(
             JSON.parse(saved)
           );
 
+        profile.authUserId =
+          currentAuthUser.id;
+
+        saveLocalProfile();
+
         return !!profile.role;
+
       } catch (_) {}
     }
 
@@ -911,26 +1102,11 @@ function renderMatches(matches) {
 
 function escapeHtml(value) {
   return String(value || "")
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 /* =========================================================
@@ -940,86 +1116,43 @@ function escapeHtml(value) {
 function openEditModal() {
   if (!profile) return;
 
-  setValue(
-    "editName",
-    profile.name
-  );
-
-  setValue(
-    "editHeadline",
-    profile.headline
-  );
-
-  setValue(
-    "editSkills",
-    profile.skills.join(", ")
-  );
-
-  setValue(
-    "editEducation",
-    profile.education
-  );
-
-  setValue(
-    "editExperience",
-    profile.experience
-  );
-
+  setValue("editName", profile.name);
+  setValue("editHeadline", profile.headline);
+  setValue("editSkills", profile.skills.join(", "));
+  setValue("editEducation", profile.education);
+  setValue("editExperience", profile.experience);
   setValue(
     "editDesiredPosition",
     profile.desiredPosition
   );
-
-  setValue(
-    "editLocation",
-    profile.location
-  );
-
+  setValue("editLocation", profile.location);
   setValue(
     "editWorkPreference",
     profile.workPreference
   );
-
-  setValue(
-    "editCompany",
-    profile.company
-  );
-
+  setValue("editCompany", profile.company);
   setValue(
     "editHiringPosition",
     profile.hiringPosition
   );
-
   setValue(
     "editRequiredSkills",
     profile.requiredSkills.join(", ")
   );
-
   setValue(
     "editExperienceRequired",
     profile.experienceRequired
   );
-
   setValue(
     "editEmployerLocation",
     profile.location
   );
-
-  setValue(
-    "editWorkType",
-    profile.workType
-  );
-
-  setValue(
-    "editAbout",
-    profile.about
-  );
+  setValue("editWorkType", profile.workType);
+  setValue("editAbout", profile.about);
 
   document
     .getElementById("editModal")
-    ?.classList.add(
-      "active"
-    );
+    ?.classList.add("active");
 
   document.body.classList.add(
     "modal-open"
@@ -1029,9 +1162,7 @@ function openEditModal() {
 function closeEditModal() {
   document
     .getElementById("editModal")
-    ?.classList.remove(
-      "active"
-    );
+    ?.classList.remove("active");
 
   document.body.classList.remove(
     "modal-open"
@@ -1045,130 +1176,110 @@ function closeEditModal() {
 async function saveProfile() {
   if (!profile) return;
 
-  /*
-    Refresh Supabase user before saving.
-  */
+  currentAuthUser =
+    await getAuthenticatedUser();
 
-  if (supabaseClient) {
-    currentAuthUser =
-      await getAuthenticatedUser();
+  if (!currentAuthUser) {
+    const status =
+      document.getElementById(
+        "editStatus"
+      );
+
+    if (status) {
+      status.textContent =
+        "Your session has expired. Please log in again.";
+
+      status.className =
+        "edit-status error";
+    }
+
+    return;
   }
 
-  if (
-    currentAuthUser &&
-    !profile.authUserId
-  ) {
-    profile.authUserId =
-      currentAuthUser.id;
-  }
+  profile.authUserId =
+    currentAuthUser.id;
+
+  profile.id =
+    profile.id ||
+    currentAuthUser.id;
 
   profile.name =
-    document
-      .getElementById(
-        "editName"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editName"
+    )?.value.trim() || "";
 
   profile.headline =
-    document
-      .getElementById(
-        "editHeadline"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editHeadline"
+    )?.value.trim() || "";
 
   profile.skills =
     normalizeArray(
-      document
-        .getElementById(
-          "editSkills"
-        )
-        ?.value
+      document.getElementById(
+        "editSkills"
+      )?.value
     );
 
   profile.education =
-    document
-      .getElementById(
-        "editEducation"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editEducation"
+    )?.value.trim() || "";
 
   profile.experience =
-    document
-      .getElementById(
-        "editExperience"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editExperience"
+    )?.value.trim() || "";
 
   profile.desiredPosition =
-    document
-      .getElementById(
-        "editDesiredPosition"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editDesiredPosition"
+    )?.value.trim() || "";
 
   profile.location =
     profile.role === "employer"
-      ? document
-          .getElementById(
-            "editEmployerLocation"
-          )
-          ?.value.trim() || ""
-      : document
-          .getElementById(
-            "editLocation"
-          )
-          ?.value.trim() || "";
+      ? document.getElementById(
+          "editEmployerLocation"
+        )?.value.trim() || ""
+      : document.getElementById(
+          "editLocation"
+        )?.value.trim() || "";
 
   profile.workPreference =
-    document
-      .getElementById(
-        "editWorkPreference"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editWorkPreference"
+    )?.value.trim() || "";
 
   profile.company =
-    document
-      .getElementById(
-        "editCompany"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editCompany"
+    )?.value.trim() || "";
 
   profile.hiringPosition =
-    document
-      .getElementById(
-        "editHiringPosition"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editHiringPosition"
+    )?.value.trim() || "";
 
   profile.requiredSkills =
     normalizeArray(
-      document
-        .getElementById(
-          "editRequiredSkills"
-        )
-        ?.value
+      document.getElementById(
+        "editRequiredSkills"
+      )?.value
     );
 
   profile.experienceRequired =
-    document
-      .getElementById(
-        "editExperienceRequired"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editExperienceRequired"
+    )?.value.trim() || "";
 
   profile.workType =
-    document
-      .getElementById(
-        "editWorkType"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editWorkType"
+    )?.value.trim() || "";
 
   profile.about =
-    document
-      .getElementById(
-        "editAbout"
-      )
-      ?.value.trim() || "";
+    document.getElementById(
+      "editAbout"
+    )?.value.trim() || "";
 
   profile.updatedAt =
     new Date().toISOString();
@@ -1192,55 +1303,14 @@ async function saveProfile() {
   }
 
   try {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/profiles`,
-        {
-          method: "POST",
+    const synced =
+      await syncProfileToBackend();
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body:
-            JSON.stringify({
-              ...profile,
-
-              authUserId:
-                currentAuthUser?.id ||
-                profile.authUserId ||
-                null
-            })
-        }
-      );
-
-    const result =
-      await response.json();
-
-    if (
-      !response.ok ||
-      !result.success
-    ) {
+    if (!synced) {
       throw new Error(
-        result.message ||
-        "Unable to save profile."
+        "Server sync failed."
       );
     }
-
-    profile =
-      normalizeProfile({
-        ...profile,
-        ...result.profile,
-
-        authUserId:
-          currentAuthUser?.id ||
-          profile.authUserId ||
-          result.profile?.auth_user_id ||
-          ""
-      });
-
-    saveLocalProfile();
 
     renderProfile();
 
@@ -1266,7 +1336,7 @@ async function saveProfile() {
     );
 
     /*
-      Local save still remains available.
+      Local profile remains saved.
     */
 
     saveLocalProfile();
@@ -1283,7 +1353,6 @@ async function saveProfile() {
   } finally {
     if (button) {
       button.disabled = false;
-
       button.textContent =
         "Save profile";
     }
@@ -1328,9 +1397,7 @@ document
   });
 
 document
-  .getElementById(
-    "editModal"
-  )
+  .getElementById("editModal")
   ?.addEventListener(
     "click",
     event => {
@@ -1392,12 +1459,6 @@ document.addEventListener(
 ========================================================= */
 
 async function initialize() {
-  /*
-    Supabase is optional for the page to render.
-    This prevents the profile page from becoming
-    dependent on a global "Expo ready" controller.
-  */
-
   initializeSupabase();
 
   const loaded =
