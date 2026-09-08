@@ -27,11 +27,14 @@ const authSubtitle = document.getElementById("authSubtitle");
 
 const authForm = document.getElementById("authForm");
 
-const fullNameInput = document.getElementById("fullName");
+const fullNameInput =
+  document.getElementById("fullName");
+
 const profileHeadlineInput =
   document.getElementById("profileHeadline");
 
-const authStatus = document.getElementById("authStatus");
+const authStatus =
+  document.getElementById("authStatus");
 
 const roleOptions =
   document.querySelectorAll(".role-option");
@@ -41,7 +44,8 @@ const roleOptions =
    STORAGE
 ========================================================= */
 
-const PROFILE_STORAGE_KEY = "expoGoProfile";
+const PROFILE_STORAGE_KEY =
+  "expoGoProfile";
 
 
 /* =========================================================
@@ -213,10 +217,9 @@ if (bottomJoinBtn) {
 }
 
 
-/*
-   For now, Log in simply opens the profile flow.
-   Real authentication will be added later.
-*/
+/* =========================================================
+   LOGIN / EXISTING PROFILE
+========================================================= */
 
 if (loginBtn) {
 
@@ -395,7 +398,7 @@ function getSavedProfile() {
 
 
 /* =========================================================
-   SHOW PROFILE
+   SHOW PROFILE PREVIEW
 ========================================================= */
 
 function showProfile(profile) {
@@ -417,7 +420,7 @@ function showProfile(profile) {
 
 
   authSubtitle.textContent =
-    "Your profile is saved on this device.";
+    "Your profile has been created.";
 
 
   roleOptions.forEach(option => {
@@ -488,57 +491,15 @@ function showProfile(profile) {
       "click",
       () => {
 
-        closeAuth();
+        /* Go to the real profile dashboard */
 
-        showStatusOnPage();
+        window.location.href =
+          "profile.html";
 
       }
     );
 
   }
-
-}
-
-
-/* =========================================================
-   RESET MODAL TO CREATE PROFILE STATE
-========================================================= */
-
-function resetProfileForm() {
-
-  if (!authForm) {
-    return;
-  }
-
-  location.reload();
-
-}
-
-
-/* =========================================================
-   PAGE PROFILE INDICATOR
-========================================================= */
-
-function showStatusOnPage() {
-
-  const profile =
-    getSavedProfile();
-
-  if (!profile) {
-    return;
-  }
-
-
-  /*
-     We intentionally keep the landing page unchanged.
-     The saved profile can be used by the next dashboard/profile
-     stage without redesigning the homepage.
-  */
-
-  console.log(
-    "Expo Go profile:",
-    profile
-  );
 
 }
 
@@ -572,7 +533,48 @@ function escapeHtml(value) {
 
 
 /* =========================================================
-   INITIAL STATE
+   OPTIONAL VISUAL PARALLAX
+========================================================= */
+
+const matchVisual =
+  document.querySelector(".match-visual");
+
+
+if (
+  matchVisual &&
+  window.innerWidth > 900
+) {
+
+  document.addEventListener(
+    "mousemove",
+    event => {
+
+      const x =
+        (
+          event.clientX /
+          window.innerWidth -
+          0.5
+        ) * 10;
+
+      const y =
+        (
+          event.clientY /
+          window.innerHeight -
+          0.5
+        ) * 10;
+
+
+      matchVisual.style.transform =
+        `translate(${x}px, ${y}px)`;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   INITIALIZE
 ========================================================= */
 
 updateAuthUI();
