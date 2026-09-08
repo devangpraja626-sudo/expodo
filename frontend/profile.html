@@ -61,7 +61,7 @@
         </div>
 
         <div class="profile-info">
-          <span>HEADLINE</span>
+          <span id="headlineLabel">HEADLINE</span>
           <strong id="infoHeadline">—</strong>
         </div>
 
@@ -71,23 +71,38 @@
         </div>
 
         <div class="profile-info">
-          <span>SKILLS</span>
+          <span id="skillsLabel">SKILLS</span>
           <strong id="infoSkills">—</strong>
         </div>
 
-        <div class="profile-info">
+        <div class="profile-info" id="educationInfo">
           <span>EDUCATION</span>
           <strong id="infoEducation">—</strong>
         </div>
 
         <div class="profile-info">
-          <span>EXPERIENCE</span>
+          <span id="experienceLabel">EXPERIENCE</span>
           <strong id="infoExperience">—</strong>
         </div>
 
         <div class="profile-info">
-          <span>LOCATION</span>
+          <span id="locationLabel">LOCATION</span>
           <strong id="infoLocation">—</strong>
+        </div>
+
+        <div class="profile-info" id="workPreferenceInfo">
+          <span>WORK PREFERENCE</span>
+          <strong id="infoWorkPreference">—</strong>
+        </div>
+
+        <div class="profile-info" id="companyInfo" style="display:none;">
+          <span>COMPANY</span>
+          <strong id="infoCompany">—</strong>
+        </div>
+
+        <div class="profile-info" id="workTypeInfo" style="display:none;">
+          <span>WORK TYPE</span>
+          <strong id="infoWorkType">—</strong>
         </div>
 
         <div class="profile-info">
@@ -139,7 +154,7 @@
         </h3>
 
         <p>
-          Give Expo Go more information so future opportunities can understand your profile better.
+          Give Expo Go more information so opportunities can understand exactly what you need.
         </p>
 
         <button id="completeProfileBtn">
@@ -165,17 +180,24 @@
       </button>
 
       <div class="edit-heading">
-        <span>PROFILE</span>
-        <h2>Build your profile.</h2>
-        <p>
-          Add the information employers and opportunities need.
+        <span id="editorType">PROFILE</span>
+
+        <h2 id="editorTitle">
+          Build your profile.
+        </h2>
+
+        <p id="editorSubtitle">
+          Add the information opportunities need.
         </p>
       </div>
 
+
       <form id="editForm">
 
+        <!-- COMMON -->
         <div class="edit-field">
           <label for="editName">Full name</label>
+
           <input
             type="text"
             id="editName"
@@ -184,8 +206,13 @@
           />
         </div>
 
-        <div class="edit-field">
-          <label for="editHeadline">What do you do?</label>
+
+        <!-- EMPLOYEE -->
+        <div class="edit-field employee-field">
+          <label for="editHeadline">
+            What do you do?
+          </label>
+
           <input
             type="text"
             id="editHeadline"
@@ -193,18 +220,27 @@
           />
         </div>
 
-        <div class="edit-field">
-          <label for="editSkills">Skills</label>
+        <div class="edit-field employee-field">
+          <label for="editSkills">
+            Skills
+          </label>
+
           <input
             type="text"
             id="editSkills"
             placeholder="e.g. JavaScript, React, Python"
           />
-          <small>Separate multiple skills with commas.</small>
+
+          <small>
+            Separate multiple skills with commas.
+          </small>
         </div>
 
-        <div class="edit-field">
-          <label for="editEducation">Education</label>
+        <div class="edit-field employee-field">
+          <label for="editEducation">
+            Education
+          </label>
+
           <input
             type="text"
             id="editEducation"
@@ -212,23 +248,132 @@
           />
         </div>
 
-        <div class="edit-field">
-          <label for="editExperience">Experience</label>
+        <div class="edit-field employee-field">
+          <label for="editExperience">
+            Experience
+          </label>
+
           <input
             type="text"
             id="editExperience"
-            placeholder="e.g. 2 years / Fresher"
+            placeholder="e.g. Fresher / 2 years"
           />
         </div>
 
-        <div class="edit-field">
-          <label for="editLocation">Location</label>
+        <div class="edit-field employee-field">
+          <label for="editDesiredPosition">
+            Desired position
+          </label>
+
+          <input
+            type="text"
+            id="editDesiredPosition"
+            placeholder="e.g. Software Engineer"
+          />
+        </div>
+
+        <div class="edit-field employee-field">
+          <label for="editLocation">
+            Location
+          </label>
+
           <input
             type="text"
             id="editLocation"
             placeholder="e.g. Indore, India"
           />
         </div>
+
+        <div class="edit-field employee-field">
+          <label for="editWorkPreference">
+            Work preference
+          </label>
+
+          <input
+            type="text"
+            id="editWorkPreference"
+            placeholder="e.g. Remote / Hybrid / On-site"
+          />
+        </div>
+
+
+        <!-- EMPLOYER -->
+        <div class="edit-field employer-field">
+          <label for="editCompany">
+            Company / organization
+          </label>
+
+          <input
+            type="text"
+            id="editCompany"
+            placeholder="e.g. Expo Technologies"
+          />
+        </div>
+
+        <div class="edit-field employer-field">
+          <label for="editHiringPosition">
+            Hiring position
+          </label>
+
+          <input
+            type="text"
+            id="editHiringPosition"
+            placeholder="e.g. Frontend Developer"
+          />
+        </div>
+
+        <div class="edit-field employer-field">
+          <label for="editRequiredSkills">
+            Required skills
+          </label>
+
+          <input
+            type="text"
+            id="editRequiredSkills"
+            placeholder="e.g. React, JavaScript, CSS"
+          />
+
+          <small>
+            Separate multiple skills with commas.
+          </small>
+        </div>
+
+        <div class="edit-field employer-field">
+          <label for="editRequiredExperience">
+            Experience required
+          </label>
+
+          <input
+            type="text"
+            id="editRequiredExperience"
+            placeholder="e.g. 0–2 years"
+          />
+        </div>
+
+        <div class="edit-field employer-field">
+          <label for="editEmployerLocation">
+            Location
+          </label>
+
+          <input
+            type="text"
+            id="editEmployerLocation"
+            placeholder="e.g. Indore, India"
+          />
+        </div>
+
+        <div class="edit-field employer-field">
+          <label for="editWorkType">
+            Work type
+          </label>
+
+          <input
+            type="text"
+            id="editWorkType"
+            placeholder="e.g. Full-time / Part-time"
+          />
+        </div>
+
 
         <div class="edit-status" id="editStatus"></div>
 
