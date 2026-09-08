@@ -1,15 +1,14 @@
-"use strict";
+/* =========================================================
+   EXPO GO — FRONTEND CONTROLLER
+   Prototype V1
+   LocalStorage based
+   ========================================================= */
+
+const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 /* =========================================================
-   EXPO GO — SIMPLE PROFILE MVP
-   Frontend only
-   LocalStorage profile system
-========================================================= */
-
-
-/* =========================================================
-   ELEMENTS
-========================================================= */
+   DOM ELEMENTS
+   ========================================================= */
 
 const authModal = document.getElementById("authModal");
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -17,564 +16,674 @@ const closeModal = document.getElementById("closeModal");
 
 const loginBtn = document.getElementById("loginBtn");
 const joinBtn = document.getElementById("joinBtn");
-
 const employeeBtn = document.getElementById("employeeBtn");
 const employerBtn = document.getElementById("employerBtn");
 const bottomJoinBtn = document.getElementById("bottomJoinBtn");
+
+const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+const mobileNav = document.getElementById("mobileNav");
+const mobileHowLink = document.getElementById("mobileHowLink");
+const mobileLoginBtn = document.getElementById("mobileLoginBtn");
+const mobileJoinBtn = document.getElementById("mobileJoinBtn");
 
 const authTitle = document.getElementById("authTitle");
 const authSubtitle = document.getElementById("authSubtitle");
 
 const authForm = document.getElementById("authForm");
+const fullName = document.getElementById("fullName");
+const profileHeadline = document.getElementById("profileHeadline");
+const authStatus = document.getElementById("authStatus");
 
-const fullNameInput =
-  document.getElementById("fullName");
+const roleOptions = document.querySelectorAll(".role-option");
 
-const profileHeadlineInput =
-  document.getElementById("profileHeadline");
+const profilePreview = document.querySelector(".profile-preview");
+const profilePreviewAvatar = document.querySelector(".profile-preview-avatar");
+const profilePreviewRole = document.querySelector(".profile-preview-role");
+const profilePreviewInfo = document.querySelector(".profile-preview-info");
 
-const authStatus =
-  document.getElementById("authStatus");
-
-const roleOptions =
-  document.querySelectorAll(".role-option");
-
-
-/* =========================================================
-   STORAGE
-========================================================= */
-
-const PROFILE_STORAGE_KEY =
-  "expoGoProfile";
-
-
-/* =========================================================
-   STATE
-========================================================= */
+const continueProfileBtn = document.getElementById("continueProfileBtn");
 
 let selectedRole = "employee";
 
 
 /* =========================================================
-   OPEN PROFILE MODAL
-========================================================= */
+   PROFILE HELPERS
+   ========================================================= */
 
-function openProfile(role = "employee") {
+function createEmptyProfile() {
+  return {
+    id: null,
 
-  selectedRole = role;
+    name: "",
+    role: "employee",
+    headline: "",
 
-  authModal.classList.remove("hidden");
+    /* Employee fields */
+    skills: [],
+    education: "",
+    experience: "",
+    desiredPosition: "",
+    location: "",
+    workPreference: "",
+    about: "",
 
-  document.body.style.overflow = "hidden";
+    /* Employer fields */
+    company: "",
+    hiringPosition: "",
+    requiredSkills: [],
+    experienceRequired: "",
+    workType: "",
+
+    createdAt: null,
+    updatedAt: null
+  };
+}
+
+
+function normalizeProfile(profile) {
+  const base = createEmptyProfile();
+
+  if (!profile || typeof profile !== "object") {
+    return base;
+  }
+
+  return {
+    ...base,
+    ...profile,
+
+    id: profile.id || base.id,
+    name: profile.name || "",
+    role: profile.role === "employer" ? "employer" : "employee",
+    headline: profile.headline || "",
+
+    skills: Array.isArray(profile.skills)
+      ? profile.skills
+      : [],
+
+    requiredSkills: Array.isArray(profile.requiredSkills)
+      ? profile.requiredSkills
+      : [],
+
+    education: profile.education || "",
+    experience: profile.experience || "",
+    desiredPosition: profile.desiredPosition || "",
+    location: profile.location || "",
+    workPreference: profile.workPreference || "",
+    about: profile.about || "",
+
+    company: profile.company || "",
+    hiringPosition: profile.hiringPosition || "",
+    experienceRequired: profile.experienceRequired || "",
+    workType: profile.workType || "",
+
+    createdAt: profile.createdAt || null,
+    updatedAt: profile.updatedAt || null
+  };
+}
+
+
+/* =========================================================
+   LOCAL STORAGE
+   ========================================================= */
+
+function getSavedProfile() {
+  try {
+    const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+
+    if (!stored) {
+      return null;
+    }
+
+    const parsed = JSON.parse(stored);
+
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    return normalizeProfile(parsed);
+  } catch (error) {
+    console.error("Expo Go: unable to read saved profile.", error);
+    return null;
+  }
+}
+
+
+function saveProfile(profile) {
+  try {
+    const normalized = normalizeProfile(profile);
+
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify(normalized)
+    );
+
+    return true;
+  } catch (error) {
+    console.error("Expo Go: unable to save profile.", error);
+
+    if (authStatus) {
+      authStatus.textContent =
+        "Unable to save your profile on this device.";
+      authStatus.className = "auth-status error";
+    }
+
+    return false;
+  }
+}
+
+
+/* =========================================================
+   SMALL UTILITIES
+   ========================================================= */
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function getInitial(name) {
+  const cleanName = String(name || "").trim();
+
+  return cleanName
+    ? cleanName.charAt(0).toUpperCase()
+    : "E";
+}
+
+
+function closeMobileMenu() {
+  if (!mobileNav) return;
+
+  mobileNav.classList.remove("active");
+
+  if (mobileMenuBtn) {
+    mobileMenuBtn.setAttribute("aria-expanded", "false");
+  }
+}
+
+
+function scrollToHowItWorks() {
+  const section =
+    document.getElementById("how-it-works") ||
+    document.querySelector(".how-it-works") ||
+    document.querySelector("#howItWorks");
+
+  if (section) {
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+}
+
+
+/* =========================================================
+   MODAL STATE
+   ========================================================= */
+
+function clearAuthStatus() {
+  if (!authStatus) return;
 
   authStatus.textContent = "";
+  authStatus.className = "auth-status";
+}
+
+
+function resetCreateView() {
+  if (authForm) {
+    authForm.style.display = "";
+    authForm.reset();
+  }
+
+  roleOptions.forEach((option) => {
+    option.style.display = "";
+  });
+
+  if (profilePreview) {
+    profilePreview.style.display = "none";
+  }
+
+  if (continueProfileBtn) {
+    continueProfileBtn.style.display = "none";
+  }
+
+  clearAuthStatus();
+}
+
+
+function openProfile(role = "employee") {
+  selectedRole =
+    role === "employer"
+      ? "employer"
+      : "employee";
+
+  resetCreateView();
+
+  if (authModal) {
+    authModal.classList.add("active");
+    authModal.setAttribute("aria-hidden", "false");
+  }
 
   updateAuthUI();
 
   setTimeout(() => {
-
-    if (fullNameInput) {
-      fullNameInput.focus();
+    if (fullName) {
+      fullName.focus();
     }
-
-  }, 200);
-
+  }, 150);
 }
 
-
-/* =========================================================
-   CLOSE MODAL
-========================================================= */
 
 function closeAuth() {
+  if (!authModal) return;
 
-  authModal.classList.add("hidden");
-
-  document.body.style.overflow = "";
-
-  authStatus.textContent = "";
-
+  authModal.classList.remove("active");
+  authModal.setAttribute("aria-hidden", "true");
 }
 
 
 /* =========================================================
-   UPDATE MODAL UI
-========================================================= */
+   ROLE / MODAL UI
+   ========================================================= */
 
 function updateAuthUI() {
-
-  if (selectedRole === "employee") {
-
-    authTitle.textContent =
-      "Create your profile";
-
-    authSubtitle.textContent =
-      "Tell us who you are and what you do.";
-
-  } else {
-
-    authTitle.textContent =
-      "Create your hiring profile";
-
-    authSubtitle.textContent =
-      "Tell us who you are and what you are hiring for.";
-
+  if (!authTitle || !authSubtitle || !profileHeadline) {
+    return;
   }
 
+  if (selectedRole === "employer") {
+    authTitle.textContent =
+      "Let's build your hiring profile.";
 
-  roleOptions.forEach(option => {
+    authSubtitle.textContent =
+      "Tell Expo Go what you're hiring for. You can complete the rest next.";
 
-    option.classList.toggle(
-      "active",
-      option.dataset.role === selectedRole
-    );
+    profileHeadline.placeholder =
+      "e.g. Hiring Frontend Developer";
+  } else {
+    authTitle.textContent =
+      "Let's build your profile.";
 
+    authSubtitle.textContent =
+      "Start with the basics. You can complete your profile next.";
+
+    profileHeadline.placeholder =
+      "e.g. Frontend Developer";
+  }
+
+  roleOptions.forEach((option) => {
+    const isActive =
+      option.dataset.role === selectedRole;
+
+    option.classList.toggle("active", isActive);
+  });
+}
+
+
+/* =========================================================
+   PROFILE PREVIEW
+   ========================================================= */
+
+function showProfile(profile) {
+  const normalized = normalizeProfile(profile);
+
+  if (!authForm || !profilePreview || !continueProfileBtn) {
+    return;
+  }
+
+  authForm.style.display = "none";
+
+  roleOptions.forEach((option) => {
+    option.style.display = "none";
   });
 
+  profilePreview.style.display = "flex";
+  continueProfileBtn.style.display = "flex";
 
-  if (profileHeadlineInput) {
+  const initial = getInitial(normalized.name);
 
-    if (selectedRole === "employee") {
-
-      profileHeadlineInput.placeholder =
-        "e.g. Software Engineer";
-
-    } else {
-
-      profileHeadlineInput.placeholder =
-        "e.g. Founder / Hiring Manager";
-
-    }
-
+  if (profilePreviewAvatar) {
+    profilePreviewAvatar.textContent = initial;
   }
 
+  if (profilePreviewRole) {
+    profilePreviewRole.textContent =
+      normalized.role === "employer"
+        ? "EMPLOYER"
+        : "EMPLOYEE";
+  }
+
+  if (profilePreviewInfo) {
+    const secondaryText =
+      normalized.role === "employer"
+        ? (
+            normalized.company ||
+            normalized.headline ||
+            "Hiring profile"
+          )
+        : (
+            normalized.headline ||
+            "Professional profile"
+          );
+
+    profilePreviewInfo.innerHTML = `
+      <strong>${escapeHTML(normalized.name)}</strong>
+      <small>${escapeHTML(secondaryText)}</small>
+    `;
+  }
 }
 
 
 /* =========================================================
    ROLE SELECTION
-========================================================= */
+   ========================================================= */
 
-roleOptions.forEach(option => {
-
+roleOptions.forEach((option) => {
   option.addEventListener("click", () => {
-
     selectedRole =
-      option.dataset.role;
+      option.dataset.role === "employer"
+        ? "employer"
+        : "employee";
 
     updateAuthUI();
-
   });
-
 });
 
 
 /* =========================================================
-   NAVIGATION BUTTONS
-========================================================= */
+   OPEN PROFILE ACTIONS
+   ========================================================= */
 
 if (joinBtn) {
-
   joinBtn.addEventListener("click", () => {
-
     openProfile("employee");
-
   });
-
 }
 
 
 if (employeeBtn) {
-
   employeeBtn.addEventListener("click", () => {
-
     openProfile("employee");
-
   });
-
 }
 
 
 if (employerBtn) {
-
   employerBtn.addEventListener("click", () => {
-
     openProfile("employer");
-
   });
-
 }
 
 
 if (bottomJoinBtn) {
-
   bottomJoinBtn.addEventListener("click", () => {
-
     openProfile("employee");
-
   });
-
 }
 
 
 /* =========================================================
    LOGIN / EXISTING PROFILE
-========================================================= */
+   ========================================================= */
 
-if (loginBtn) {
+function handleLogin() {
+  const existingProfile = getSavedProfile();
 
-  loginBtn.addEventListener("click", () => {
+  if (existingProfile) {
+    selectedRole = existingProfile.role;
 
-    const existingProfile =
-      getSavedProfile();
-
-    if (existingProfile) {
-
-      showProfile(existingProfile);
-
-    } else {
-
-      openProfile("employee");
-
+    if (authModal) {
+      authModal.classList.add("active");
+      authModal.setAttribute("aria-hidden", "false");
     }
 
-  });
+    showProfile(existingProfile);
+  } else {
+    openProfile("employee");
+  }
+}
 
+
+if (loginBtn) {
+  loginBtn.addEventListener("click", handleLogin);
+}
+
+
+if (mobileLoginBtn) {
+  mobileLoginBtn.addEventListener("click", () => {
+    closeMobileMenu();
+    handleLogin();
+  });
 }
 
 
 /* =========================================================
-   CLOSE EVENTS
-========================================================= */
+   PROFILE CREATION
+   ========================================================= */
+
+if (authForm) {
+  authForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const name =
+      fullName
+        ? fullName.value.trim()
+        : "";
+
+    const headline =
+      profileHeadline
+        ? profileHeadline.value.trim()
+        : "";
+
+    clearAuthStatus();
+
+    if (!name || !headline) {
+      if (authStatus) {
+        authStatus.textContent =
+          "Please complete both fields.";
+
+        authStatus.className =
+          "auth-status error";
+      }
+
+      return;
+    }
+
+    const existingProfile = getSavedProfile();
+
+    const profile = normalizeProfile({
+      ...(existingProfile || {}),
+
+      id:
+        existingProfile?.id ||
+        `expo_${Date.now()}`,
+
+      name,
+      headline,
+
+      role: selectedRole,
+
+      createdAt:
+        existingProfile?.createdAt ||
+        new Date().toISOString(),
+
+      updatedAt:
+        new Date().toISOString()
+    });
+
+    const saved = saveProfile(profile);
+
+    if (!saved) {
+      return;
+    }
+
+    if (authStatus) {
+      authStatus.textContent =
+        "Profile created successfully.";
+
+      authStatus.className =
+        "auth-status success";
+    }
+
+    showProfile(profile);
+  });
+}
+
+
+/* =========================================================
+   CONTINUE TO PROFILE
+   ========================================================= */
+
+if (continueProfileBtn) {
+  continueProfileBtn.addEventListener("click", () => {
+    const profile = getSavedProfile();
+
+    if (!profile) {
+      openProfile("employee");
+      return;
+    }
+
+    window.location.href = "profile.html";
+  });
+}
+
+
+/* =========================================================
+   CLOSE MODAL
+   ========================================================= */
 
 if (closeModal) {
-
-  closeModal.addEventListener(
-    "click",
-    closeAuth
-  );
-
+  closeModal.addEventListener("click", closeAuth);
 }
 
 
 if (modalBackdrop) {
-
-  modalBackdrop.addEventListener(
-    "click",
-    closeAuth
-  );
-
+  modalBackdrop.addEventListener("click", closeAuth);
 }
 
 
-document.addEventListener("keydown", event => {
-
-  if (
-    event.key === "Escape" &&
-    authModal &&
-    !authModal.classList.contains("hidden")
-  ) {
-
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
     closeAuth();
-
+    closeMobileMenu();
   }
-
 });
 
 
 /* =========================================================
-   CREATE PROFILE
-========================================================= */
+   MOBILE NAVIGATION
+   ========================================================= */
 
-authForm.addEventListener("submit", event => {
+if (mobileMenuBtn) {
+  mobileMenuBtn.addEventListener("click", () => {
+    if (!mobileNav) return;
 
-  event.preventDefault();
+    const isOpen =
+      mobileNav.classList.toggle("active");
 
-
-  const name =
-    fullNameInput.value.trim();
-
-  const headline =
-    profileHeadlineInput.value.trim();
-
-
-  if (!name) {
-
-    showStatus(
-      "Please enter your name."
+    mobileMenuBtn.setAttribute(
+      "aria-expanded",
+      String(isOpen)
     );
-
-    fullNameInput.focus();
-
-    return;
-
-  }
-
-
-  if (!headline) {
-
-    showStatus(
-      "Please tell us what you do."
-    );
-
-    profileHeadlineInput.focus();
-
-    return;
-
-  }
-
-
-  const profile = {
-
-    id:
-      "expo_" +
-      Date.now(),
-
-    name,
-
-    headline,
-
-    role:
-      selectedRole,
-
-    createdAt:
-      new Date().toISOString()
-
-  };
-
-
-  saveProfile(profile);
-
-  showProfile(profile);
-
-});
-
-
-/* =========================================================
-   SAVE PROFILE
-========================================================= */
-
-function saveProfile(profile) {
-
-  localStorage.setItem(
-    PROFILE_STORAGE_KEY,
-    JSON.stringify(profile)
-  );
-
-}
-
-
-/* =========================================================
-   GET PROFILE
-========================================================= */
-
-function getSavedProfile() {
-
-  try {
-
-    const saved =
-      localStorage.getItem(
-        PROFILE_STORAGE_KEY
-      );
-
-    if (!saved) {
-      return null;
-    }
-
-    return JSON.parse(saved);
-
-  } catch (error) {
-
-    console.error(
-      "Unable to load Expo Go profile:",
-      error
-    );
-
-    return null;
-
-  }
-
-}
-
-
-/* =========================================================
-   SHOW PROFILE PREVIEW
-========================================================= */
-
-function showProfile(profile) {
-
-  const roleLabel =
-    profile.role === "employer"
-      ? "EMPLOYER"
-      : "EMPLOYEE";
-
-
-  const roleText =
-    profile.role === "employer"
-      ? "Hiring profile"
-      : "Professional profile";
-
-
-  authTitle.textContent =
-    "Your Expo Go profile";
-
-
-  authSubtitle.textContent =
-    "Your profile has been created.";
-
-
-  roleOptions.forEach(option => {
-
-    option.style.display = "none";
-
   });
+}
 
 
-  authForm.innerHTML = `
-
-    <div class="profile-preview">
-
-      <div class="profile-preview-avatar">
-        ${escapeHtml(
-          profile.name.charAt(0).toUpperCase()
-        )}
-      </div>
-
-      <div class="profile-preview-info">
-
-        <div class="profile-preview-role">
-          ${roleLabel}
-        </div>
-
-        <h3>
-          ${escapeHtml(profile.name)}
-        </h3>
-
-        <p>
-          ${escapeHtml(profile.headline)}
-        </p>
-
-        <span>
-          ${roleText}
-        </span>
-
-      </div>
-
-    </div>
+if (mobileHowLink) {
+  mobileHowLink.addEventListener("click", () => {
+    closeMobileMenu();
+    scrollToHowItWorks();
+  });
+}
 
 
-    <button
-      type="button"
-      class="primary-btn auth-submit"
-      id="continueProfileBtn"
-    >
-      Continue
-      <span>→</span>
-    </button>
-
-  `;
+if (mobileJoinBtn) {
+  mobileJoinBtn.addEventListener("click", () => {
+    closeMobileMenu();
+    openProfile("employee");
+  });
+}
 
 
-  authStatus.textContent =
-    "Profile created successfully.";
+/* =========================================================
+   DESKTOP HOW IT WORKS
+   ========================================================= */
 
+const howLink = document.querySelector(
+  'a[href="#how-it-works"], a[href="#howItWorks"]'
+);
 
-  const continueButton =
-    document.getElementById(
-      "continueProfileBtn"
+if (howLink) {
+  howLink.addEventListener("click", (event) => {
+    const target = document.querySelector(
+      "#how-it-works, #howItWorks, .how-it-works"
     );
 
+    if (target) {
+      event.preventDefault();
 
-  if (continueButton) {
-
-    continueButton.addEventListener(
-      "click",
-      () => {
-
-        /* Go to the real profile dashboard */
-
-        window.location.href =
-          "profile.html";
-
-      }
-    );
-
-  }
-
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  });
 }
 
 
 /* =========================================================
-   STATUS MESSAGE
-========================================================= */
-
-function showStatus(message) {
-
-  authStatus.textContent =
-    message;
-
-}
-
-
-/* =========================================================
-   BASIC HTML ESCAPE
-========================================================= */
-
-function escapeHtml(value) {
-
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-
-}
-
-
-/* =========================================================
-   OPTIONAL VISUAL PARALLAX
-========================================================= */
+   MATCH VISUAL — DESKTOP MICRO INTERACTION
+   ========================================================= */
 
 const matchVisual =
   document.querySelector(".match-visual");
 
-
 if (
   matchVisual &&
-  window.innerWidth > 900
+  window.matchMedia("(pointer:fine)").matches
 ) {
-
-  document.addEventListener(
+  matchVisual.addEventListener(
     "mousemove",
-    event => {
+    (event) => {
+      const rect =
+        matchVisual.getBoundingClientRect();
 
       const x =
-        (
-          event.clientX /
-          window.innerWidth -
-          0.5
-        ) * 10;
+        (event.clientX - rect.left) /
+          rect.width -
+        0.5;
 
       const y =
-        (
-          event.clientY /
-          window.innerHeight -
-          0.5
-        ) * 10;
-
+        (event.clientY - rect.top) /
+          rect.height -
+        0.5;
 
       matchVisual.style.transform =
-        `translate(${x}px, ${y}px)`;
-
+        `rotateY(${x * 3}deg) rotateX(${y * -3}deg)`;
     }
   );
 
+  matchVisual.addEventListener(
+    "mouseleave",
+    () => {
+      matchVisual.style.transform = "";
+    }
+  );
 }
 
 
 /* =========================================================
-   INITIALIZE
-========================================================= */
+   INITIAL STATE
+   ========================================================= */
+
+if (authModal) {
+  authModal.setAttribute("aria-hidden", "true");
+}
 
 updateAuthUI();
+
+console.log("Expo Go frontend controller loaded.");
