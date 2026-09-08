@@ -450,7 +450,7 @@
   </footer>
 
 
-  <!-- PROFILE CREATION MODAL -->
+  <!-- AUTH MODAL -->
 
   <div
     class="auth-modal"
@@ -503,6 +503,7 @@
           type="button"
           class="role-option active"
           data-role="employee"
+          aria-selected="true"
         >
 
           <span class="role-option-icon">
@@ -530,6 +531,7 @@
           type="button"
           class="role-option"
           data-role="employer"
+          aria-selected="false"
         >
 
           <span class="role-option-icon">
@@ -555,7 +557,7 @@
       </div>
 
 
-      <!-- PROFILE FORM -->
+      <!-- AUTH FORM -->
 
       <form
         id="authForm"
@@ -592,7 +594,6 @@
             id="profileHeadline"
             name="profileHeadline"
             placeholder="e.g. Frontend Developer"
-            required
           />
 
         </div>
@@ -603,11 +604,6 @@
           id="authStatus"
         ></div>
 
-
-        <!-- IMPORTANT:
-             This is now a normal button.
-             It cannot submit the HTML form or
-             change the URL to ?fullName=... -->
 
         <button
           type="button"
@@ -620,8 +616,6 @@
 
       </form>
 
-
-      <!-- PROFILE PREVIEW -->
 
       <div class="profile-preview">
 
@@ -662,8 +656,10 @@
   </div>
 
 
-  <!-- MAIN JAVASCRIPT -->
+  <!-- SUPABASE MUST LOAD FIRST -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- EXPO GO APP -->
   <script src="app.js"></script>
 
 </body>
