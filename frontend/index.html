@@ -2,15 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Expo Go — The right people. The right opportunities.</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <meta
     name="description"
-    content="Expo Go connects people with the right opportunities and employers with the right people."
+    content="Expo Go — The right people. The right opportunities."
   />
 
+  <title>Expo Go — The right people. The right opportunities.</title>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -19,23 +23,20 @@
     rel="stylesheet"
   />
 
+  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
   <!-- =====================================================
-       AMBIENT BACKGROUND
+       BACKGROUND
   ====================================================== -->
 
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
-  <div class="grid-overlay"></div>
 
-
-  <!-- =====================================================
-       FLOATING PARTICLES
-  ====================================================== -->
+  <div class="background-grid"></div>
 
   <div class="particles" aria-hidden="true">
     <span></span>
@@ -55,44 +56,50 @@
 
   <header class="navbar">
 
-    <div class="nav-inner">
+    <a href="index.html" class="brand">
+      EXPO <span>GO</span>
+    </a>
 
-      <a href="#" class="brand" aria-label="Expo Go home">
+    <nav class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <button id="loginBtn" type="button">Log in</button>
+      <button id="joinBtn" type="button" class="nav-cta">
+        Get started
+      </button>
+    </nav>
 
-        <div class="brand-mark">
-          E
-        </div>
-
-        <span>EXPO GO</span>
-
-      </a>
-
-
-      <nav class="nav-links">
-
-        <a href="#how">How it works</a>
-
-        <button
-          type="button"
-          id="loginBtn"
-          class="nav-login"
-        >
-          Log in
-        </button>
-
-        <button
-          type="button"
-          id="joinBtn"
-          class="nav-join"
-        >
-          Get started
-        </button>
-
-      </nav>
-
-    </div>
+    <button
+      class="mobile-menu-btn"
+      id="mobileMenuBtn"
+      type="button"
+      aria-label="Open menu"
+    >
+      <span></span>
+      <span></span>
+    </button>
 
   </header>
+
+
+  <!-- =====================================================
+       MOBILE NAV
+  ====================================================== -->
+
+  <div class="mobile-nav" id="mobileNav">
+
+    <a href="#how-it-works" id="mobileHowLink">
+      How it works
+    </a>
+
+    <button type="button" id="mobileLoginBtn">
+      Log in
+    </button>
+
+    <button type="button" id="mobileJoinBtn">
+      Get started
+    </button>
+
+  </div>
 
 
   <!-- =====================================================
@@ -103,42 +110,39 @@
 
     <section class="hero">
 
-      <div class="hero-content">
+      <div class="hero-copy">
 
         <div class="eyebrow">
           <span class="eyebrow-dot"></span>
-          SMARTER CONNECTIONS
+          OPPORTUNITY, REIMAGINED
         </div>
-
 
         <h1>
           The right people.
+          <br />
           <span>The right opportunities.</span>
         </h1>
 
-
-        <p class="hero-description">
-          Build your profile. Tell us what you are looking for.
-          Expo Go helps people and opportunities find each other.
+        <p>
+          Expo Go connects people and opportunities through
+          intelligent matching.
         </p>
-
 
         <div class="hero-actions">
 
           <button
             type="button"
-            id="employeeBtn"
             class="primary-btn"
+            id="employeeBtn"
           >
             I'm looking for work
             <span>→</span>
           </button>
 
-
           <button
             type="button"
-            id="employerBtn"
             class="secondary-btn"
+            id="employerBtn"
           >
             I'm hiring
             <span>→</span>
@@ -146,9 +150,9 @@
 
         </div>
 
-
         <div class="hero-note">
-          No complicated setup. Just create your profile and start.
+          <span class="note-dot"></span>
+          Build your profile. Discover your match.
         </div>
 
       </div>
@@ -158,135 +162,120 @@
            MATCH VISUAL
       ================================================== -->
 
-      <div class="hero-visual">
+      <div class="match-visual">
 
-        <div class="match-visual">
+        <div class="visual-glow"></div>
 
-          <div class="orbit orbit-one"></div>
-          <div class="orbit orbit-two"></div>
-          <div class="orbit orbit-three"></div>
+        <!-- Employee card -->
+        <div class="floating-card employee-card">
 
+          <div class="mini-card-top">
 
-          <!-- Connection lines -->
-
-          <div class="connection connection-one"></div>
-          <div class="connection connection-two"></div>
-          <div class="connection connection-three"></div>
-
-
-          <!-- Employee card -->
-
-          <div class="profile-card employee-card">
-
-            <div class="card-top">
-
-              <div class="avatar">
-                A
-              </div>
-
-              <div>
-
-                <div class="card-name">
-                  Alex
-                </div>
-
-                <div class="card-role">
-                  Product Designer
-                </div>
-
-              </div>
-
+            <div class="mini-avatar employee-avatar">
+              A
             </div>
 
+            <div>
+              <span class="mini-label">
+                EMPLOYEE
+              </span>
 
-            <div class="card-tags">
-
-              <span>UI/UX</span>
-              <span>Figma</span>
-              <span>Product</span>
-
+              <strong>
+                Alex Morgan
+              </strong>
             </div>
 
           </div>
 
+          <div class="mini-card-line"></div>
 
-          <!-- Employer card -->
+          <div class="mini-skills">
+            <span>React</span>
+            <span>JavaScript</span>
+            <span>UI/UX</span>
+          </div>
 
-          <div class="profile-card employer-card">
+        </div>
 
-            <div class="card-top">
 
-              <div class="avatar employer-avatar">
-                N
-              </div>
+        <!-- Employer card -->
+        <div class="floating-card employer-card">
 
-              <div>
+          <div class="mini-card-top">
 
-                <div class="card-name">
-                  Nova
-                </div>
-
-                <div class="card-role">
-                  Hiring team
-                </div>
-
-              </div>
-
+            <div class="mini-avatar employer-avatar">
+              N
             </div>
 
+            <div>
+              <span class="mini-label">
+                EMPLOYER
+              </span>
 
-            <div class="card-tags">
-
-              <span>Design</span>
-              <span>Remote</span>
-
+              <strong>
+                Nova Labs
+              </strong>
             </div>
 
           </div>
 
+          <div class="mini-card-line"></div>
 
-          <!-- AI Core -->
-
-          <div class="ai-core">
-
-            <div class="ai-ring"></div>
-
-            <div class="ai-inner">
-              AI
-            </div>
-
+          <div class="mini-job">
+            <span>LOOKING FOR</span>
+            <strong>Frontend Developer</strong>
           </div>
 
+        </div>
 
-          <!-- Match score -->
 
-          <div class="match-score">
+        <!-- AI Core -->
+        <div class="ai-core">
 
-            <span class="score-number">
-              98%
-            </span>
+          <div class="ai-ring ring-one"></div>
+          <div class="ai-ring ring-two"></div>
+          <div class="ai-ring ring-three"></div>
 
-            <span class="score-label">
-              MATCH
-            </span>
-
+          <div class="ai-center">
+            <span>EXPO</span>
+            <strong>AI</strong>
           </div>
 
+        </div>
 
-          <!-- Floating chips -->
 
-          <div class="floating-chip chip-one">
-            Skills
-          </div>
+        <!-- Match score -->
+        <div class="match-score">
 
-          <div class="floating-chip chip-two">
-            Experience
-          </div>
+          <span class="match-score-label">
+            MATCH
+          </span>
 
-          <div class="floating-chip chip-three">
-            Location
-          </div>
+          <strong>
+            94%
+          </strong>
 
+          <span class="match-score-check">
+            ✓
+          </span>
+
+        </div>
+
+
+        <!-- Floating chips -->
+        <div class="floating-chip chip-one">
+          Skills
+          <span>✓</span>
+        </div>
+
+        <div class="floating-chip chip-two">
+          Experience
+          <span>✓</span>
+        </div>
+
+        <div class="floating-chip chip-three">
+          Goals
+          <span>✓</span>
         </div>
 
       </div>
@@ -294,97 +283,112 @@
     </section>
 
 
-    <!-- ===================================================
+    <!-- =====================================================
          HOW IT WORKS
-    ==================================================== -->
+    ====================================================== -->
 
     <section
-      id="how"
       class="how-section"
+      id="how-it-works"
     >
 
       <div class="section-heading">
 
         <div class="eyebrow">
           <span class="eyebrow-dot"></span>
-          SIMPLE BY DESIGN
+          HOW IT WORKS
         </div>
 
         <h2>
-          Your profile does the talking.
+          Simple on the surface.
+          <br />
+          Powerful underneath.
         </h2>
-
-        <p>
-          A few details are enough to get started.
-        </p>
 
       </div>
 
 
-      <div class="steps">
+      <div class="steps-grid">
 
-        <div class="step">
+        <article class="step-card">
 
-          <span class="step-number">
+          <div class="step-number">
             01
-          </span>
+          </div>
+
+          <div class="step-icon">
+            +
+          </div>
 
           <h3>
-            Create your profile
+            Build your profile
           </h3>
 
           <p>
-            Tell us who you are and what you do.
+            Tell Expo Go who you are, what you can offer,
+            or what you're looking for.
           </p>
 
-        </div>
+        </article>
 
 
-        <div class="step">
+        <article class="step-card">
 
-          <span class="step-number">
+          <div class="step-number">
             02
-          </span>
+          </div>
+
+          <div class="step-icon">
+            ◇
+          </div>
 
           <h3>
-            Tell us what you need
+            Find alignment
           </h3>
 
           <p>
-            Share the opportunity or role you are looking for.
+            Your profile becomes structured around the
+            information that actually matters.
           </p>
 
-        </div>
+        </article>
 
 
-        <div class="step">
+        <article class="step-card">
 
-          <span class="step-number">
+          <div class="step-number">
             03
-          </span>
+          </div>
+
+          <div class="step-icon">
+            ↗
+          </div>
 
           <h3>
-            Find the right match
+            Make the connection
           </h3>
 
           <p>
-            Expo Go brings the strongest possibilities forward.
+            The goal is simple: put the right people
+            in front of the right opportunities.
           </p>
 
-        </div>
+        </article>
 
       </div>
 
     </section>
 
 
-    <!-- ===================================================
-         SMALL CTA
-    ==================================================== -->
+    <!-- =====================================================
+         BOTTOM CTA
+    ====================================================== -->
 
     <section class="bottom-cta">
 
-      <div>
+      <div class="bottom-cta-glow"></div>
+
+      <div class="bottom-cta-content">
 
         <div class="eyebrow">
           <span class="eyebrow-dot"></span>
@@ -392,24 +396,25 @@
         </div>
 
         <h2>
-          Start with your profile.
+          Your next opportunity
+          <br />
+          starts with a profile.
         </h2>
 
         <p>
-          Your next opportunity could be closer than you think.
+          Create yours and let Expo Go take it from there.
         </p>
 
+        <button
+          type="button"
+          class="primary-btn"
+          id="bottomJoinBtn"
+        >
+          Create my profile
+          <span>→</span>
+        </button>
+
       </div>
-
-
-      <button
-        type="button"
-        id="bottomJoinBtn"
-        class="primary-btn"
-      >
-        Get started
-        <span>→</span>
-      </button>
 
     </section>
 
@@ -420,42 +425,19 @@
        FOOTER
   ====================================================== -->
 
-  <footer>
+  <footer class="footer">
 
-    <div class="footer-inner">
-
-      <div class="footer-brand">
-
-        <a href="#" class="brand">
-
-          <div class="brand-mark">
-            E
-          </div>
-
-          <span>EXPO GO</span>
-
-        </a>
-
-        <p>
-          Connecting people with opportunities.
-        </p>
-
-      </div>
-
-
-      <div class="footer-bottom">
-
-        <span>
-          © 2026 Expo Go
-        </span>
-
-        <span>
-          Built for better connections.
-        </span>
-
-      </div>
-
+    <div class="footer-brand">
+      EXPO <span>GO</span>
     </div>
+
+    <p>
+      Connecting people with opportunity.
+    </p>
+
+    <span class="footer-copy">
+      © 2026 Expo Go
+    </span>
 
   </footer>
 
@@ -465,50 +447,49 @@
   ====================================================== -->
 
   <div
+    class="auth-modal"
     id="authModal"
-    class="auth-modal hidden"
     aria-hidden="true"
   >
 
     <div
-      id="modalBackdrop"
       class="modal-backdrop"
+      id="modalBackdrop"
     ></div>
 
 
-    <div
-      class="auth-box"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="authTitle"
-    >
+    <div class="auth-panel">
 
       <button
         type="button"
-        id="closeModal"
         class="modal-close"
+        id="closeModal"
         aria-label="Close"
       >
         ×
       </button>
 
 
-      <div class="auth-eyebrow">
-        YOUR EXPO GO PROFILE
+      <div class="auth-heading">
+
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          EXPO GO PROFILE
+        </div>
+
+        <h2 id="authTitle">
+          Let's build your profile.
+        </h2>
+
+        <p id="authSubtitle">
+          Start with the basics. You can complete
+          your profile next.
+        </p>
+
       </div>
 
 
-      <h2 id="authTitle">
-        Create your profile
-      </h2>
-
-
-      <p id="authSubtitle">
-        Start with your name and build from there.
-      </p>
-
-
-      <!-- Role selection -->
+      <!-- ROLE SELECTOR -->
 
       <div class="role-selector">
 
@@ -517,16 +498,18 @@
           class="role-option active"
           data-role="employee"
         >
-
-          <span class="role-icon">
-            ◇
+          <span class="role-option-icon">
+            ◉
           </span>
 
           <span>
             <strong>I'm looking for work</strong>
-            <small>Build your professional profile</small>
+            <small>Build an employee profile</small>
           </span>
 
+          <span class="role-check">
+            ✓
+          </span>
         </button>
 
 
@@ -535,36 +518,38 @@
           class="role-option"
           data-role="employer"
         >
-
-          <span class="role-icon">
+          <span class="role-option-icon">
             ◈
           </span>
 
           <span>
             <strong>I'm hiring</strong>
-            <small>Create a hiring profile</small>
+            <small>Build an employer profile</small>
           </span>
 
+          <span class="role-check">
+            ✓
+          </span>
         </button>
 
       </div>
 
 
-      <!-- Profile form -->
+      <!-- PROFILE FORM -->
 
       <form id="authForm">
 
-        <div class="input-group">
+        <div class="form-field">
 
           <label for="fullName">
-            Your name
+            Full name
           </label>
 
           <input
             type="text"
             id="fullName"
             name="fullName"
-            placeholder="Enter your name"
+            placeholder="Your full name"
             autocomplete="name"
             required
           />
@@ -572,7 +557,7 @@
         </div>
 
 
-        <div class="input-group">
+        <div class="form-field">
 
           <label for="profileHeadline">
             What do you do?
@@ -582,17 +567,22 @@
             type="text"
             id="profileHeadline"
             name="profileHeadline"
-            placeholder="e.g. Software Engineer"
-            autocomplete="organization-title"
+            placeholder="e.g. Frontend Developer"
             required
           />
 
         </div>
 
 
+        <div
+          class="auth-status"
+          id="authStatus"
+        ></div>
+
+
         <button
           type="submit"
-          class="primary-btn auth-submit"
+          class="modal-submit"
         >
           Create my profile
           <span>→</span>
@@ -601,16 +591,41 @@
       </form>
 
 
-      <div
-        id="authStatus"
-        class="auth-status"
-        aria-live="polite"
-      ></div>
+      <!-- PROFILE PREVIEW -->
 
+      <div class="profile-preview">
 
-      <div class="auth-footnote">
-        You can add more details to your profile after this.
+        <div class="profile-preview-avatar">
+          E
+        </div>
+
+        <div class="profile-preview-info">
+
+          <span class="profile-preview-role">
+            EMPLOYEE
+          </span>
+
+          <strong>
+            Profile created
+          </strong>
+
+          <small>
+            Your Expo Go profile is ready.
+          </small>
+
+        </div>
+
       </div>
+
+
+      <button
+        type="button"
+        class="continue-profile-btn"
+        id="continueProfileBtn"
+      >
+        Continue to profile
+        <span>→</span>
+      </button>
 
     </div>
 
@@ -618,7 +633,7 @@
 
 
   <!-- =====================================================
-       SCRIPT
+       MAIN JAVASCRIPT
   ====================================================== -->
 
   <script src="app.js"></script>
