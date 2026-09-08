@@ -1,10 +1,9 @@
 /* =========================================================
    EXPO GO — FRONTEND CONTROLLER
-   Supabase Authentication + Profile Sync
+   Supabase Authentication + Persistent Profile Sync
 ========================================================= */
 
-const API_BASE_URL =
-  "https://expodo.onrender.com";
+const API_BASE_URL = "https://expodo.onrender.com";
 
 const SUPABASE_URL =
   "https://inhxlwsjlddhnpalbocl.supabase.co";
@@ -12,11 +11,8 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
   "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
 
-const STORAGE_KEY =
-  "expoGoPrototype";
-
-const PROFILE_STORAGE_KEY =
-  "expoGoProfile";
+const STORAGE_KEY = "expoGoPrototype";
+const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 let supabaseClient = null;
 let authMode = "signup";
@@ -48,7 +44,6 @@ const DEFAULT_DATA = {
 
 let data = loadData();
 
-
 /* =========================================================
    STORAGE
 ========================================================= */
@@ -56,48 +51,33 @@ let data = loadData();
 function loadData() {
   try {
     const saved =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
+      localStorage.getItem(STORAGE_KEY);
 
     if (!saved) {
-      return structuredClone(
-        DEFAULT_DATA
-      );
+      return structuredClone(DEFAULT_DATA);
     }
 
-    const parsed =
-      JSON.parse(saved);
+    const parsed = JSON.parse(saved);
 
     return {
-      ...structuredClone(
-        DEFAULT_DATA
-      ),
-
+      ...structuredClone(DEFAULT_DATA),
       ...parsed,
 
       profile: {
-        ...structuredClone(
-          DEFAULT_DATA.profile
-        ),
-
+        ...structuredClone(DEFAULT_DATA.profile),
         ...(parsed.profile || {})
       }
     };
 
   } catch (error) {
-
     console.error(
       "Storage loading error:",
       error
     );
 
-    return structuredClone(
-      DEFAULT_DATA
-    );
+    return structuredClone(DEFAULT_DATA);
   }
 }
-
 
 function saveData() {
   localStorage.setItem(
@@ -106,45 +86,31 @@ function saveData() {
   );
 }
 
-
 function normalizeArray(value) {
-
   if (Array.isArray(value)) {
-
     return value
-      .map(item =>
-        String(item).trim()
-      )
+      .map(item => String(item).trim())
       .filter(Boolean);
   }
 
   if (typeof value === "string") {
-
     return value
       .split(",")
-      .map(item =>
-        item.trim()
-      )
+      .map(item => item.trim())
       .filter(Boolean);
   }
 
   return [];
 }
 
-
 /* =========================================================
    PROFILE OBJECT
 ========================================================= */
 
-function createProfileObject(
-  authUserId = null
-) {
-
-  const profile =
-    data.profile || {};
+function createProfileObject(authUserId = null) {
+  const profile = data.profile || {};
 
   return {
-
     id:
       profile.id ||
       authUserId,
@@ -166,9 +132,7 @@ function createProfileObject(
       profile.headline || "",
 
     skills:
-      normalizeArray(
-        profile.skills
-      ),
+      normalizeArray(profile.skills),
 
     education:
       profile.education || "",
@@ -195,28 +159,22 @@ function createProfileObject(
       profile.hiringPosition || "",
 
     requiredSkills:
-      normalizeArray(
-        profile.requiredSkills
-      ),
+      normalizeArray(profile.requiredSkills),
 
     experienceRequired:
-      profile.experienceRequired ||
-      "",
+      profile.experienceRequired || "",
 
     workType:
       profile.workType || ""
   };
 }
 
-
 /* =========================================================
    SUPABASE
 ========================================================= */
 
 function initializeSupabase() {
-
   if (!window.supabase) {
-
     console.error(
       "Supabase library not loaded."
     );
@@ -224,88 +182,72 @@ function initializeSupabase() {
     return false;
   }
 
-  supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+  try {
+    supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+    return true;
+
+  } catch (error) {
+    console.error(
+      "Supabase initialization error:",
+      error
     );
 
-  return true;
+    return false;
+  }
 }
-
 
 /* =========================================================
    ELEMENTS
 ========================================================= */
 
 const authModal =
-  document.getElementById(
-    "authModal"
-  );
+  document.getElementById("authModal");
 
 const authForm =
-  document.getElementById(
-    "authForm"
-  );
+  document.getElementById("authForm");
 
 const createProfileBtn =
-  document.getElementById(
-    "createProfileBtn"
-  );
+  document.getElementById("createProfileBtn");
 
 const continueProfileBtn =
-  document.getElementById(
-    "continueProfileBtn"
-  );
+  document.getElementById("continueProfileBtn");
 
 const authStatus =
-  document.getElementById(
-    "authStatus"
-  );
+  document.getElementById("authStatus");
 
 const fullNameInput =
-  document.getElementById(
-    "fullName"
-  );
+  document.getElementById("fullName");
 
 const profileHeadlineInput =
-  document.getElementById(
-    "profileHeadline"
-  );
+  document.getElementById("profileHeadline");
 
 const roleOptions =
-  document.querySelectorAll(
-    ".role-option"
-  );
-
+  document.querySelectorAll(".role-option");
 
 /* =========================================================
    AUTH FIELDS
 ========================================================= */
 
 function createAuthFields() {
-
   const form =
-    document.getElementById(
-      "authForm"
-    );
+    document.getElementById("authForm");
 
   if (
     !form ||
-    document.getElementById(
-      "expoAuthFields"
-    )
+    document.getElementById("expoAuthFields")
   ) {
     return;
   }
 
   const wrapper =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
-  wrapper.id =
-    "expoAuthFields";
+  wrapper.id = "expoAuthFields";
 
   wrapper.innerHTML = `
     <div class="form-field">
@@ -358,37 +300,23 @@ function createAuthFields() {
   `;
 
   const status =
-    document.getElementById(
-      "authStatus"
-    );
+    document.getElementById("authStatus");
 
   if (status) {
-
-    form.insertBefore(
-      wrapper,
-      status
-    );
-
+    form.insertBefore(wrapper, status);
   } else {
-
-    form.appendChild(
-      wrapper
-    );
+    form.appendChild(wrapper);
   }
 
   document
-    .getElementById(
-      "authModeToggle"
-    )
+    .getElementById("authModeToggle")
     ?.addEventListener(
       "click",
       toggleAuthMode
     );
 
   document
-    .getElementById(
-      "resendVerificationBtn"
-    )
+    .getElementById("resendVerificationBtn")
     ?.addEventListener(
       "click",
       resendVerification
@@ -397,13 +325,11 @@ function createAuthFields() {
   updateAuthMode();
 }
 
-
 /* =========================================================
    AUTH MODE
 ========================================================= */
 
 function updateAuthMode() {
-
   const toggle =
     document.getElementById(
       "authModeToggle"
@@ -415,9 +341,7 @@ function updateAuthMode() {
     );
 
   const name =
-    document.getElementById(
-      "fullName"
-    );
+    document.getElementById("fullName");
 
   const headline =
     document.getElementById(
@@ -425,9 +349,7 @@ function updateAuthMode() {
     );
 
   const title =
-    document.getElementById(
-      "authTitle"
-    );
+    document.getElementById("authTitle");
 
   const subtitle =
     document.getElementById(
@@ -435,7 +357,6 @@ function updateAuthMode() {
     );
 
   if (authMode === "login") {
-
     if (toggle) {
       toggle.textContent =
         "New to Expo Go? Create an account";
@@ -477,7 +398,6 @@ function updateAuthMode() {
     }
 
   } else {
-
     if (toggle) {
       toggle.textContent =
         "Already have an account? Log in";
@@ -518,9 +438,7 @@ function updateAuthMode() {
   }
 }
 
-
 function toggleAuthMode() {
-
   authMode =
     authMode === "signup"
       ? "login"
@@ -538,61 +456,48 @@ function toggleAuthMode() {
     );
 
   if (resend) {
-    resend.style.display =
-      "none";
+    resend.style.display = "none";
   }
 }
-
 
 /* =========================================================
    ROLE SELECTION
 ========================================================= */
 
-roleOptions.forEach(
-  option => {
+roleOptions.forEach(option => {
+  option.addEventListener(
+    "click",
+    () => {
+      roleOptions.forEach(item => {
+        item.classList.remove("active");
 
-    option.addEventListener(
-      "click",
-      () => {
-
-        roleOptions.forEach(
-          item => {
-
-            item.classList.remove(
-              "active"
-            );
-
-            item.setAttribute(
-              "aria-selected",
-              "false"
-            );
-          }
-        );
-
-        option.classList.add(
-          "active"
-        );
-
-        option.setAttribute(
+        item.setAttribute(
           "aria-selected",
-          "true"
+          "false"
         );
+      });
 
-        data.userType =
-          option.dataset.role ||
-          null;
+      option.classList.add("active");
 
-        saveData();
+      option.setAttribute(
+        "aria-selected",
+        "true"
+      );
 
-        if (authStatus) {
-          authStatus.textContent =
-            "";
-        }
+      data.userType =
+        option.dataset.role || null;
+
+      data.profile.role =
+        data.userType;
+
+      saveData();
+
+      if (authStatus) {
+        authStatus.textContent = "";
       }
-    );
-  }
-);
-
+    }
+  );
+});
 
 /* =========================================================
    MODAL
@@ -602,34 +507,28 @@ function openAuthModal(
   role = null,
   mode = "signup"
 ) {
-
   if (role) {
-
-    data.userType =
-      role;
+    data.userType = role;
+    data.profile.role = role;
 
     saveData();
 
-    roleOptions.forEach(
-      option => {
+    roleOptions.forEach(option => {
+      const active =
+        option.dataset.role === role;
 
-        const active =
-          option.dataset.role ===
-          role;
+      option.classList.toggle(
+        "active",
+        active
+      );
 
-        option.classList.toggle(
-          "active",
-          active
-        );
-
-        option.setAttribute(
-          "aria-selected",
-          active
-            ? "true"
-            : "false"
-        );
-      }
-    );
+      option.setAttribute(
+        "aria-selected",
+        active
+          ? "true"
+          : "false"
+      );
+    });
   }
 
   createAuthFields();
@@ -638,9 +537,7 @@ function openAuthModal(
 
   updateAuthMode();
 
-  authModal?.classList.add(
-    "active"
-  );
+  authModal?.classList.add("active");
 
   authModal?.setAttribute(
     "aria-hidden",
@@ -650,21 +547,9 @@ function openAuthModal(
   document.body.classList.add(
     "modal-open"
   );
-
-  setTimeout(() => {
-
-    document
-      .getElementById(
-        "authEmail"
-      )
-      ?.focus();
-
-  }, 100);
 }
 
-
 function closeAuthModal() {
-
   authModal?.classList.remove(
     "active"
   );
@@ -679,45 +564,33 @@ function closeAuthModal() {
   );
 
   if (authStatus) {
-    authStatus.textContent =
-      "";
+    authStatus.textContent = "";
   }
 }
-
 
 /* =========================================================
    SIGN UP
 ========================================================= */
 
 async function signup() {
-
   const name =
-    fullNameInput?.value.trim() ||
-    "";
+    fullNameInput?.value.trim() || "";
 
   const headline =
     profileHeadlineInput
-      ?.value.trim() ||
-    "";
+      ?.value.trim() || "";
 
   const email =
     document
-      .getElementById(
-        "authEmail"
-      )
-      ?.value.trim() ||
-    "";
+      .getElementById("authEmail")
+      ?.value.trim() || "";
 
   const password =
     document
-      .getElementById(
-        "authPassword"
-      )
-      ?.value ||
-    "";
+      .getElementById("authPassword")
+      ?.value || "";
 
   if (!data.userType) {
-
     authStatus.textContent =
       "Please select Employee or Employer.";
 
@@ -725,7 +598,6 @@ async function signup() {
   }
 
   if (!name) {
-
     authStatus.textContent =
       "Please enter your name.";
 
@@ -735,7 +607,6 @@ async function signup() {
   }
 
   if (!email) {
-
     authStatus.textContent =
       "Please enter your email.";
 
@@ -743,45 +614,37 @@ async function signup() {
   }
 
   if (password.length < 6) {
-
     authStatus.textContent =
       "Password must be at least 6 characters.";
 
     return;
   }
 
-  createProfileBtn.disabled =
-    true;
+  createProfileBtn.disabled = true;
 
   authStatus.textContent =
     "Creating your secure account...";
 
   try {
-
     const {
       data: authData,
       error
     } =
-      await supabaseClient.auth
-        .signUp({
+      await supabaseClient.auth.signUp({
+        email,
+        password,
 
-          email,
+        options: {
+          data: {
+            name,
+            role: data.userType,
+            headline
+          },
 
-          password,
-
-          options: {
-
-            data: {
-              name,
-              role:
-                data.userType,
-              headline
-            },
-
-            emailRedirectTo:
-              `${window.location.origin}/index.html`
-          }
-        });
+          emailRedirectTo:
+            `${window.location.origin}/index.html`
+        }
+      });
 
     if (error) {
       throw error;
@@ -793,8 +656,17 @@ async function signup() {
       );
     }
 
-    data.profile = {
+    /*
+      IMPORTANT:
+      Save the authenticated user's UUID
+      immediately.
+    */
 
+    data.userType =
+      data.userType ||
+      data.profile.role;
+
+    data.profile = {
       ...data.profile,
 
       id:
@@ -815,10 +687,30 @@ async function signup() {
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify(
-        data.profile
-      )
+      JSON.stringify(data.profile)
     );
+
+    /*
+      IMPORTANT:
+      Persist the profile to the backend.
+      This is what was missing.
+    */
+
+    try {
+      await syncProfileToBackend(
+        authData.user.id
+      );
+
+      console.log(
+        "Expo Go profile synced successfully."
+      );
+
+    } catch (syncError) {
+      console.error(
+        "Initial profile sync failed:",
+        syncError
+      );
+    }
 
     authStatus.innerHTML =
       "Account created. <strong>Check your email</strong> and click the verification link to continue.";
@@ -829,12 +721,10 @@ async function signup() {
       );
 
     if (resend) {
-      resend.style.display =
-        "block";
+      resend.style.display = "block";
     }
 
   } catch (error) {
-
     console.error(
       "Supabase signup error:",
       error
@@ -845,60 +735,46 @@ async function signup() {
       "Unable to create account.";
 
   } finally {
-
     createProfileBtn.disabled =
       false;
   }
 }
-
 
 /* =========================================================
    LOGIN
 ========================================================= */
 
 async function login() {
-
   const email =
     document
-      .getElementById(
-        "authEmail"
-      )
-      ?.value.trim() ||
-    "";
+      .getElementById("authEmail")
+      ?.value.trim() || "";
 
   const password =
     document
-      .getElementById(
-        "authPassword"
-      )
-      ?.value ||
-    "";
+      .getElementById("authPassword")
+      ?.value || "";
 
   if (!email || !password) {
-
     authStatus.textContent =
       "Enter your email and password.";
 
     return;
   }
 
-  createProfileBtn.disabled =
-    true;
+  createProfileBtn.disabled = true;
 
   authStatus.textContent =
     "Signing you in...";
 
   try {
-
     const {
       data: authData,
       error
     } =
       await supabaseClient.auth
         .signInWithPassword({
-
           email,
-
           password
         });
 
@@ -920,14 +796,11 @@ async function login() {
       "Login successful.";
 
     setTimeout(() => {
-
       window.location.href =
         "profile.html";
-
     }, 300);
 
   } catch (error) {
-
     console.error(
       "Login error:",
       error
@@ -938,12 +811,10 @@ async function login() {
       "Unable to log in.";
 
   } finally {
-
     createProfileBtn.disabled =
       false;
   }
 }
-
 
 /* =========================================================
    LOAD AUTH PROFILE
@@ -952,96 +823,294 @@ async function login() {
 async function loadOrCreateAuthenticatedProfile(
   user
 ) {
+  try {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles/me/${user.id}`
+      );
 
-  const response =
-    await fetch(
-      `${API_BASE_URL}/api/profiles/me/${user.id}`
-    );
+    const result =
+      await response.json();
 
-  const result =
-    await response.json();
+    if (
+      result.success &&
+      result.profile
+    ) {
+      const serverProfile =
+        result.profile;
 
-  if (
-    result.success &&
-    result.profile
-  ) {
+      data.profile = {
+        ...data.profile,
 
-    const serverProfile =
-      result.profile;
+        id:
+          serverProfile.id,
+
+        authUserId:
+          user.id,
+
+        name:
+          serverProfile.name ||
+          user.user_metadata?.name ||
+          "",
+
+        role:
+          serverProfile.role ||
+          user.user_metadata?.role ||
+          "",
+
+        headline:
+          serverProfile.headline ||
+          "",
+
+        skills:
+          normalizeArray(
+            serverProfile.skills
+          ),
+
+        education:
+          serverProfile.education ||
+          "",
+
+        experience:
+          serverProfile.experience ||
+          "",
+
+        desiredPosition:
+          serverProfile.desired_position ||
+          "",
+
+        location:
+          serverProfile.location ||
+          "",
+
+        workPreference:
+          serverProfile.work_preference ||
+          "",
+
+        about:
+          serverProfile.about ||
+          "",
+
+        company:
+          serverProfile.company ||
+          "",
+
+        hiringPosition:
+          serverProfile.hiring_position ||
+          "",
+
+        requiredSkills:
+          normalizeArray(
+            serverProfile.required_skills
+          ),
+
+        experienceRequired:
+          serverProfile.experience_required ||
+          "",
+
+        workType:
+          serverProfile.work_type ||
+          ""
+      };
+
+      data.userType =
+        data.profile.role;
+
+      saveData();
+
+      localStorage.setItem(
+        PROFILE_STORAGE_KEY,
+        JSON.stringify(
+          data.profile
+        )
+      );
+
+      return;
+    }
+
+    /*
+      Profile doesn't exist yet.
+      Create it from the authenticated user.
+    */
+
+    const metadata =
+      user.user_metadata || {};
 
     data.profile = {
-
       ...data.profile,
 
       id:
-        serverProfile.id,
+        user.id,
 
       authUserId:
         user.id,
 
       name:
-        serverProfile.name ||
-        user.user_metadata?.name ||
+        data.profile.name ||
+        metadata.name ||
+        user.email ||
         "",
 
       role:
-        serverProfile.role ||
-        user.user_metadata?.role ||
+        data.profile.role ||
+        metadata.role ||
         "",
 
       headline:
-        serverProfile.headline ||
-        "",
+        data.profile.headline ||
+        metadata.headline ||
+        ""
+    };
+
+    data.userType =
+      data.profile.role;
+
+    saveData();
+
+    await syncProfileToBackend(
+      user.id
+    );
+
+  } catch (error) {
+    console.error(
+      "Authenticated profile loading error:",
+      error
+    );
+
+    throw error;
+  }
+}
+
+/* =========================================================
+   PROFILE SYNC
+========================================================= */
+
+async function syncProfileToBackend(
+  authUserId
+) {
+  const payload =
+    createProfileObject(
+      authUserId
+    );
+
+  const response =
+    await fetch(
+      `${API_BASE_URL}/api/profiles`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          "Accept":
+            "application/json"
+        },
+
+        body:
+          JSON.stringify(payload)
+      }
+    );
+
+  const raw =
+    await response.text();
+
+  let result = {};
+
+  try {
+    result =
+      raw
+        ? JSON.parse(raw)
+        : {};
+
+  } catch {
+    result = {};
+  }
+
+  if (
+    !response.ok ||
+    !result.success
+  ) {
+    throw new Error(
+      result.message ||
+      "Profile sync failed."
+    );
+  }
+
+  if (result.profile) {
+    const server =
+      result.profile;
+
+    data.profile = {
+      ...data.profile,
+
+      id:
+        server.id ||
+        data.profile.id,
+
+      authUserId,
+
+      name:
+        server.name ||
+        data.profile.name,
+
+      role:
+        server.role ||
+        data.profile.role,
+
+      headline:
+        server.headline ||
+        data.profile.headline,
 
       skills:
         normalizeArray(
-          serverProfile.skills
+          server.skills
         ),
 
       education:
-        serverProfile.education ||
-        "",
+        server.education ||
+        data.profile.education,
 
       experience:
-        serverProfile.experience ||
-        "",
+        server.experience ||
+        data.profile.experience,
 
       desiredPosition:
-        serverProfile.desired_position ||
-        "",
+        server.desired_position ||
+        data.profile.desiredPosition,
 
       location:
-        serverProfile.location ||
-        "",
+        server.location ||
+        data.profile.location,
 
       workPreference:
-        serverProfile.work_preference ||
-        "",
+        server.work_preference ||
+        data.profile.workPreference,
 
       about:
-        serverProfile.about ||
-        "",
+        server.about ||
+        data.profile.about,
 
       company:
-        serverProfile.company ||
-        "",
+        server.company ||
+        data.profile.company,
 
       hiringPosition:
-        serverProfile.hiring_position ||
-        "",
+        server.hiring_position ||
+        data.profile.hiringPosition,
 
       requiredSkills:
         normalizeArray(
-          serverProfile.required_skills
+          server.required_skills
         ),
 
       experienceRequired:
-        serverProfile.experience_required ||
-        "",
+        server.experience_required ||
+        data.profile.experienceRequired,
 
       workType:
-        serverProfile.work_type ||
-        ""
+        server.work_type ||
+        data.profile.workType
     };
 
     data.userType =
@@ -1055,184 +1124,20 @@ async function loadOrCreateAuthenticatedProfile(
         data.profile
       )
     );
-
-    return;
-  }
-
-  const metadata =
-    user.user_metadata ||
-    {};
-
-  data.profile = {
-
-    ...data.profile,
-
-    id:
-      user.id,
-
-    authUserId:
-      user.id,
-
-    name:
-      data.profile.name ||
-      metadata.name ||
-      user.email ||
-      "",
-
-    role:
-      data.profile.role ||
-      metadata.role ||
-      "",
-
-    headline:
-      data.profile.headline ||
-      metadata.headline ||
-      ""
-  };
-
-  data.userType =
-    data.profile.role;
-
-  saveData();
-
-  await syncProfileToBackend(
-    user.id
-  );
-}
-
-
-/* =========================================================
-   PROFILE SYNC
-========================================================= */
-
-async function syncProfileToBackend(
-  authUserId
-) {
-
-  const payload =
-    createProfileObject(
-      authUserId
-    );
-
-  const response =
-    await fetch(
-      `${API_BASE_URL}/api/profiles`,
-      {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type":
-            "application/json",
-
-          "Accept":
-            "application/json"
-        },
-
-        body:
-          JSON.stringify(
-            payload
-          )
-      }
-    );
-
-  const raw =
-    await response.text();
-
-  let result = {};
-
-  try {
-
-    result =
-      raw
-        ? JSON.parse(raw)
-        : {};
-
-  } catch {
-
-    result = {};
-  }
-
-  if (
-    !response.ok ||
-    !result.success
-  ) {
-
-    throw new Error(
-      result.message ||
-      "Profile sync failed."
-    );
-  }
-
-  if (result.profile) {
-
-    data.profile = {
-
-      ...data.profile,
-
-      ...result.profile,
-
-      authUserId,
-
-      desiredPosition:
-        result.profile.desired_position ||
-        data.profile.desiredPosition ||
-        "",
-
-      workPreference:
-        result.profile.work_preference ||
-        data.profile.workPreference ||
-        "",
-
-      hiringPosition:
-        result.profile.hiring_position ||
-        data.profile.hiringPosition ||
-        "",
-
-      requiredSkills:
-        normalizeArray(
-          result.profile.required_skills
-        ),
-
-      experienceRequired:
-        result.profile.experience_required ||
-        data.profile.experienceRequired ||
-        "",
-
-      workType:
-        result.profile.work_type ||
-        data.profile.workType ||
-        ""
-    };
-
-    saveData();
-
-    localStorage.setItem(
-      PROFILE_STORAGE_KEY,
-      JSON.stringify(
-        data.profile
-      )
-    );
   }
 }
-
 
 /* =========================================================
    RESEND VERIFICATION
 ========================================================= */
 
 async function resendVerification() {
-
   const email =
     document
-      .getElementById(
-        "authEmail"
-      )
+      .getElementById("authEmail")
       ?.value.trim();
 
   if (!email) {
-
     authStatus.textContent =
       "Enter your email first.";
 
@@ -1240,19 +1145,16 @@ async function resendVerification() {
   }
 
   try {
-
     const {
       error
     } =
       await supabaseClient.auth
         .resend({
-
           type: "signup",
 
           email,
 
           options: {
-
             emailRedirectTo:
               `${window.location.origin}/index.html`
           }
@@ -1266,7 +1168,6 @@ async function resendVerification() {
       "Verification email sent again.";
 
   } catch (error) {
-
     console.error(
       "Verification resend error:",
       error
@@ -1278,13 +1179,11 @@ async function resendVerification() {
   }
 }
 
-
 /* =========================================================
    SESSION CHECK
 ========================================================= */
 
 async function checkSession() {
-
   if (!supabaseClient) {
     return;
   }
@@ -1297,7 +1196,6 @@ async function checkSession() {
       .getSession();
 
   if (error) {
-
     console.error(
       "Session error:",
       error
@@ -1321,7 +1219,6 @@ async function checkSession() {
   }
 
   try {
-
     await loadOrCreateAuthenticatedProfile(
       user
     );
@@ -1330,13 +1227,11 @@ async function checkSession() {
       data.profile?.id &&
       data.profile?.role
     ) {
-
       window.location.href =
         "profile.html";
     }
 
   } catch (error) {
-
     console.error(
       "Authenticated profile error:",
       error
@@ -1344,13 +1239,11 @@ async function checkSession() {
   }
 }
 
-
 /* =========================================================
    AUTH STATE
 ========================================================= */
 
 function setupAuthListener() {
-
   if (!supabaseClient) {
     return;
   }
@@ -1361,7 +1254,6 @@ function setupAuthListener() {
         event,
         session
       ) => {
-
         console.log(
           "Expo Go auth event:",
           event
@@ -1371,7 +1263,6 @@ function setupAuthListener() {
           event === "SIGNED_IN" &&
           session?.user
         ) {
-
           if (
             !session.user
               .email_confirmed_at
@@ -1380,7 +1271,6 @@ function setupAuthListener() {
           }
 
           try {
-
             await loadOrCreateAuthenticatedProfile(
               session.user
             );
@@ -1389,7 +1279,6 @@ function setupAuthListener() {
               "profile.html";
 
           } catch (error) {
-
             console.error(
               "Auth profile error:",
               error
@@ -1400,156 +1289,118 @@ function setupAuthListener() {
     );
 }
 
-
 /* =========================================================
-   NAVIGATION / UI
+   NAVIGATION
 ========================================================= */
 
 document
-  .getElementById(
-    "employeeBtn"
-  )
+  .getElementById("employeeBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         "employee",
         "signup"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "employerBtn"
-  )
+  .getElementById("employerBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         "employer",
         "signup"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "bottomJoinBtn"
-  )
+  .getElementById("bottomJoinBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         null,
         "signup"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "joinBtn"
-  )
+  .getElementById("joinBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         null,
         "signup"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "loginBtn"
-  )
+  .getElementById("loginBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         null,
         "login"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "mobileLoginBtn"
-  )
+  .getElementById("mobileLoginBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         null,
         "login"
-      );
-    }
+      )
   );
 
-
 document
-  .getElementById(
-    "mobileJoinBtn"
-  )
+  .getElementById("mobileJoinBtn")
   ?.addEventListener(
     "click",
-    () => {
-
+    () =>
       openAuthModal(
         null,
         "signup"
-      );
-    }
+      )
   );
 
+/* =========================================================
+   HOW IT WORKS
+========================================================= */
 
 document
   .querySelectorAll(
     'a[href="#how-it-works"], #mobileHowLink'
   )
-  .forEach(
-    link => {
+  .forEach(link => {
+    link.addEventListener(
+      "click",
+      event => {
+        const section =
+          document.getElementById(
+            "how-it-works"
+          );
 
-      link.addEventListener(
-        "click",
-        event => {
+        if (section) {
+          event.preventDefault();
 
-          const section =
-            document.getElementById(
-              "how-it-works"
-            );
+          section.scrollIntoView({
+            behavior: "smooth"
+          });
 
-          if (section) {
-
-            event.preventDefault();
-
-            section.scrollIntoView({
-              behavior: "smooth"
-            });
-
-            mobileNav?.classList.remove(
-              "active"
-            );
-          }
+          mobileNav?.classList.remove(
+            "active"
+          );
         }
-      );
-    }
-  );
-
+      }
+    );
+  });
 
 const mobileMenuBtn =
   document.getElementById(
@@ -1564,7 +1415,6 @@ const mobileNav =
 mobileMenuBtn?.addEventListener(
   "click",
   () => {
-
     mobileNav?.classList.toggle(
       "active"
     );
@@ -1575,7 +1425,6 @@ mobileMenuBtn?.addEventListener(
   }
 );
 
-
 /* =========================================================
    MODAL EVENTS
 ========================================================= */
@@ -1583,109 +1432,74 @@ mobileMenuBtn?.addEventListener(
 authForm?.addEventListener(
   "submit",
   event => {
-
     event.preventDefault();
-
     createProfile();
   }
 );
-
 
 createProfileBtn?.addEventListener(
   "click",
   createProfile
 );
 
-
 continueProfileBtn?.addEventListener(
   "click",
   createProfile
 );
 
-
 document
-  .getElementById(
-    "closeModal"
-  )
+  .getElementById("closeModal")
   ?.addEventListener(
     "click",
     closeAuthModal
   );
 
-
 document
-  .getElementById(
-    "modalBackdrop"
-  )
+  .getElementById("modalBackdrop")
   ?.addEventListener(
     "click",
     closeAuthModal
   );
-
 
 authModal?.addEventListener(
   "click",
   event => {
-
     if (
-      event.target ===
-      authModal
+      event.target === authModal
     ) {
       closeAuthModal();
     }
   }
 );
-
 
 document.addEventListener(
   "keydown",
   event => {
-
-    if (
-      event.key ===
-      "Escape"
-    ) {
+    if (event.key === "Escape") {
       closeAuthModal();
     }
   }
 );
-
 
 /* =========================================================
    FORM CONTROLLER
 ========================================================= */
 
 async function createProfile() {
-
-  if (
-    authMode ===
-    "login"
-  ) {
-
+  if (authMode === "login") {
     await login();
-
   } else {
-
     await signup();
   }
 }
-
 
 /* =========================================================
    INITIALIZATION
 ========================================================= */
 
 async function initialize() {
-
   try {
-
-    /*
-      Supabase is loaded directly by index.html
-      BEFORE this file runs.
-    */
-
     if (!window.supabase) {
-
       console.error(
         "Expo Go: Supabase library unavailable."
       );
@@ -1693,10 +1507,7 @@ async function initialize() {
       return;
     }
 
-    const initialized =
-      initializeSupabase();
-
-    if (!initialized) {
+    if (!initializeSupabase()) {
       return;
     }
 
@@ -1711,13 +1522,11 @@ async function initialize() {
     );
 
   } catch (error) {
-
     console.error(
       "Expo Go initialization error:",
       error
     );
   }
 }
-
 
 initialize();
