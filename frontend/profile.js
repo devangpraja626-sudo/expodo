@@ -140,7 +140,8 @@ function saveLocalProfile() {
 }
 
 function setText(id, value) {
-  const element = document.getElementById(id);
+  const element =
+    document.getElementById(id);
 
   if (element) {
     element.textContent =
@@ -149,7 +150,8 @@ function setText(id, value) {
 }
 
 function setValue(id, value) {
-  const element = document.getElementById(id);
+  const element =
+    document.getElementById(id);
 
   if (element) {
     element.value = value || "";
@@ -190,6 +192,7 @@ async function getAuthenticatedUser() {
     }
 
     return data?.user || null;
+
   } catch (error) {
     console.error(
       "Auth lookup error:",
@@ -208,14 +211,16 @@ async function fetchServerProfile(userId) {
   if (!userId) return null;
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(userId)}`
-    );
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(userId)}`
+      );
 
     let result = {};
 
     try {
-      result = await response.json();
+      result =
+        await response.json();
     } catch (_) {
       result = {};
     }
@@ -229,6 +234,7 @@ async function fetchServerProfile(userId) {
     }
 
     return null;
+
   } catch (error) {
     console.warn(
       "Backend profile lookup unavailable.",
@@ -244,7 +250,10 @@ async function fetchServerProfile(userId) {
 ========================================================= */
 
 async function syncProfileToBackend() {
-  if (!profile || !currentAuthUser) {
+  if (
+    !profile ||
+    !currentAuthUser
+  ) {
     return false;
   }
 
@@ -263,28 +272,30 @@ async function syncProfileToBackend() {
   };
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/profiles`,
-      {
-        method: "POST",
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles`,
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
+          headers: {
+            "Content-Type":
+              "application/json",
 
-          "Accept":
-            "application/json"
-        },
+            "Accept":
+              "application/json"
+          },
 
-        body:
-          JSON.stringify(payload)
-      }
-    );
+          body:
+            JSON.stringify(payload)
+        }
+      );
 
     let result = {};
 
     try {
-      result = await response.json();
+      result =
+        await response.json();
     } catch (_) {
       result = {};
     }
@@ -300,18 +311,20 @@ async function syncProfileToBackend() {
     }
 
     if (result.profile) {
-      profile = normalizeProfile({
-        ...profile,
-        ...result.profile,
+      profile =
+        normalizeProfile({
+          ...profile,
+          ...result.profile,
 
-        authUserId:
-          currentAuthUser.id
-      });
+          authUserId:
+            currentAuthUser.id
+        });
 
       saveLocalProfile();
     }
 
     return true;
+
   } catch (error) {
     console.error(
       "Profile sync error:",
@@ -342,6 +355,10 @@ async function loadProfile() {
       return false;
     }
 
+    const metadata =
+      currentAuthUser.user_metadata ||
+      {};
+
     let localProfile = null;
 
     const saved =
@@ -368,47 +385,111 @@ async function loadProfile() {
         currentAuthUser.id
       );
 
+    /* =====================================================
+       SERVER PROFILE EXISTS
+    ===================================================== */
+
     if (serverProfile) {
+
       profile =
         normalizeProfile({
           ...serverProfile,
 
+          /*
+            Supabase metadata is now a fallback
+            instead of being ignored.
+          */
+
+          name:
+            serverProfile.name ||
+            metadata.name ||
+            localProfile?.name ||
+            currentAuthUser.email ||
+            "",
+
+          role:
+            serverProfile.role ||
+            metadata.role ||
+            localProfile?.role ||
+            "",
+
+          headline:
+            serverProfile.headline ||
+            metadata.headline ||
+            localProfile?.headline ||
+            "",
+
           authUserId:
             currentAuthUser.id
         });
 
       saveLocalProfile();
 
+      /*
+        If the backend profile was missing important
+        identity information, repair it.
+      */
+
+      const needsRepair =
+        !serverProfile.name ||
+        !serverProfile.role ||
+        !serverProfile.headline;
+
+      if (needsRepair) {
+        await syncProfileToBackend();
+      }
+
       return true;
     }
 
-    if (
-      localProfile &&
-      localProfile.role
-    ) {
+    /* =====================================================
+       LOCAL PROFILE EXISTS
+    ===================================================== */
+
+    if (localProfile) {
+
       profile =
         normalizeProfile({
           ...localProfile,
 
+          name:
+            localProfile.name ||
+            metadata.name ||
+            currentAuthUser.email ||
+            "",
+
+          role:
+            localProfile.role ||
+            metadata.role ||
+            "",
+
+          headline:
+            localProfile.headline ||
+            metadata.headline ||
+            "",
+
           authUserId:
             currentAuthUser.id
         });
 
       saveLocalProfile();
 
-      await syncProfileToBackend();
+      if (profile.role) {
+        await syncProfileToBackend();
+      }
 
       return true;
     }
 
-    const metadata =
-      currentAuthUser.user_metadata ||
-      {};
+    /* =====================================================
+       CREATE PROFILE FROM SUPABASE METADATA
+    ===================================================== */
 
     const role =
       metadata.role || "";
 
     if (role) {
+
       profile =
         normalizeProfile({
           id:
@@ -436,12 +517,17 @@ async function loadProfile() {
       return true;
     }
 
+    /* =====================================================
+       NO PROFILE
+    ===================================================== */
+
     window.location.href =
       "index.html";
 
     return false;
 
   } catch (error) {
+
     console.error(
       "Profile loading error:",
       error
@@ -456,18 +542,46 @@ async function loadProfile() {
       saved &&
       currentAuthUser
     ) {
+
       try {
-        profile =
+
+        const local =
           normalizeProfile(
             JSON.parse(saved)
           );
 
-        profile.authUserId =
-          currentAuthUser.id;
+        const metadata =
+          currentAuthUser.user_metadata ||
+          {};
+
+        profile =
+          normalizeProfile({
+            ...local,
+
+            authUserId:
+              currentAuthUser.id,
+
+            name:
+              local.name ||
+              metadata.name ||
+              currentAuthUser.email ||
+              "",
+
+            role:
+              local.role ||
+              metadata.role ||
+              "",
+
+            headline:
+              local.headline ||
+              metadata.headline ||
+              ""
+          });
 
         saveLocalProfile();
 
         return !!profile.role;
+
       } catch (_) {}
     }
 
@@ -724,6 +838,7 @@ function updateCompletion() {
     );
 
   if (percentage === 100) {
+
     if (nextTitle) {
       nextTitle.textContent =
         "You're ready to match.";
@@ -733,7 +848,9 @@ function updateCompletion() {
       nextText.textContent =
         "Expo Go can now find relevant people and opportunities for you.";
     }
+
   } else {
+
     if (nextTitle) {
       nextTitle.textContent =
         "Complete your profile";
@@ -804,6 +921,7 @@ async function loadMatches() {
   }
 
   try {
+
     const response =
       await fetch(
         `${API_BASE_URL}/api/match`,
@@ -812,6 +930,9 @@ async function loadMatches() {
 
           headers: {
             "Content-Type":
+              "application/json",
+
+            "Accept":
               "application/json"
           },
 
@@ -823,7 +944,8 @@ async function loadMatches() {
     let result = {};
 
     try {
-      result = await response.json();
+      result =
+        await response.json();
     } catch (_) {
       result = {};
     }
@@ -848,6 +970,7 @@ async function loadMatches() {
     }
 
   } catch (error) {
+
     console.error(
       "Matching error:",
       error
@@ -859,7 +982,9 @@ async function loadMatches() {
     }
 
     if (empty) {
-      empty.style.display = "";
+
+      empty.style.display =
+        "";
 
       empty.innerHTML = `
         <div class="matches-empty-icon">✦</div>
@@ -878,6 +1003,7 @@ async function loadMatches() {
 ========================================================= */
 
 function renderMatches(matches) {
+
   const grid =
     document.getElementById(
       "matchesGrid"
@@ -899,8 +1025,11 @@ function renderMatches(matches) {
     );
 
   if (!matches.length) {
+
     if (empty) {
-      empty.style.display = "";
+
+      empty.style.display =
+        "";
 
       empty.innerHTML = `
         <div class="matches-empty-icon">✦</div>
@@ -917,10 +1046,12 @@ function renderMatches(matches) {
   }
 
   if (empty) {
-    empty.style.display = "none";
+    empty.style.display =
+      "none";
   }
 
   matches.forEach(match => {
+
     const candidate =
       normalizeProfile(
         match.profile || {}
@@ -1078,7 +1209,14 @@ function renderMatches(matches) {
 ========================================================= */
 
 function openEditModal() {
-  if (!profile) return;
+
+  if (!profile) {
+    console.warn(
+      "Cannot open edit modal: profile not loaded."
+    );
+
+    return;
+  }
 
   setValue(
     "editName",
@@ -1161,7 +1299,9 @@ function openEditModal() {
     );
 
   if (status) {
-    status.textContent = "";
+    status.textContent =
+      "";
+
     status.className =
       "edit-status";
   }
@@ -1171,9 +1311,22 @@ function openEditModal() {
       "editModal"
     );
 
-  if (modal) {
-    modal.classList.add("active");
+  if (!modal) {
+    console.error(
+      "editModal element was not found."
+    );
+
+    return;
   }
+
+  modal.classList.add(
+    "active"
+  );
+
+  modal.setAttribute(
+    "aria-hidden",
+    "false"
+  );
 
   document.body.classList.add(
     "modal-open"
@@ -1181,13 +1334,22 @@ function openEditModal() {
 }
 
 function closeEditModal() {
+
   const modal =
     document.getElementById(
       "editModal"
     );
 
   if (modal) {
-    modal.classList.remove("active");
+
+    modal.classList.remove(
+      "active"
+    );
+
+    modal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
   }
 
   document.body.classList.remove(
@@ -1200,18 +1362,23 @@ function closeEditModal() {
 ========================================================= */
 
 async function saveProfile() {
-  if (!profile) return;
+
+  if (!profile) {
+    return;
+  }
 
   currentAuthUser =
     await getAuthenticatedUser();
 
   if (!currentAuthUser) {
+
     const status =
       document.getElementById(
         "editStatus"
       );
 
     if (status) {
+
       status.textContent =
         "Your session has expired. Please log in again.";
 
@@ -1233,6 +1400,25 @@ async function saveProfile() {
     document.getElementById(
       "editName"
     )?.value.trim() || "";
+
+  if (!profile.name) {
+
+    const status =
+      document.getElementById(
+        "editStatus"
+      );
+
+    if (status) {
+
+      status.textContent =
+        "Please enter your name.";
+
+      status.className =
+        "edit-status error";
+    }
+
+    return;
+  }
 
   profile.headline =
     document.getElementById(
@@ -1312,6 +1498,54 @@ async function saveProfile() {
 
   saveLocalProfile();
 
+  /*
+    Also update the Supabase user's metadata.
+    This keeps the name connected to the authenticated
+    account itself.
+  */
+
+  try {
+
+    const {
+      error
+    } =
+      await supabaseClient.auth.updateUser({
+        data: {
+          name:
+            profile.name,
+
+          role:
+            profile.role,
+
+          headline:
+            profile.headline
+        }
+      });
+
+    if (error) {
+      console.warn(
+        "Supabase metadata update failed:",
+        error
+      );
+    } else {
+
+      const refreshed =
+        await getAuthenticatedUser();
+
+      if (refreshed) {
+        currentAuthUser =
+          refreshed;
+      }
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Supabase metadata update error:",
+      error
+    );
+  }
+
   const button =
     document.getElementById(
       "saveProfileBtn"
@@ -1323,19 +1557,25 @@ async function saveProfile() {
     );
 
   if (button) {
-    button.disabled = true;
+
+    button.disabled =
+      true;
+
     button.textContent =
       "Saving...";
   }
 
   if (status) {
+
     status.textContent =
       "";
+
     status.className =
       "edit-status";
   }
 
   try {
+
     const synced =
       await syncProfileToBackend();
 
@@ -1348,6 +1588,7 @@ async function saveProfile() {
     renderProfile();
 
     if (status) {
+
       status.textContent =
         "Profile saved successfully.";
 
@@ -1364,6 +1605,7 @@ async function saveProfile() {
     );
 
   } catch (error) {
+
     console.error(
       "Profile save error:",
       error
@@ -1373,6 +1615,7 @@ async function saveProfile() {
     renderProfile();
 
     if (status) {
+
       status.textContent =
         "Saved locally. Server sync unavailable.";
 
@@ -1381,8 +1624,12 @@ async function saveProfile() {
     }
 
   } finally {
+
     if (button) {
-      button.disabled = false;
+
+      button.disabled =
+        false;
+
       button.textContent =
         "Save profile";
     }
@@ -1403,6 +1650,7 @@ function goHome() {
 ========================================================= */
 
 async function loadConnections() {
+
   if (
     !supabaseClient ||
     !currentAuthUser
@@ -1411,6 +1659,7 @@ async function loadConnections() {
   }
 
   try {
+
     const userId =
       currentAuthUser.id;
 
@@ -1441,6 +1690,7 @@ async function loadConnections() {
     await loadConnectionProfiles();
 
   } catch (error) {
+
     console.error(
       "Connections loading error:",
       error
@@ -1456,6 +1706,7 @@ async function loadConnections() {
 ========================================================= */
 
 async function loadConnectionProfiles() {
+
   connectionProfiles = {};
 
   if (!currentAuthUser) {
@@ -1491,7 +1742,9 @@ async function loadConnectionProfiles() {
   );
 
   for (const id of ids) {
+
     try {
+
       const response =
         await fetch(
           `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(id)}`
@@ -1508,6 +1761,7 @@ async function loadConnectionProfiles() {
         result.success &&
         result.profile
       ) {
+
         connectionProfiles[id] =
           normalizeProfile({
             ...result.profile,
@@ -1518,6 +1772,7 @@ async function loadConnectionProfiles() {
       }
 
     } catch (error) {
+
       console.warn(
         "Connection profile lookup failed:",
         id,
@@ -1534,6 +1789,7 @@ async function loadConnectionProfiles() {
 function getConnectionWithUser(
   userId
 ) {
+
   if (
     !currentAuthUser ||
     !userId
@@ -1588,6 +1844,7 @@ function getConnectionWithUser(
 function getConnectionState(
   userId
 ) {
+
   if (
     !currentAuthUser ||
     !userId
@@ -1615,6 +1872,7 @@ function getConnectionState(
     connection.status ===
     "pending"
   ) {
+
     if (
       connection.requester_id ===
       currentAuthUser.id
@@ -1659,6 +1917,7 @@ async function sendConnectionRequest(
   recipientId,
   button = null
 ) {
+
   if (
     !supabaseClient ||
     !currentAuthUser ||
@@ -1690,18 +1949,7 @@ async function sendConnectionRequest(
 
     if (
       existing.status ===
-        "pending" &&
-      existing.recipient_id ===
-        currentAuthUser.id
-    ) {
-      return;
-    }
-
-    if (
-      existing.status ===
-        "pending" &&
-      existing.requester_id ===
-        currentAuthUser.id
+        "pending"
     ) {
       return;
     }
@@ -1717,12 +1965,16 @@ async function sendConnectionRequest(
   }
 
   if (button) {
-    button.disabled = true;
+
+    button.disabled =
+      true;
+
     button.textContent =
       "Sending...";
   }
 
   try {
+
     const {
       data,
       error
@@ -1756,13 +2008,17 @@ async function sendConnectionRequest(
     await loadMatches();
 
   } catch (error) {
+
     console.error(
       "Connection request error:",
       error
     );
 
     if (button) {
-      button.disabled = false;
+
+      button.disabled =
+        false;
+
       button.textContent =
         "Connect";
     }
@@ -1782,6 +2038,7 @@ async function updateConnectionStatus(
   connectionId,
   status
 ) {
+
   if (
     !supabaseClient ||
     !currentAuthUser ||
@@ -1791,6 +2048,7 @@ async function updateConnectionStatus(
   }
 
   try {
+
     const {
       data,
       error
@@ -1831,6 +2089,7 @@ async function updateConnectionStatus(
     await loadMatches();
 
   } catch (error) {
+
     console.error(
       "Connection status update error:",
       error
@@ -1850,6 +2109,7 @@ async function updateConnectionStatus(
 function getMatchAuthUserId(
   match
 ) {
+
   const candidate =
     match?.profile || {};
 
@@ -1867,6 +2127,7 @@ function getMatchAuthUserId(
 function createMatchConnectionButton(
   recipientId
 ) {
+
   if (
     !recipientId ||
     !currentAuthUser
@@ -1883,6 +2144,7 @@ function createMatchConnectionButton(
     state ===
     "accepted"
   ) {
+
     return `
       <button
         type="button"
@@ -1898,6 +2160,7 @@ function createMatchConnectionButton(
     state ===
     "sent"
   ) {
+
     return `
       <button
         type="button"
@@ -1913,6 +2176,7 @@ function createMatchConnectionButton(
     state ===
     "incoming"
   ) {
+
     const connection =
       getConnectionWithUser(
         recipientId
@@ -1935,6 +2199,7 @@ function createMatchConnectionButton(
     state ===
     "declined"
   ) {
+
     return `
       <button
         type="button"
@@ -2015,7 +2280,8 @@ function bindMatchConnectionButtons() {
             return;
           }
 
-          button.disabled = true;
+          button.disabled =
+            true;
 
           button.textContent =
             "Accepting...";
@@ -2041,9 +2307,21 @@ function initializePageEvents() {
     );
 
   if (editButton) {
+
     editButton.addEventListener(
       "click",
-      openEditModal
+      event => {
+
+        event.preventDefault();
+
+        openEditModal();
+      }
+    );
+
+  } else {
+
+    console.error(
+      "editProfileBtn was not found."
     );
   }
 
@@ -2053,9 +2331,15 @@ function initializePageEvents() {
     );
 
   if (saveButton) {
+
     saveButton.addEventListener(
       "click",
-      saveProfile
+      event => {
+
+        event.preventDefault();
+
+        saveProfile();
+      }
     );
   }
 
@@ -2064,9 +2348,15 @@ function initializePageEvents() {
       ".edit-modal-close, [data-close-edit]"
     )
     .forEach(button => {
+
       button.addEventListener(
         "click",
-        closeEditModal
+        event => {
+
+          event.preventDefault();
+
+          closeEditModal();
+        }
       );
     });
 
@@ -2076,9 +2366,11 @@ function initializePageEvents() {
     );
 
   if (editModal) {
+
     editModal.addEventListener(
       "click",
       event => {
+
         if (
           event.target ===
           editModal
@@ -2095,6 +2387,7 @@ function initializePageEvents() {
     );
 
   if (homeButton) {
+
     homeButton.addEventListener(
       "click",
       goHome
@@ -2107,15 +2400,22 @@ function initializePageEvents() {
     );
 
   if (completeButton) {
+
     completeButton.addEventListener(
       "click",
-      openEditModal
+      event => {
+
+        event.preventDefault();
+
+        openEditModal();
+      }
     );
   }
 
   document.addEventListener(
     "keydown",
     event => {
+
       if (
         event.key ===
         "Escape"
@@ -2132,26 +2432,54 @@ function initializePageEvents() {
 
 async function initialize() {
 
-  initializeSupabase();
+  try {
 
-  initializePageEvents();
+    if (!initializeSupabase()) {
+      return;
+    }
 
-  const loaded =
-    await loadProfile();
+    /*
+      Bind page events immediately.
+      The DOM already exists because this script
+      is loaded at the bottom of profile.html.
+    */
 
-  if (!loaded) {
-    return;
+    initializePageEvents();
+
+    const loaded =
+      await loadProfile();
+
+    if (!loaded) {
+      return;
+    }
+
+    renderProfile();
+
+    await loadConnections();
+
+    await loadMatches();
+
+    console.log(
+      "Expo Go profile is ready.",
+      {
+        userId:
+          currentAuthUser?.id,
+
+        name:
+          profile?.name,
+
+        role:
+          profile?.role
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Expo Go profile initialization error:",
+      error
+    );
   }
-
-  renderProfile();
-
-  await loadConnections();
-
-  await loadMatches();
-
-  console.log(
-    "Expo Go profile is ready."
-  );
 }
 
 initialize();
