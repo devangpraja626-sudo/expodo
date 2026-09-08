@@ -3,18 +3,14 @@ const supabase = require("../config/supabase");
 
 const router = express.Router();
 
-/* =========================================================
-   CREATE / UPDATE PROFILE
-   ========================================================= */
-
 router.post("/", async (req, res) => {
   try {
     const profile = req.body;
 
-    if (!profile || !profile.id || !profile.name || !profile.role) {
+    if (!profile || !profile.name || !profile.role) {
       return res.status(400).json({
         success: false,
-        message: "Profile id, name and role are required."
+        message: "Profile name and role are required."
       });
     }
 
@@ -25,8 +21,36 @@ router.post("/", async (req, res) => {
       });
     }
 
+    const authUserId = profile.authUserId || profile.auth_user_id || null;
+
+    let existingProfile = null;
+
+    if (authUserId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("auth_user_id", authUserId)
+        .maybeSingle();
+
+      existingProfile = data;
+    }
+
+    const profileId =
+      existingProfile?.id ||
+      profile.id ||
+      authUserId;
+
+    if (!profileId) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile ID is required."
+      });
+    }
+
     const data = {
-      id: profile.id,
+      id: profileId,
+      auth_user_id: authUserId,
+
       name: profile.name,
       role: profile.role,
       headline: profile.headline || "",
@@ -49,8 +73,11 @@ router.post("/", async (req, res) => {
         ? profile.requiredSkills
         : [],
 
-      experience_required: profile.experienceRequired || "",
-      work_type: profile.workType || "",
+      experience_required:
+        profile.experienceRequired || "",
+
+      work_type:
+        profile.workType || "",
 
       updated_at: new Date().toISOString()
     };
@@ -73,7 +100,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: "Profile saved successfully.",
       profile: savedProfile
@@ -89,9 +116,37 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* =========================================================
-   GET PROFILE BY ID
-   ========================================================= */
+router.get("/me/:authUserId", async (req, res) => {
+  try {
+    const { authUserId } = req.params;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load profile."
+      });
+    }
+
+    res.json({
+      success: true,
+      profile: data || null
+    });
+
+  } catch (error) {
+    console.error("Profile lookup error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to load profile."
+    });
+  }
+});
 
 router.get("/:id", async (req, res) => {
   try {
@@ -125,10 +180,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/* =========================================================
-   GET PROFILES
-   ========================================================= */
-
 router.get("/", async (req, res) => {
   try {
     const role = req.query.role;
@@ -140,15 +191,16 @@ router.get("/", async (req, res) => {
         ascending: false
       });
 
-    if (role && ["employee", "employer"].includes(role)) {
+    if (
+      role &&
+      ["employee", "employer"].includes(role)
+    ) {
       query = query.eq("role", role);
     }
 
     const { data: profiles, error } = await query;
 
     if (error) {
-      console.error("Supabase profiles error:", error);
-
       return res.status(500).json({
         success: false,
         message: "Unable to load profiles.",
