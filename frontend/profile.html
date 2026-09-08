@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>Expo Go — My Profile</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+
+</head>
+
+
+<body>
+
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="grid-overlay"></div>
+
+
+  <!-- NAVBAR -->
+
+  <header class="navbar">
+
+    <div class="nav-inner">
+
+      <a
+        href="index.html"
+        class="brand"
+      >
+
+        <div class="brand-mark">
+          E
+        </div>
+
+        <span>EXPO GO</span>
+
+      </a>
+
+
+      <button
+        id="homeBtn"
+        class="nav-login"
+        type="button"
+      >
+        Home
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- PROFILE -->
+
+  <main class="profile-page">
+
+    <section class="profile-header">
+
+      <div>
+
+        <div class="eyebrow">
+          <span class="eyebrow-dot"></span>
+          MY EXPO GO
+        </div>
+
+        <h1>
+          Your profile.
+        </h1>
+
+        <p>
+          This is how opportunities will see you.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <section class="profile-layout">
+
+
+      <!-- PROFILE CARD -->
+
+      <div class="dashboard-card profile-main-card">
+
+        <div class="profile-main-top">
+
+          <div
+            id="profileAvatar"
+            class="large-avatar"
+          >
+            E
+          </div>
+
+
+          <div>
+
+            <div
+              id="profileRole"
+              class="profile-role"
+            >
+              EMPLOYEE
+            </div>
+
+            <h2 id="profileName">
+              Your Name
+            </h2>
+
+            <p id="profileHeadline">
+              Your profession
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="profile-divider"></div>
+
+
+        <div class="profile-info-grid">
+
+
+          <div class="profile-info">
+
+            <span>
+              NAME
+            </span>
+
+            <strong id="infoName">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="profile-info">
+
+            <span>
+              PROFESSION
+            </span>
+
+            <strong id="infoHeadline">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="profile-info">
+
+            <span>
+              PROFILE TYPE
+            </span>
+
+            <strong id="infoRole">
+              —
+            </strong>
+
+          </div>
+
+
+          <div class="profile-info">
+
+            <span>
+              STATUS
+            </span>
+
+            <strong class="status-active">
+              ACTIVE
+            </strong>
+
+          </div>
+
+
+        </div>
+
+
+        <button
+          id="editProfileBtn"
+          class="primary-btn profile-edit-btn"
+          type="button"
+        >
+          Edit profile
+          <span>→</span>
+        </button>
+
+      </div>
+
+
+      <!-- RIGHT SIDE -->
+
+      <div class="dashboard-side">
+
+
+        <div class="dashboard-card completion-card">
+
+          <div class="card-label">
+            PROFILE STRENGTH
+          </div>
+
+          <div class="completion-number">
+            40%
+          </div>
+
+          <div class="completion-bar">
+
+            <div class="completion-fill"></div>
+
+          </div>
+
+          <p>
+            Add more information to improve
+            your profile and future matches.
+          </p>
+
+        </div>
+
+
+        <div class="dashboard-card next-card">
+
+          <div class="card-label">
+            NEXT STEP
+          </div>
+
+          <h3>
+            Complete your profile.
+          </h3>
+
+          <p>
+            Add your skills, experience,
+            education and preferences.
+          </p>
+
+          <button
+            id="completeProfileBtn"
+            class="secondary-btn"
+            type="button"
+          >
+            Continue
+            <span>→</span>
+          </button>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- EDIT PROFILE MODAL -->
+
+  <div
+    id="editModal"
+    class="auth-modal hidden"
+  >
+
+    <div
+      id="editBackdrop"
+      class="modal-backdrop"
+    ></div>
+
+
+    <div class="auth-box">
+
+      <button
+        id="closeEdit"
+        class="modal-close"
+        type="button"
+      >
+        ×
+      </button>
+
+
+      <div class="auth-eyebrow">
+        EDIT PROFILE
+      </div>
+
+
+      <h2>
+        Update your profile
+      </h2>
+
+
+      <p>
+        Keep your information current.
+      </p>
+
+
+      <form id="editForm">
+
+
+        <div class="input-group">
+
+          <label for="editName">
+            Your name
+          </label>
+
+          <input
+            id="editName"
+            type="text"
+            required
+          />
+
+        </div>
+
+
+        <div class="input-group">
+
+          <label for="editHeadline">
+            What do you do?
+          </label>
+
+          <input
+            id="editHeadline"
+            type="text"
+            required
+          />
+
+        </div>
+
+
+        <button
+          type="submit"
+          class="primary-btn auth-submit"
+        >
+          Save changes
+          <span>→</span>
+        </button>
+
+
+      </form>
+
+
+      <div
+        id="editStatus"
+        class="auth-status"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <script src="profile.js"></script>
+
+</body>
+
+</html>
