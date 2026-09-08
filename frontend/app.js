@@ -1,5 +1,72 @@
+/* =========================================================
+   EXPO GO — SHARED FRONTEND CONTROLLER
+   Prototype V1
+   Local Storage + Render Backend + Supabase
+========================================================= */
+
 const API_BASE_URL = "https://expodo.onrender.com";
+const STORAGE_KEY = "expoGoPrototype";
 const PROFILE_STORAGE_KEY = "expoGoProfile";
+
+const DEFAULT_DATA = {
+  userType: null,
+
+  profile: {
+    id: null,
+    name: "",
+    education: "",
+    skills: [],
+    experience: "",
+    desiredPosition: "",
+    location: "",
+    workPreference: "",
+    about: "",
+    headline: "",
+
+    company: "",
+    hiringPosition: "",
+    requiredSkills: [],
+    experienceRequired: "",
+    workType: ""
+  }
+};
+
+let data = loadData();
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if (!saved) {
+      return structuredClone(DEFAULT_DATA);
+    }
+
+    const parsed = JSON.parse(saved);
+
+    return {
+      ...structuredClone(DEFAULT_DATA),
+      ...parsed,
+      profile: {
+        ...structuredClone(DEFAULT_DATA.profile),
+        ...(parsed.profile || {})
+      }
+    };
+  } catch (error) {
+    console.error("Storage loading error:", error);
+    return structuredClone(DEFAULT_DATA);
+  }
+}
+
+function saveData() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(data)
+  );
+}
 
 /* =========================================================
    HELPERS
@@ -22,148 +89,41 @@ function normalizeArray(value) {
   return [];
 }
 
-function normalizeProfile(profile = {}) {
+function createProfileObject() {
+  const profile = data.profile || {};
+
   return {
-    id: profile.id || `expo_${Date.now()}`,
-
+    id: profile.id,
     name: profile.name || "",
-
-    role: profile.role || "",
+    role: data.userType || profile.role || "",
 
     headline: profile.headline || "",
 
     skills: normalizeArray(profile.skills),
-
     education: profile.education || "",
-
     experience: profile.experience || "",
-
-    desiredPosition:
-      profile.desiredPosition ||
-      profile.desired_position ||
-      "",
-
+    desiredPosition: profile.desiredPosition || "",
     location: profile.location || "",
-
-    workPreference:
-      profile.workPreference ||
-      profile.work_preference ||
-      "",
-
+    workPreference: profile.workPreference || "",
     about: profile.about || "",
 
     company: profile.company || "",
-
-    hiringPosition:
-      profile.hiringPosition ||
-      profile.hiring_position ||
-      "",
+    hiringPosition: profile.hiringPosition || "",
 
     requiredSkills: normalizeArray(
-      profile.requiredSkills ||
-      profile.required_skills
+      profile.requiredSkills
     ),
 
     experienceRequired:
-      profile.experienceRequired ||
-      profile.experience_required ||
-      "",
+      profile.experienceRequired || "",
 
     workType:
-      profile.workType ||
-      profile.work_type ||
-      "",
-
-    createdAt:
-      profile.createdAt ||
-      profile.created_at ||
-      new Date().toISOString(),
-
-    updatedAt:
-      profile.updatedAt ||
-      profile.updated_at ||
-      new Date().toISOString()
+      profile.workType || ""
   };
 }
 
-function getStoredProfile() {
-  try {
-    const saved =
-      localStorage.getItem(PROFILE_STORAGE_KEY);
-
-    if (!saved) {
-      return null;
-    }
-
-    return normalizeProfile(
-      JSON.parse(saved)
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Unable to read stored profile:",
-      error
-    );
-
-    return null;
-  }
-}
-
-function saveLocalProfile(profile) {
-  localStorage.setItem(
-    PROFILE_STORAGE_KEY,
-    JSON.stringify(
-      normalizeProfile(profile)
-    )
-  );
-}
-
 /* =========================================================
-   BACKEND
-========================================================= */
-
-async function saveProfileToBackend(profile) {
-
-  const normalized =
-    normalizeProfile(profile);
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/profiles`,
-    {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify(normalized)
-    }
-  );
-
-  let result = null;
-
-  try {
-    result = await response.json();
-  } catch {
-    result = null;
-  }
-
-  if (
-    !response.ok ||
-    !result?.success
-  ) {
-    throw new Error(
-      result?.message ||
-      "Unable to save profile."
-    );
-  }
-
-  return result.profile;
-}
-
-/* =========================================================
-   ELEMENTS
+   AUTH / PROFILE MODAL
 ========================================================= */
 
 const authModal =
@@ -172,52 +132,540 @@ const authModal =
 const authForm =
   document.getElementById("authForm");
 
-const authStatus =
-  document.getElementById("authStatus");
-
-const employeeBtn =
-  document.getElementById("employeeBtn");
-
-const employerBtn =
-  document.getElementById("employerBtn");
-
 const createProfileBtn =
-  document.getElementById(
-    "createProfileBtn"
-  );
+  document.getElementById("createProfileBtn");
 
 const continueProfileBtn =
-  document.getElementById(
-    "continueProfileBtn"
-  );
+  document.getElementById("continueProfileBtn");
+
+const authStatus =
+  document.getElementById("authStatus");
 
 const fullNameInput =
   document.getElementById("fullName");
 
 const profileHeadlineInput =
-  document.getElementById(
-    "profileHeadline"
-  );
-
-const profilePreviewName =
-  document.getElementById(
-    "profilePreviewName"
-  );
-
-const profilePreviewHeadline =
-  document.getElementById(
-    "profilePreviewHeadline"
-  );
+  document.getElementById("profileHeadline");
 
 const roleOptions =
   document.querySelectorAll(
     ".role-option"
   );
 
-const bottomJoinBtn =
-  document.getElementById(
-    "bottomJoinBtn"
+/* =========================================================
+   ROLE SELECTION
+========================================================= */
+
+roleOptions.forEach(option => {
+  option.addEventListener("click", () => {
+    roleOptions.forEach(item => {
+      item.classList.remove("active");
+      item.setAttribute(
+        "aria-selected",
+        "false"
+      );
+    });
+
+    option.classList.add("active");
+    option.setAttribute(
+      "aria-selected",
+      "true"
+    );
+
+    data.userType =
+      option.dataset.role || null;
+
+    saveData();
+
+    if (authStatus) {
+      authStatus.textContent = "";
+    }
+  });
+});
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function openAuthModal(role = null) {
+  if (role) {
+    data.userType = role;
+    saveData();
+
+    roleOptions.forEach(option => {
+      const active =
+        option.dataset.role === role;
+
+      option.classList.toggle(
+        "active",
+        active
+      );
+
+      option.setAttribute(
+        "aria-selected",
+        active ? "true" : "false"
+      );
+    });
+  }
+
+  authModal?.classList.add("active");
+
+  document.body.classList.add(
+    "modal-open"
   );
+
+  setTimeout(() => {
+    fullNameInput?.focus();
+  }, 100);
+}
+
+function closeAuthModal() {
+  authModal?.classList.remove("active");
+
+  document.body.classList.remove(
+    "modal-open"
+  );
+
+  if (authStatus) {
+    authStatus.textContent = "";
+  }
+}
+
+/* =========================================================
+   PROFILE CREATION
+========================================================= */
+
+async function createProfile(event) {
+  /*
+    IMPORTANT:
+    Prevent the browser's native form submission.
+    Without this, the page can redirect to:
+    index.html?fullName=...
+  */
+
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const name =
+    fullNameInput?.value.trim() || "";
+
+  const headline =
+    profileHeadlineInput?.value.trim() || "";
+
+  if (!data.userType) {
+    if (authStatus) {
+      authStatus.textContent =
+        "Please select Employee or Employer.";
+    }
+
+    return;
+  }
+
+  if (!name) {
+    if (authStatus) {
+      authStatus.textContent =
+        "Please enter your name.";
+    }
+
+    fullNameInput?.focus();
+
+    return;
+  }
+
+  const role = data.userType;
+
+  /*
+    Generate a stable profile ID.
+
+    This ID is also used by Supabase as the
+    primary key in the profiles table.
+  */
+
+  const existingId =
+    data.profile?.id;
+
+  const profileId =
+    existingId ||
+    (
+      crypto?.randomUUID
+        ? crypto.randomUUID()
+        : `expo_${Date.now()}_${Math.random()
+            .toString(36)
+            .slice(2, 10)}`
+    );
+
+  data.profile = {
+    ...data.profile,
+
+    id: profileId,
+    name,
+    headline,
+    role
+  };
+
+  data.userType = role;
+
+  /*
+    Save locally FIRST.
+    This guarantees the user does not lose
+    their profile if the network request fails.
+  */
+
+  saveData();
+
+  localStorage.setItem(
+    PROFILE_STORAGE_KEY,
+    JSON.stringify({
+      ...data.profile,
+      role
+    })
+  );
+
+  if (createProfileBtn) {
+    createProfileBtn.disabled = true;
+    createProfileBtn.innerHTML =
+      "Creating profile <span>...</span>";
+  }
+
+  if (authStatus) {
+    authStatus.textContent =
+      "Creating your profile...";
+  }
+
+  /* =======================================================
+     SERVER SYNC
+  ======================================================= */
+
+  try {
+    const payload = createProfileObject();
+
+    console.log(
+      "Expo Go profile sync payload:",
+      payload
+    );
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/profiles`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+
+        body: JSON.stringify(payload)
+      }
+    );
+
+    /*
+      Read the response safely.
+      This prevents a JSON parsing error from
+      hiding the actual server response.
+    */
+
+    const rawResponse =
+      await response.text();
+
+    let result = {};
+
+    try {
+      result =
+        rawResponse
+          ? JSON.parse(rawResponse)
+          : {};
+    } catch {
+      result = {
+        success: false,
+        message: rawResponse
+      };
+    }
+
+    console.log(
+      "Expo Go profile sync response:",
+      response.status,
+      result
+    );
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+        result.error ||
+        `Server returned ${response.status}.`
+      );
+    }
+
+    /*
+      Backend successfully saved the profile.
+      Use the backend's returned profile if available.
+    */
+
+    if (result.profile) {
+      data.profile = {
+        ...data.profile,
+        ...result.profile,
+
+        /*
+          Convert backend snake_case back
+          into the frontend format.
+        */
+
+        desiredPosition:
+          result.profile.desired_position ||
+          data.profile.desiredPosition ||
+          "",
+
+        workPreference:
+          result.profile.work_preference ||
+          data.profile.workPreference ||
+          "",
+
+        hiringPosition:
+          result.profile.hiring_position ||
+          data.profile.hiringPosition ||
+          "",
+
+        requiredSkills:
+          normalizeArray(
+            result.profile.required_skills
+          ),
+
+        experienceRequired:
+          result.profile.experience_required ||
+          data.profile.experienceRequired ||
+          "",
+
+        workType:
+          result.profile.work_type ||
+          data.profile.workType ||
+          ""
+      };
+    }
+
+    saveData();
+
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify({
+        ...data.profile,
+        role
+      })
+    );
+
+    if (authStatus) {
+      authStatus.textContent =
+        "Profile created successfully.";
+    }
+
+    /*
+      Small delay so the success state is visible.
+    */
+
+    setTimeout(() => {
+      window.location.href =
+        "profile.html";
+    }, 250);
+
+  } catch (error) {
+    console.error(
+      "Expo Go profile sync failed:",
+      error
+    );
+
+    /*
+      Local profile is already saved.
+      Do NOT prevent the user from entering
+      their dashboard.
+    */
+
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify({
+        ...data.profile,
+        role
+      })
+    );
+
+    if (authStatus) {
+      authStatus.textContent =
+        "Saved locally. Server sync unavailable.";
+    }
+
+    /*
+      IMPORTANT:
+      We still allow the user to continue.
+    */
+
+    setTimeout(() => {
+      window.location.href =
+        "profile.html";
+    }, 500);
+
+  } finally {
+    if (createProfileBtn) {
+      createProfileBtn.disabled = false;
+
+      createProfileBtn.innerHTML =
+        'Create my profile <span>→</span>';
+    }
+  }
+}
+
+/* =========================================================
+   FORM SUBMISSION
+========================================================= */
+
+/*
+  This is the important fix.
+
+  The form itself is intercepted, so pressing
+  Enter or clicking the submit button cannot
+  trigger the browser's native GET submission.
+*/
+
+authForm?.addEventListener(
+  "submit",
+  createProfile
+);
+
+createProfileBtn?.addEventListener(
+  "click",
+  createProfile
+);
+
+continueProfileBtn?.addEventListener(
+  "click",
+  createProfile
+);
+
+/* =========================================================
+   CLOSE MODAL
+========================================================= */
+
+authModal?.addEventListener(
+  "click",
+  event => {
+    if (
+      event.target === authModal
+    ) {
+      closeAuthModal();
+    }
+  }
+);
+
+document
+  .querySelectorAll(
+    "[data-close-modal], .modal-close"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      closeAuthModal
+    );
+  });
+
+document.addEventListener(
+  "keydown",
+  event => {
+    if (
+      event.key === "Escape"
+    ) {
+      closeAuthModal();
+    }
+  }
+);
+
+/* =========================================================
+   HERO BUTTONS
+========================================================= */
+
+document
+  .getElementById("employeeBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal("employee");
+    }
+  );
+
+document
+  .getElementById("employerBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal("employer");
+    }
+  );
+
+document
+  .getElementById("bottomJoinBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal();
+    }
+  );
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+document
+  .querySelectorAll(
+    'a[href="#how-it-works"], #mobileHowLink'
+  )
+  .forEach(link => {
+    link.addEventListener(
+      "click",
+      event => {
+        const section =
+          document.getElementById(
+            "how-it-works"
+          );
+
+        if (section) {
+          event.preventDefault();
+
+          section.scrollIntoView({
+            behavior: "smooth"
+          });
+        }
+      }
+    );
+  });
+
+document
+  .getElementById("loginBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal();
+    }
+  );
+
+document
+  .getElementById("mobileLoginBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal();
+    }
+  );
+
+document
+  .getElementById("mobileJoinBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+      openAuthModal();
+    }
+  );
+
+/* =========================================================
+   MOBILE MENU
+========================================================= */
 
 const mobileMenuBtn =
   document.getElementById(
@@ -229,651 +677,9 @@ const mobileNav =
     "mobileNav"
   );
 
-const mobileHowLink =
-  document.getElementById(
-    "mobileHowLink"
-  );
-
-const mobileLoginBtn =
-  document.getElementById(
-    "mobileLoginBtn"
-  );
-
-const mobileJoinBtn =
-  document.getElementById(
-    "mobileJoinBtn"
-  );
-
-const closeModalBtn =
-  document.getElementById(
-    "closeModal"
-  );
-
-const modalBackdrop =
-  document.getElementById(
-    "modalBackdrop"
-  );
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let selectedRole = null;
-let profileCreationInProgress = false;
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-function openCreateModal(role = null) {
-
-  if (!authModal) {
-    return;
-  }
-
-  resetCreateView();
-
-  authModal.classList.add("active");
-
-  authModal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
-
-  document.body.classList.add(
-    "modal-open"
-  );
-
-  if (role) {
-    selectRole(role);
-  }
-
-  setTimeout(() => {
-    fullNameInput?.focus();
-  }, 150);
-}
-
-function closeCreateModal() {
-
-  if (!authModal) {
-    return;
-  }
-
-  authModal.classList.remove(
-    "active"
-  );
-
-  authModal.setAttribute(
-    "aria-hidden",
-    "true"
-  );
-
-  document.body.classList.remove(
-    "modal-open"
-  );
-}
-
-function resetCreateView() {
-
-  selectedRole = null;
-
-  profileCreationInProgress = false;
-
-  if (fullNameInput) {
-    fullNameInput.value = "";
-  }
-
-  if (profileHeadlineInput) {
-    profileHeadlineInput.value = "";
-  }
-
-  if (authStatus) {
-    authStatus.textContent = "";
-    authStatus.className =
-      "auth-status";
-  }
-
-  roleOptions.forEach(option => {
-
-    option.classList.remove(
-      "selected",
-      "active"
-    );
-
-  });
-
-  if (createProfileBtn) {
-    createProfileBtn.disabled = false;
-  }
-
-  if (continueProfileBtn) {
-    continueProfileBtn.disabled = false;
-  }
-
-  updatePreview();
-}
-
-/* =========================================================
-   ROLE SELECTION
-========================================================= */
-
-function selectRole(role) {
-
-  if (
-    !["employee", "employer"]
-      .includes(role)
-  ) {
-    return;
-  }
-
-  selectedRole = role;
-
-  roleOptions.forEach(option => {
-
-    const active =
-      option.dataset.role === role;
-
-    option.classList.toggle(
-      "selected",
-      active
-    );
-
-    option.classList.toggle(
-      "active",
-      active
-    );
-
-  });
-
-  updatePreview();
-}
-
-roleOptions.forEach(option => {
-
-  option.addEventListener(
-    "click",
-    event => {
-
-      event.preventDefault();
-
-      selectRole(
-        option.dataset.role
-      );
-
-    }
-  );
-
-});
-
-/* =========================================================
-   PREVIEW
-========================================================= */
-
-function updatePreview() {
-
-  const name =
-    fullNameInput?.value.trim() ||
-    "Your name";
-
-  const headline =
-    profileHeadlineInput?.value.trim() ||
-    (
-      selectedRole === "employer"
-        ? "Your hiring profile"
-        : "Your professional profile"
-    );
-
-  if (profilePreviewName) {
-    profilePreviewName.textContent =
-      name;
-  }
-
-  if (profilePreviewHeadline) {
-    profilePreviewHeadline.textContent =
-      headline;
-  }
-}
-
-fullNameInput?.addEventListener(
-  "input",
-  updatePreview
-);
-
-profileHeadlineInput?.addEventListener(
-  "input",
-  updatePreview
-);
-
-/* =========================================================
-   CREATE PROFILE
-========================================================= */
-
-async function createProfile(event) {
-
-  /*
-    CRITICAL FIX:
-    Stop ALL native browser form submission.
-
-    This prevents:
-    ?fullName=...
-    from appearing in the URL.
-  */
-
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
-  if (profileCreationInProgress) {
-    return;
-  }
-
-  const name =
-    fullNameInput?.value.trim() ||
-    "";
-
-  const headline =
-    profileHeadlineInput?.value.trim() ||
-    "";
-
-  if (!selectedRole) {
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Please select Employee or Employer.";
-
-      authStatus.className =
-        "auth-status error";
-    }
-
-    return;
-  }
-
-  if (!name) {
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Please enter your name.";
-
-      authStatus.className =
-        "auth-status error";
-    }
-
-    fullNameInput?.focus();
-
-    return;
-  }
-
-  if (!headline) {
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Please enter what you do.";
-
-      authStatus.className =
-        "auth-status error";
-    }
-
-    profileHeadlineInput?.focus();
-
-    return;
-  }
-
-  profileCreationInProgress = true;
-
-  const existingProfile =
-    getStoredProfile();
-
-  const profile =
-    normalizeProfile({
-
-      ...(existingProfile || {}),
-
-      id:
-        existingProfile?.id ||
-        `expo_${Date.now()}`,
-
-      name,
-
-      role: selectedRole,
-
-      headline,
-
-      createdAt:
-        existingProfile?.createdAt ||
-        new Date().toISOString(),
-
-      updatedAt:
-        new Date().toISOString()
-
-    });
-
-  if (createProfileBtn) {
-    createProfileBtn.disabled = true;
-  }
-
-  if (continueProfileBtn) {
-    continueProfileBtn.disabled = true;
-  }
-
-  if (authStatus) {
-
-    authStatus.textContent =
-      "Creating your Expo Go profile...";
-
-    authStatus.className =
-      "auth-status";
-  }
-
-  /*
-    SAVE LOCALLY FIRST
-  */
-
-  saveLocalProfile(profile);
-
-  try {
-
-    /*
-      SAVE TO RENDER / SUPABASE
-    */
-
-    const savedProfile =
-      await saveProfileToBackend(
-        profile
-      );
-
-    /*
-      NORMALIZE BACKEND RESPONSE
-    */
-
-    const frontendProfile =
-      normalizeProfile({
-
-        ...profile,
-
-        id:
-          savedProfile?.id ||
-          profile.id,
-
-        name:
-          savedProfile?.name ||
-          profile.name,
-
-        role:
-          savedProfile?.role ||
-          profile.role,
-
-        headline:
-          savedProfile?.headline ||
-          profile.headline,
-
-        skills:
-          savedProfile?.skills ||
-          profile.skills,
-
-        education:
-          savedProfile?.education ||
-          profile.education,
-
-        experience:
-          savedProfile?.experience ||
-          profile.experience,
-
-        desiredPosition:
-          savedProfile?.desired_position ||
-          profile.desiredPosition,
-
-        location:
-          savedProfile?.location ||
-          profile.location,
-
-        workPreference:
-          savedProfile?.work_preference ||
-          profile.workPreference,
-
-        about:
-          savedProfile?.about ||
-          profile.about,
-
-        company:
-          savedProfile?.company ||
-          profile.company,
-
-        hiringPosition:
-          savedProfile?.hiring_position ||
-          profile.hiringPosition,
-
-        requiredSkills:
-          savedProfile?.required_skills ||
-          profile.requiredSkills,
-
-        experienceRequired:
-          savedProfile?.experience_required ||
-          profile.experienceRequired,
-
-        workType:
-          savedProfile?.work_type ||
-          profile.workType,
-
-        createdAt:
-          savedProfile?.created_at ||
-          profile.createdAt,
-
-        updatedAt:
-          savedProfile?.updated_at ||
-          profile.updatedAt
-
-      });
-
-    saveLocalProfile(
-      frontendProfile
-    );
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Profile created successfully.";
-
-      authStatus.className =
-        "auth-status success";
-    }
-
-    /*
-      DIRECT PROFILE PAGE
-
-      IMPORTANT:
-      No query parameters.
-      No form submission.
-    */
-
-    setTimeout(() => {
-
-      window.location.href =
-        "/profile.html";
-
-    }, 250);
-
-  } catch (error) {
-
-    console.error(
-      "Backend profile save failed:",
-      error
-    );
-
-    /*
-      LOCAL PROFILE IS ALREADY SAVED.
-      Allow the user to continue anyway.
-    */
-
-    saveLocalProfile(profile);
-
-    if (authStatus) {
-
-      authStatus.textContent =
-        "Profile saved. Opening your profile...";
-
-      authStatus.className =
-        "auth-status success";
-    }
-
-    setTimeout(() => {
-
-      window.location.href =
-        "/profile.html";
-
-    }, 500);
-  }
-}
-
-/* =========================================================
-   IMPORTANT FORM PROTECTION
-========================================================= */
-
-/*
-  Catch the form's submit event directly.
-
-  This is the main protection against:
-  /?fullName=...
-*/
-
-authForm?.addEventListener(
-  "submit",
-  createProfile
-);
-
-/*
-  Also connect the Create My Profile button
-  directly.
-*/
-
-createProfileBtn?.addEventListener(
-  "click",
-  createProfile
-);
-
-/*
-  Keep the Continue button working too.
-*/
-
-continueProfileBtn?.addEventListener(
-  "click",
-  createProfile
-);
-
-/* =========================================================
-   MAIN BUTTONS
-========================================================= */
-
-employeeBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    openCreateModal("employee");
-
-  }
-);
-
-employerBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    openCreateModal("employer");
-
-  }
-);
-
-bottomJoinBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    openCreateModal();
-
-  }
-);
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-function handleLogin() {
-
-  const existingProfile =
-    getStoredProfile();
-
-  if (existingProfile) {
-
-    window.location.href =
-      "/profile.html";
-
-    return;
-  }
-
-  openCreateModal();
-}
-
-const loginBtn =
-  document.getElementById(
-    "loginBtn"
-  );
-
-loginBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    handleLogin();
-
-  }
-);
-
-mobileLoginBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    closeMobileMenu();
-
-    handleLogin();
-
-  }
-);
-
-/* =========================================================
-   MOBILE MENU
-========================================================= */
-
-function closeMobileMenu() {
-
-  if (!mobileNav) {
-    return;
-  }
-
-  mobileNav.classList.remove(
-    "active"
-  );
-
-  mobileMenuBtn?.classList.remove(
-    "active"
-  );
-}
-
 mobileMenuBtn?.addEventListener(
   "click",
-  event => {
-
-    event.preventDefault();
-
+  () => {
     mobileNav?.classList.toggle(
       "active"
     );
@@ -881,192 +687,46 @@ mobileMenuBtn?.addEventListener(
     mobileMenuBtn.classList.toggle(
       "active"
     );
-
-  }
-);
-
-mobileHowLink?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    closeMobileMenu();
-
-    document
-      .getElementById(
-        "how-it-works"
-      )
-      ?.scrollIntoView({
-        behavior: "smooth"
-      });
-
-  }
-);
-
-mobileJoinBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    closeMobileMenu();
-
-    openCreateModal();
-
   }
 );
 
 /* =========================================================
-   MODAL CLOSE
+   EXISTING PROFILE CHECK
 ========================================================= */
 
-closeModalBtn?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    closeCreateModal();
-
-  }
-);
-
-modalBackdrop?.addEventListener(
-  "click",
-  event => {
-
-    event.preventDefault();
-
-    closeCreateModal();
-
-  }
-);
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if (event.key === "Escape") {
-
-      closeCreateModal();
-
-      closeMobileMenu();
-
-    }
-
-  }
-);
-
-/* =========================================================
-   GENERIC MODAL CLOSE BUTTONS
-========================================================= */
-
-document
-  .querySelectorAll(
-    "[data-close-modal]"
-  )
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      event => {
-
-        event.preventDefault();
-
-        closeCreateModal();
-
-      }
+function checkExistingProfile() {
+  const saved =
+    localStorage.getItem(
+      PROFILE_STORAGE_KEY
     );
 
-  });
+  if (!saved) {
+    return;
+  }
 
-/* =========================================================
-   SMOOTH SCROLL
-========================================================= */
+  try {
+    const existing =
+      JSON.parse(saved);
 
-document
-  .querySelectorAll(
-    'a[href^="#"]'
-  )
-  .forEach(link => {
-
-    link.addEventListener(
-      "click",
-      event => {
-
-        const targetId =
-          link.getAttribute(
-            "href"
-          );
-
-        if (
-          !targetId ||
-          targetId === "#"
-        ) {
-          return;
-        }
-
-        const target =
-          document.querySelector(
-            targetId
-          );
-
-        if (!target) {
-          return;
-        }
-
-        event.preventDefault();
-
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-
-        closeMobileMenu();
-
-      }
+    if (
+      existing?.id &&
+      existing?.role
+    ) {
+      console.log(
+        "Existing Expo Go profile detected:",
+        existing
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Existing profile parsing error:",
+      error
     );
-
-  });
-
-/* =========================================================
-   MATCH VISUAL
-========================================================= */
-
-const matchVisual =
-  document.querySelector(
-    ".match-visual"
-  );
-
-if (matchVisual) {
-
-  matchVisual.addEventListener(
-    "mouseenter",
-    () => {
-
-      matchVisual.classList.add(
-        "is-active"
-      );
-
-    }
-  );
-
-  matchVisual.addEventListener(
-    "mouseleave",
-    () => {
-
-      matchVisual.classList.remove(
-        "is-active"
-      );
-
-    }
-  );
-
+  }
 }
 
-/* =========================================================
-   INITIAL PREVIEW
-========================================================= */
+checkExistingProfile();
 
-updatePreview();
+/* =========================================================
+   END
+========================================================= */
