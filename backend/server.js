@@ -4,6 +4,8 @@ const express = require("express");
 const cors = require("cors");
 
 const profileRoutes = require("./routes/profileRoutes");
+const supabase = require("./config/supabase");
+const { getMatches } = require("./services/matchingEngine");
 
 const app = express();
 
@@ -34,10 +36,6 @@ app.get("/", (req, res) => {
   });
 });
 
-/* =========================================================
-   API HEALTH
-   ========================================================= */
-
 app.get("/api/health", (req, res) => {
   res.json({
     success: true,
@@ -53,24 +51,57 @@ app.get("/api/health", (req, res) => {
 app.use("/api/profiles", profileRoutes);
 
 /* =========================================================
-   MATCHING ROUTE
+   TWO-WAY MATCHING
    ========================================================= */
 
 app.post("/api/match", async (req, res) => {
   try {
     const profile = req.body;
 
-    if (!profile || !profile.role) {
+    if (!profile || !profile.id || !profile.role) {
       return res.status(400).json({
         success: false,
-        message: "Profile data is required."
+        message: "Complete profile data is required."
       });
     }
 
+    if (!["employee", "employer"].includes(profile.role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid profile role."
+      });
+    }
+
+    const oppositeRole =
+      profile.role === "employee"
+        ? "employer"
+        : "employee";
+
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("role", oppositeRole);
+
+    if (error) {
+      console.error("Supabase matching error:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load profiles for matching.",
+        error: error.message
+      });
+    }
+
+    const matches = getMatches(
+      profile,
+      profiles || []
+    );
+
     res.json({
       success: true,
-      message: "Matching engine is ready.",
-      matches: []
+      message: "Matching completed successfully.",
+      count: matches.length,
+      matches
     });
 
   } catch (error) {
