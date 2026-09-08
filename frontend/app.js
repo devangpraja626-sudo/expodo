@@ -9,7 +9,7 @@ const SUPABASE_URL =
   "https://inhxlwsjlddhnpalbocl.supabase.co";
 
 const SUPABASE_ANON_KEY =
-  "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
+  "sb_publishable_EoecvlHpO_r1ZJdJWl5Q_VEgr0dOw";
 
 const STORAGE_KEY = "expoGoPrototype";
 const PROFILE_STORAGE_KEY = "expoGoProfile";
@@ -70,10 +70,7 @@ function loadData() {
     };
 
   } catch (error) {
-    console.error(
-      "Storage loading error:",
-      error
-    );
+    console.error("Storage loading error:", error);
 
     return structuredClone(DEFAULT_DATA);
   }
@@ -524,9 +521,7 @@ function openAuthModal(
 
       option.setAttribute(
         "aria-selected",
-        active
-          ? "true"
-          : "false"
+        active ? "true" : "false"
       );
     });
   }
@@ -577,8 +572,7 @@ async function signup() {
     fullNameInput?.value.trim() || "";
 
   const headline =
-    profileHeadlineInput
-      ?.value.trim() || "";
+    profileHeadlineInput?.value.trim() || "";
 
   const email =
     document
@@ -593,7 +587,6 @@ async function signup() {
   if (!data.userType) {
     authStatus.textContent =
       "Please select Employee or Employer.";
-
     return;
   }
 
@@ -602,21 +595,18 @@ async function signup() {
       "Please enter your name.";
 
     fullNameInput?.focus();
-
     return;
   }
 
   if (!email) {
     authStatus.textContent =
       "Please enter your email.";
-
     return;
   }
 
   if (password.length < 6) {
     authStatus.textContent =
       "Password must be at least 6 characters.";
-
     return;
   }
 
@@ -656,16 +646,6 @@ async function signup() {
       );
     }
 
-    /*
-      IMPORTANT:
-      Save the authenticated user's UUID
-      immediately.
-    */
-
-    data.userType =
-      data.userType ||
-      data.profile.role;
-
     data.profile = {
       ...data.profile,
 
@@ -683,6 +663,9 @@ async function signup() {
         data.userType
     };
 
+    data.userType =
+      data.profile.role;
+
     saveData();
 
     localStorage.setItem(
@@ -691,20 +674,13 @@ async function signup() {
     );
 
     /*
-      IMPORTANT:
-      Persist the profile to the backend.
-      This is what was missing.
+      Persist immediately.
     */
 
     try {
       await syncProfileToBackend(
         authData.user.id
       );
-
-      console.log(
-        "Expo Go profile synced successfully."
-      );
-
     } catch (syncError) {
       console.error(
         "Initial profile sync failed:",
@@ -735,8 +711,7 @@ async function signup() {
       "Unable to create account.";
 
   } finally {
-    createProfileBtn.disabled =
-      false;
+    createProfileBtn.disabled = false;
   }
 }
 
@@ -758,7 +733,6 @@ async function login() {
   if (!email || !password) {
     authStatus.textContent =
       "Enter your email and password.";
-
     return;
   }
 
@@ -795,6 +769,11 @@ async function login() {
     authStatus.textContent =
       "Login successful.";
 
+    /*
+      ONLY the explicit login flow redirects.
+      Auth state listener does NOT redirect anymore.
+    */
+
     setTimeout(() => {
       window.location.href =
         "profile.html";
@@ -811,8 +790,7 @@ async function login() {
       "Unable to log in.";
 
   } finally {
-    createProfileBtn.disabled =
-      false;
+    createProfileBtn.disabled = false;
   }
 }
 
@@ -820,19 +798,23 @@ async function login() {
    LOAD AUTH PROFILE
 ========================================================= */
 
-async function loadOrCreateAuthenticatedProfile(
-  user
-) {
+async function loadOrCreateAuthenticatedProfile(user) {
   try {
     const response =
       await fetch(
         `${API_BASE_URL}/api/profiles/me/${user.id}`
       );
 
-    const result =
-      await response.json();
+    let result = {};
+
+    try {
+      result = await response.json();
+    } catch (_) {
+      result = {};
+    }
 
     if (
+      response.ok &&
       result.success &&
       result.profile
     ) {
@@ -843,7 +825,8 @@ async function loadOrCreateAuthenticatedProfile(
         ...data.profile,
 
         id:
-          serverProfile.id,
+          serverProfile.id ||
+          user.id,
 
         authUserId:
           user.id,
@@ -851,15 +834,19 @@ async function loadOrCreateAuthenticatedProfile(
         name:
           serverProfile.name ||
           user.user_metadata?.name ||
+          data.profile.name ||
+          user.email ||
           "",
 
         role:
           serverProfile.role ||
           user.user_metadata?.role ||
+          data.profile.role ||
           "",
 
         headline:
           serverProfile.headline ||
+          data.profile.headline ||
           "",
 
         skills:
@@ -920,17 +907,15 @@ async function loadOrCreateAuthenticatedProfile(
 
       localStorage.setItem(
         PROFILE_STORAGE_KEY,
-        JSON.stringify(
-          data.profile
-        )
+        JSON.stringify(data.profile)
       );
 
       return;
     }
 
     /*
-      Profile doesn't exist yet.
-      Create it from the authenticated user.
+      Server profile does not exist.
+      Recover from local storage / metadata.
     */
 
     const metadata =
@@ -940,6 +925,7 @@ async function loadOrCreateAuthenticatedProfile(
       ...data.profile,
 
       id:
+        data.profile.id ||
         user.id,
 
       authUserId:
@@ -959,7 +945,17 @@ async function loadOrCreateAuthenticatedProfile(
       headline:
         data.profile.headline ||
         metadata.headline ||
-        ""
+        "",
+
+      skills:
+        normalizeArray(
+          data.profile.skills
+        ),
+
+      requiredSkills:
+        normalizeArray(
+          data.profile.requiredSkills
+        )
     };
 
     data.userType =
@@ -967,15 +963,64 @@ async function loadOrCreateAuthenticatedProfile(
 
     saveData();
 
-    await syncProfileToBackend(
-      user.id
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify(data.profile)
     );
+
+    /*
+      Recreate server profile if necessary.
+    */
+
+    if (data.profile.role) {
+      try {
+        await syncProfileToBackend(
+          user.id
+        );
+      } catch (syncError) {
+        console.error(
+          "Profile recreation sync failed:",
+          syncError
+        );
+      }
+    }
 
   } catch (error) {
     console.error(
       "Authenticated profile loading error:",
       error
     );
+
+    /*
+      Do NOT redirect here.
+      Local profile can still be recovered.
+    */
+
+    const saved =
+      localStorage.getItem(
+        PROFILE_STORAGE_KEY
+      );
+
+    if (saved) {
+      try {
+        const local =
+          JSON.parse(saved);
+
+        data.profile = {
+          ...data.profile,
+          ...local,
+          authUserId:
+            user.id
+        };
+
+        data.userType =
+          data.profile.role;
+
+        saveData();
+
+        return;
+      } catch (_) {}
+    }
 
     throw error;
   }
@@ -985,9 +1030,7 @@ async function loadOrCreateAuthenticatedProfile(
    PROFILE SYNC
 ========================================================= */
 
-async function syncProfileToBackend(
-  authUserId
-) {
+async function syncProfileToBackend(authUserId) {
   const payload =
     createProfileObject(
       authUserId
@@ -1022,7 +1065,6 @@ async function syncProfileToBackend(
       raw
         ? JSON.parse(raw)
         : {};
-
   } catch {
     result = {};
   }
@@ -1120,9 +1162,7 @@ async function syncProfileToBackend(
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify(
-        data.profile
-      )
+      JSON.stringify(data.profile)
     );
   }
 }
@@ -1140,25 +1180,21 @@ async function resendVerification() {
   if (!email) {
     authStatus.textContent =
       "Enter your email first.";
-
     return;
   }
 
   try {
-    const {
-      error
-    } =
-      await supabaseClient.auth
-        .resend({
-          type: "signup",
+    const { error } =
+      await supabaseClient.auth.resend({
+        type: "signup",
 
-          email,
+        email,
 
-          options: {
-            emailRedirectTo:
-              `${window.location.origin}/index.html`
-          }
-        });
+        options: {
+          emailRedirectTo:
+            `${window.location.origin}/index.html`
+        }
+      });
 
     if (error) {
       throw error;
@@ -1181,19 +1217,20 @@ async function resendVerification() {
 
 /* =========================================================
    SESSION CHECK
+   IMPORTANT:
+   This no longer redirects automatically.
 ========================================================= */
 
 async function checkSession() {
   if (!supabaseClient) {
-    return;
+    return null;
   }
 
   const {
     data: sessionData,
     error
   } =
-    await supabaseClient.auth
-      .getSession();
+    await supabaseClient.auth.getSession();
 
   if (error) {
     console.error(
@@ -1201,46 +1238,42 @@ async function checkSession() {
       error
     );
 
-    return;
+    return null;
   }
 
   const session =
     sessionData?.session;
 
   if (!session?.user) {
-    return;
+    return null;
   }
 
-  const user =
-    session.user;
-
-  if (!user.email_confirmed_at) {
-    return;
-  }
+  /*
+    Recover profile data silently,
+    but stay on the homepage.
+  */
 
   try {
     await loadOrCreateAuthenticatedProfile(
-      user
+      session.user
     );
 
-    if (
-      data.profile?.id &&
-      data.profile?.role
-    ) {
-      window.location.href =
-        "profile.html";
-    }
+    return session.user;
 
   } catch (error) {
     console.error(
-      "Authenticated profile error:",
+      "Session profile recovery error:",
       error
     );
+
+    return session.user;
   }
 }
 
 /* =========================================================
    AUTH STATE
+   IMPORTANT:
+   Never redirect automatically from here.
 ========================================================= */
 
 function setupAuthListener() {
@@ -1248,45 +1281,38 @@ function setupAuthListener() {
     return;
   }
 
-  supabaseClient.auth
-    .onAuthStateChange(
-      async (
-        event,
-        session
-      ) => {
-        console.log(
-          "Expo Go auth event:",
-          event
-        );
+  supabaseClient.auth.onAuthStateChange(
+    async (
+      event,
+      session
+    ) => {
+      console.log(
+        "Expo Go auth event:",
+        event
+      );
 
-        if (
-          event === "SIGNED_IN" &&
-          session?.user
-        ) {
-          if (
-            !session.user
-              .email_confirmed_at
-          ) {
-            return;
-          }
+      if (
+        event === "SIGNED_IN" &&
+        session?.user
+      ) {
+        /*
+          Only synchronize the profile.
+          Do NOT redirect.
+        */
 
-          try {
-            await loadOrCreateAuthenticatedProfile(
-              session.user
-            );
-
-            window.location.href =
-              "profile.html";
-
-          } catch (error) {
-            console.error(
-              "Auth profile error:",
-              error
-            );
-          }
+        try {
+          await loadOrCreateAuthenticatedProfile(
+            session.user
+          );
+        } catch (error) {
+          console.error(
+            "Auth profile recovery error:",
+            error
+          );
         }
       }
-    );
+    }
+  );
 }
 
 /* =========================================================
@@ -1514,6 +1540,11 @@ async function initialize() {
     createAuthFields();
 
     setupAuthListener();
+
+    /*
+      Recover session/profile silently.
+      No automatic redirect.
+    */
 
     await checkSession();
 
