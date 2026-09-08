@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://expo-5ths.onrender.com";
+const API_BASE_URL = "https://expodo.onrender.com";
 const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 /* =========================================================
