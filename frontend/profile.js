@@ -1478,3 +1478,1023 @@ async function initialize() {
 }
 
 initialize();
+
+/* =========================================================
+   CONNECTIONS SYSTEM
+========================================================= */
+
+let connections = [];
+let connectionProfiles = {};
+
+
+/* =========================================================
+   LOAD CONNECTIONS
+========================================================= */
+
+async function loadConnections() {
+  if (!supabaseClient || !currentAuthUser) {
+    return;
+  }
+
+  const incomingContainer =
+    document.getElementById("incomingConnections");
+
+  const acceptedContainer =
+    document.getElementById("acceptedConnections");
+
+  if (!incomingContainer || !acceptedContainer) {
+    return;
+  }
+
+  try {
+    const userId = currentAuthUser.id;
+
+    const { data, error } =
+      await supabaseClient
+        .from("connections")
+        .select("*")
+        .or(
+          `requester_id.eq.${userId},recipient_id.eq.${userId}`
+        )
+        .order(
+          "created_at",
+          { ascending: false }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    connections = data || [];
+
+    await loadConnectionProfiles();
+
+    renderConnections();
+
+    /*
+      Refresh match buttons so their state reflects
+      the latest connection information.
+    */
+
+    await loadMatches();
+
+  } catch (error) {
+    console.error(
+      "Connections loading error:",
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   LOAD PROFILES FOR CONNECTIONS
+========================================================= */
+
+async function loadConnectionProfiles() {
+  connectionProfiles = {};
+
+  const ids = new Set();
+
+  connections.forEach(connection => {
+
+    if (
+      connection.requester_id &&
+      connection.requester_id !== currentAuthUser.id
+    ) {
+      ids.add(connection.requester_id);
+    }
+
+    if (
+      connection.recipient_id &&
+      connection.recipient_id !== currentAuthUser.id
+    ) {
+      ids.add(connection.recipient_id);
+    }
+
+  });
+
+  /*
+    The connection table stores Supabase auth UUIDs.
+    Our backend profile endpoint accepts authUserId.
+  */
+
+  for (const id of ids) {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_BASE_URL}/api/profiles/me/${id}`
+        );
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const result =
+        await response.json();
+
+      if (
+        result.success &&
+        result.profile
+      ) {
+        connectionProfiles[id] =
+          normalizeProfile({
+            ...result.profile,
+            authUserId: id
+          });
+      }
+
+    } catch (error) {
+
+      console.warn(
+        "Connection profile lookup failed:",
+        id,
+        error
+      );
+
+    }
+
+  }
+}
+
+
+/* =========================================================
+   GET OTHER USER
+========================================================= */
+
+function getConnectionOtherUser(connection) {
+
+  if (!currentAuthUser) {
+    return "";
+  }
+
+  return connection.requester_id === currentAuthUser.id
+    ? connection.recipient_id
+    : connection.requester_id;
+}
+
+
+/* =========================================================
+   FIND CONNECTION WITH USER
+========================================================= */
+
+function getConnectionWithUser(userId) {
+
+  return connections.find(
+    connection =>
+      (
+        connection.requester_id === currentAuthUser.id &&
+        connection.recipient_id === userId
+      )
+      ||
+      (
+        connection.requester_id === userId &&
+        connection.recipient_id === currentAuthUser.id
+      )
+  ) || null;
+}
+
+
+/* =========================================================
+   CONNECTION STATE
+========================================================= */
+
+function getConnectionState(userId) {
+
+  const connection =
+    getConnectionWithUser(userId);
+
+  if (!connection) {
+    return "none";
+  }
+
+  if (
+    connection.status === "accepted"
+  ) {
+    return "accepted";
+  }
+
+  if (
+    connection.status === "pending"
+  ) {
+
+    if (
+      connection.requester_id ===
+      currentAuthUser.id
+    ) {
+      return "sent";
+    }
+
+    return "incoming";
+  }
+
+  return "none";
+}
+
+
+/* =========================================================
+   SEND CONNECTION REQUEST
+========================================================= */
+
+async function sendConnectionRequest(
+  recipientId,
+  button = null
+) {
+
+  if (
+    !supabaseClient ||
+    !currentAuthUser ||
+    !recipientId
+  ) {
+    return;
+  }
+
+  if (
+    recipientId === currentAuthUser.id
+  ) {
+    return;
+  }
+
+  const existing =
+    getConnectionWithUser(
+      recipientId
+    );
+
+  if (existing) {
+
+    if (
+      existing.status === "accepted"
+    ) {
+      return;
+    }
+
+    if (
+      existing.status === "pending"
+    ) {
+
+      /*
+        If the other person already requested us,
+        do not create a reverse request.
+      */
+
+      if (
+        existing.recipient_id ===
+        currentAuthUser.id
+      ) {
+
+        await updateConnectionStatus(
+          existing.id,
+          "accepted"
+        );
+
+      }
+
+      return;
+    }
+
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Sending...";
+  }
+
+  try {
+
+    const { data, error } =
+      await supabaseClient
+        .from("connections")
+        .insert({
+          requester_id:
+            currentAuthUser.id,
+
+          recipient_id:
+            recipientId,
+
+          status:
+            "pending"
+        })
+        .select()
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    connections.unshift(data);
+
+    await loadConnectionProfiles();
+
+    renderConnections();
+
+    await loadMatches();
+
+  } catch (error) {
+
+    console.error(
+      "Connection request error:",
+      error
+    );
+
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Connect";
+    }
+
+    alert(
+      error.message ||
+      "Unable to send connection request."
+    );
+
+  }
+}
+
+
+/* =========================================================
+   ACCEPT / DECLINE
+========================================================= */
+
+async function updateConnectionStatus(
+  connectionId,
+  status
+) {
+
+  if (
+    !supabaseClient ||
+    !currentAuthUser
+  ) {
+    return;
+  }
+
+  try {
+
+    const { data, error } =
+      await supabaseClient
+        .from("connections")
+        .update({
+          status
+        })
+        .eq(
+          "id",
+          connectionId
+        )
+        .eq(
+          "recipient_id",
+          currentAuthUser.id
+        )
+        .select()
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const index =
+      connections.findIndex(
+        connection =>
+          connection.id ===
+          connectionId
+      );
+
+    if (index !== -1) {
+      connections[index] = data;
+    }
+
+    await loadConnectionProfiles();
+
+    renderConnections();
+
+    await loadMatches();
+
+  } catch (error) {
+
+    console.error(
+      "Connection status update error:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Unable to update connection."
+    );
+
+  }
+}
+
+
+/* =========================================================
+   RENDER CONNECTIONS
+========================================================= */
+
+function renderConnections() {
+
+  const incomingContainer =
+    document.getElementById(
+      "incomingConnections"
+    );
+
+  const acceptedContainer =
+    document.getElementById(
+      "acceptedConnections"
+    );
+
+  if (
+    !incomingContainer ||
+    !acceptedContainer
+  ) {
+    return;
+  }
+
+  const incoming =
+    connections.filter(
+      connection =>
+        connection.recipient_id ===
+        currentAuthUser.id &&
+        connection.status === "pending"
+    );
+
+  const accepted =
+    connections.filter(
+      connection =>
+        connection.status === "accepted"
+    );
+
+  const countElement =
+    document.getElementById(
+      "connectionsCount"
+    );
+
+  const pendingElement =
+    document.getElementById(
+      "pendingCount"
+    );
+
+  if (countElement) {
+    countElement.textContent =
+      `${accepted.length} ${
+        accepted.length === 1
+          ? "connection"
+          : "connections"
+      }`;
+  }
+
+  if (pendingElement) {
+    pendingElement.textContent =
+      incoming.length;
+  }
+
+  /*
+    Incoming
+  */
+
+  if (!incoming.length) {
+
+    incomingContainer.innerHTML = `
+      <div class="connections-empty">
+
+        <div class="connections-empty-icon">
+          ◎
+        </div>
+
+        <strong>
+          No pending requests
+        </strong>
+
+        <p>
+          New connection requests will appear here.
+        </p>
+
+      </div>
+    `;
+
+  } else {
+
+    incomingContainer.innerHTML =
+      incoming
+        .map(connection =>
+          renderIncomingConnection(
+            connection
+          )
+        )
+        .join("");
+
+  }
+
+
+  /*
+    Accepted
+  */
+
+  if (!accepted.length) {
+
+    acceptedContainer.innerHTML = `
+      <div class="connections-empty">
+
+        <div class="connections-empty-icon">
+          ✦
+        </div>
+
+        <strong>
+          Your network is empty
+        </strong>
+
+        <p>
+          Connect with relevant people from your matches.
+        </p>
+
+      </div>
+    `;
+
+  } else {
+
+    acceptedContainer.innerHTML =
+      accepted
+        .map(connection =>
+          renderAcceptedConnection(
+            connection
+          )
+        )
+        .join("");
+
+  }
+
+
+  bindConnectionButtons();
+}
+
+
+/* =========================================================
+   INCOMING CARD
+========================================================= */
+
+function renderIncomingConnection(
+  connection
+) {
+
+  const userId =
+    connection.requester_id;
+
+  const person =
+    connectionProfiles[userId] ||
+    {};
+
+  const name =
+    person.name ||
+    "Expo Go member";
+
+  const role =
+    person.role === "employer"
+      ? "Employer"
+      : "Employee";
+
+  const headline =
+    person.headline ||
+    person.desiredPosition ||
+    person.hiringPosition ||
+    "Professional profile";
+
+  const initial =
+    name
+      .charAt(0)
+      .toUpperCase();
+
+  return `
+    <article
+      class="connection-card"
+    >
+
+      <div class="connection-card-top">
+
+        <div class="connection-avatar">
+          ${escapeHtml(initial)}
+        </div>
+
+        <div class="connection-identity">
+
+          <strong>
+            ${escapeHtml(name)}
+          </strong>
+
+          <span>
+            ${escapeHtml(role)} ·
+            ${escapeHtml(headline)}
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="connection-actions">
+
+        <button
+          type="button"
+          class="connection-btn connection-btn-primary"
+          data-connection-action="accept"
+          data-connection-id="${connection.id}"
+        >
+          Accept
+        </button>
+
+        <button
+          type="button"
+          class="connection-btn connection-btn-danger"
+          data-connection-action="decline"
+          data-connection-id="${connection.id}"
+        >
+          Decline
+        </button>
+
+      </div>
+
+    </article>
+  `;
+}
+
+
+/* =========================================================
+   ACCEPTED CARD
+========================================================= */
+
+function renderAcceptedConnection(
+  connection
+) {
+
+  const userId =
+    getConnectionOtherUser(
+      connection
+    );
+
+  const person =
+    connectionProfiles[userId] ||
+    {};
+
+  const name =
+    person.name ||
+    "Expo Go member";
+
+  const role =
+    person.role === "employer"
+      ? "Employer"
+      : "Employee";
+
+  const headline =
+    person.headline ||
+    person.desiredPosition ||
+    person.hiringPosition ||
+    "Professional profile";
+
+  const initial =
+    name
+      .charAt(0)
+      .toUpperCase();
+
+  return `
+    <article
+      class="connection-card"
+    >
+
+      <div class="connection-card-top">
+
+        <div class="connection-avatar">
+          ${escapeHtml(initial)}
+        </div>
+
+        <div class="connection-identity">
+
+          <strong>
+            ${escapeHtml(name)}
+          </strong>
+
+          <span>
+            ${escapeHtml(role)} ·
+            ${escapeHtml(headline)}
+          </span>
+
+        </div>
+
+      </div>
+
+      <div class="connection-status">
+
+        <span class="connection-status-dot"></span>
+
+        Connected
+
+      </div>
+
+    </article>
+  `;
+}
+
+
+/* =========================================================
+   CONNECTION BUTTON EVENTS
+========================================================= */
+
+function bindConnectionButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-connection-action]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const action =
+            button.dataset.connectionAction;
+
+          const connectionId =
+            button.dataset.connectionId;
+
+          if (
+            action === "accept"
+          ) {
+
+            button.disabled = true;
+            button.textContent =
+              "Accepting...";
+
+            await updateConnectionStatus(
+              connectionId,
+              "accepted"
+            );
+
+          }
+
+          if (
+            action === "decline"
+          ) {
+
+            button.disabled = true;
+            button.textContent =
+              "Declining...";
+
+            await updateConnectionStatus(
+              connectionId,
+              "declined"
+            );
+
+          }
+
+        }
+      );
+
+    });
+}
+
+
+/* =========================================================
+   MATCH CONNECTION BUTTON
+========================================================= */
+
+function getMatchAuthUserId(match) {
+
+  const candidate =
+    match?.profile || {};
+
+  return (
+    candidate.authUserId ||
+    candidate.auth_user_id ||
+    ""
+  );
+}
+
+
+function createMatchConnectionButton(
+  recipientId
+) {
+
+  const state =
+    getConnectionState(
+      recipientId
+    );
+
+  if (state === "accepted") {
+
+    return `
+      <button
+        type="button"
+        class="match-connection-action connected"
+        disabled
+      >
+        Connected
+      </button>
+    `;
+  }
+
+  if (state === "sent") {
+
+    return `
+      <button
+        type="button"
+        class="match-connection-action pending"
+        disabled
+      >
+        Request sent
+      </button>
+    `;
+  }
+
+  if (state === "incoming") {
+
+    const connection =
+      getConnectionWithUser(
+        recipientId
+      );
+
+    return `
+      <button
+        type="button"
+        class="match-connection-action respond"
+        data-match-accept="${connection?.id || ""}"
+      >
+        Accept request
+      </button>
+    `;
+  }
+
+  return `
+    <button
+      type="button"
+      class="match-connection-action"
+      data-match-connect="${recipientId}"
+    >
+      Connect
+    </button>
+  `;
+}
+
+
+/* =========================================================
+   MATCH CONNECTION EVENTS
+========================================================= */
+
+function bindMatchConnectionButtons() {
+
+  document
+    .querySelectorAll(
+      "[data-match-connect]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const recipientId =
+            button.dataset.matchConnect;
+
+          await sendConnectionRequest(
+            recipientId,
+            button
+          );
+
+        }
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(
+      "[data-match-accept]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const connectionId =
+            button.dataset.matchAccept;
+
+          button.disabled = true;
+          button.textContent =
+            "Accepting...";
+
+          await updateConnectionStatus(
+            connectionId,
+            "accepted"
+          );
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   REPLACE MATCH RENDERER CONNECTION ACTION
+========================================================= */
+
+const originalRenderMatches =
+  renderMatches;
+
+renderMatches = function(matches) {
+
+  const grid =
+    document.getElementById(
+      "matchesGrid"
+    );
+
+  if (!grid) {
+    return;
+  }
+
+  /*
+    Use the original renderer first.
+  */
+
+  originalRenderMatches(matches);
+
+  /*
+    Add connection buttons to the cards.
+  */
+
+  const cards =
+    grid.querySelectorAll(
+      ".match-result-card"
+    );
+
+  matches.forEach(
+    (match, index) => {
+
+      const card =
+        cards[index];
+
+      if (!card) {
+        return;
+      }
+
+      const recipientId =
+        getMatchAuthUserId(
+          match
+        );
+
+      if (!recipientId) {
+        return;
+      }
+
+      /*
+        Avoid adding duplicate buttons.
+      */
+
+      if (
+        card.querySelector(
+          ".match-connection-action"
+        )
+      ) {
+        return;
+      }
+
+      card.insertAdjacentHTML(
+        "beforeend",
+        createMatchConnectionButton(
+          recipientId
+        )
+      );
+
+    }
+  );
+
+  bindMatchConnectionButtons();
+};
+
+
+/* =========================================================
+   CONNECTIONS INITIALIZATION
+========================================================= */
+
+async function initializeConnections() {
+
+  if (
+    !supabaseClient ||
+    !currentAuthUser
+  ) {
+    return;
+  }
+
+  await loadConnections();
+
+  console.log(
+    "Expo Go connections are ready."
+  );
+}
+
+
+/*
+  Start connections after the existing
+  profile initialization has completed.
+*/
+
+setTimeout(
+  initializeConnections,
+  0
+);
