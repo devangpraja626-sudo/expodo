@@ -1,16 +1,16 @@
 /* =========================================================
-   EXPO GO — PROFILE CONTROLLER
-   Supabase Auth + Render Backend + Persistent Profile
+EXPO GO — PROFILE CONTROLLER
+Supabase Auth + Render Backend + Persistent Profile
 ========================================================= */
 
 const API_BASE_URL = "https://expodo.onrender.com";
 const PROFILE_STORAGE_KEY = "expoGoProfile";
 
 const SUPABASE_URL =
-  "https://inhxlwsjlddhnpalbocl.supabase.co";
+"https://inhxlwsjlddhnpalbocl.supabase.co";
 
 const SUPABASE_ANON_KEY =
-  "sb_publishable_g3o2x8l0trhHpqndi-wLg_zfYfFaXb";
+"sb_publishable_g3o2x8l0trhHpqndi-wLg_zfYfFaXb";
 
 let supabaseClient = null;
 let profile = null;
@@ -20,2466 +20,2638 @@ let connections = [];
 let connectionProfiles = {};
 
 /* =========================================================
-   SUPABASE
+SUPABASE
 ========================================================= */
 
 function initializeSupabase() {
-  if (!window.supabase) {
-    console.error("Supabase library is not loaded.");
-    return false;
-  }
+if (!window.supabase) {
+console.error("Supabase library is not loaded.");
+return false;
+}
 
-  try {
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
+try {
+supabaseClient = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
 
-    return true;
-  } catch (error) {
-    console.error("Supabase initialization error:", error);
-    return false;
-  }
+return true;
+
+} catch (error) {
+console.error("Supabase initialization error:", error);
+return false;
+}
 }
 
 /* =========================================================
-   HELPERS
+HELPERS
 ========================================================= */
 
 function normalizeArray(value) {
-  if (Array.isArray(value)) {
-    return value
-      .map(item => String(item).trim())
-      .filter(Boolean);
-  }
+if (Array.isArray(value)) {
+return value
+.map(item => String(item).trim())
+.filter(Boolean);
+}
 
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map(item => item.trim())
-      .filter(Boolean);
-  }
+if (typeof value === "string") {
+return value
+.split(",")
+.map(item => item.trim())
+.filter(Boolean);
+}
 
-  return [];
+return [];
 }
 
 function normalizeProfile(data = {}) {
-  return {
-    id: data.id || "",
+return {
+id: data.id || "",
 
-    authUserId:
-      data.authUserId ||
-      data.auth_user_id ||
-      currentAuthUser?.id ||
-      "",
+authUserId:
+  data.authUserId ||
+  data.auth_user_id ||
+  currentAuthUser?.id ||
+  "",
 
-    name: data.name || "",
-    role: data.role || "",
-    headline: data.headline || "",
+name: data.name || "",
+role: data.role || "",
+headline: data.headline || "",
 
-    skills: normalizeArray(data.skills),
+skills: normalizeArray(data.skills),
 
-    education: data.education || "",
-    experience: data.experience || "",
+education: data.education || "",
+experience: data.experience || "",
 
-    desiredPosition:
-      data.desiredPosition ||
-      data.desired_position ||
-      "",
+desiredPosition:
+  data.desiredPosition ||
+  data.desired_position ||
+  "",
 
-    location: data.location || "",
+location: data.location || "",
 
-    workPreference:
-      data.workPreference ||
-      data.work_preference ||
-      "",
+workPreference:
+  data.workPreference ||
+  data.work_preference ||
+  "",
 
-    about: data.about || "",
+about: data.about || "",
 
-    company: data.company || "",
+company: data.company || "",
 
-    hiringPosition:
-      data.hiringPosition ||
-      data.hiring_position ||
-      "",
+hiringPosition:
+  data.hiringPosition ||
+  data.hiring_position ||
+  "",
 
-    requiredSkills: normalizeArray(
-      data.requiredSkills ||
-      data.required_skills
-    ),
+requiredSkills: normalizeArray(
+  data.requiredSkills ||
+  data.required_skills
+),
 
-    experienceRequired:
-      data.experienceRequired ||
-      data.experience_required ||
-      "",
+experienceRequired:
+  data.experienceRequired ||
+  data.experience_required ||
+  "",
 
-    workType:
-      data.workType ||
-      data.work_type ||
-      "",
+workType:
+  data.workType ||
+  data.work_type ||
+  "",
 
-    createdAt:
-      data.createdAt ||
-      data.created_at ||
-      new Date().toISOString(),
+createdAt:
+  data.createdAt ||
+  data.created_at ||
+  new Date().toISOString(),
 
-    updatedAt:
-      data.updatedAt ||
-      data.updated_at ||
-      new Date().toISOString()
-  };
+updatedAt:
+  data.updatedAt ||
+  data.updated_at ||
+  new Date().toISOString()
+
+};
 }
 
 function saveLocalProfile() {
-  if (!profile) return;
+if (!profile) return;
 
-  localStorage.setItem(
-    PROFILE_STORAGE_KEY,
-    JSON.stringify(profile)
-  );
+localStorage.setItem(
+PROFILE_STORAGE_KEY,
+JSON.stringify(profile)
+);
 }
 
 function setText(id, value) {
-  const element =
-    document.getElementById(id);
+const element =
+document.getElementById(id);
 
-  if (element) {
-    element.textContent =
-      value || "Not added yet";
-  }
+if (element) {
+element.textContent =
+value || "Not added yet";
+}
 }
 
 function setValue(id, value) {
-  const element =
-    document.getElementById(id);
+const element =
+document.getElementById(id);
 
-  if (element) {
-    element.value = value || "";
-  }
+if (element) {
+element.value = value || "";
+}
 }
 
 function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+return String(value || "")
+.replaceAll("&", "&")
+.replaceAll("<", "<")
+.replaceAll(">", ">")
+.replaceAll('"', """)
+.replaceAll("'", "'");
 }
 
 /* =========================================================
-   AUTH
+AUTH
+FIXED SESSION RECOVERY
 ========================================================= */
 
 async function getAuthenticatedUser() {
-  if (!supabaseClient) {
-    return null;
-  }
+if (!supabaseClient) {
+return null;
+}
 
-  try {
-    const {
-      data,
-      error
-    } = await supabaseClient.auth.getUser();
+try {
 
-    if (error) {
-      console.error(
-        "Auth user error:",
-        error
-      );
+/*
+  IMPORTANT:
 
-      return null;
-    }
+  On a fresh profile.html load, Supabase may still be
+  restoring the browser session.
 
-    return data?.user || null;
+  getUser() alone can therefore return no user for a
+  very short period.
 
-  } catch (error) {
-    console.error(
-      "Auth lookup error:",
-      error
-    );
+  We first check the local session, then give Supabase
+  a moment to restore it before using getUser().
+*/
 
-    return null;
-  }
+const {
+  data: sessionData,
+  error: sessionError
+} =
+  await supabaseClient.auth.getSession();
+
+if (sessionError) {
+  console.error(
+    "Session error:",
+    sessionError
+  );
+}
+
+const sessionUser =
+  sessionData?.session?.user;
+
+if (sessionUser) {
+  return sessionUser;
+}
+
+/*
+  Small recovery delay for page navigation /
+  Supabase session restoration.
+*/
+
+await new Promise(resolve =>
+  setTimeout(resolve, 500)
+);
+
+const {
+  data,
+  error
+} =
+  await supabaseClient.auth.getUser();
+
+if (error) {
+  console.error(
+    "Auth user error:",
+    error
+  );
+
+  return null;
+}
+
+return data?.user || null;
+
+} catch (error) {
+
+console.error(
+  "Auth lookup error:",
+  error
+);
+
+return null;
+
+}
 }
 
 /* =========================================================
-   BACKEND PROFILE
+BACKEND PROFILE
 ========================================================= */
 
 async function fetchServerProfile(userId) {
-  if (!userId) return null;
+if (!userId) return null;
 
-  try {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(userId)}`
-      );
+try {
 
-    let result = {};
+const response =
+  await fetch(
+    `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(userId)}`
+  );
 
-    try {
-      result =
-        await response.json();
-    } catch (_) {
-      result = {};
-    }
+let result = {};
 
-    if (
-      response.ok &&
-      result.success &&
-      result.profile
-    ) {
-      return result.profile;
-    }
+try {
+  result =
+    await response.json();
+} catch (_) {
+  result = {};
+}
 
-    return null;
+if (
+  response.ok &&
+  result.success &&
+  result.profile
+) {
+  return result.profile;
+}
 
-  } catch (error) {
-    console.warn(
-      "Backend profile lookup unavailable.",
-      error
-    );
+return null;
 
-    return null;
-  }
+} catch (error) {
+
+console.warn(
+  "Backend profile lookup unavailable.",
+  error
+);
+
+return null;
+
+}
 }
 
 /* =========================================================
-   SYNC PROFILE TO BACKEND
+SYNC PROFILE TO BACKEND
 ========================================================= */
 
 async function syncProfileToBackend() {
-  if (
-    !profile ||
-    !currentAuthUser
-  ) {
-    return false;
-  }
 
-  const payload = {
-    ...profile,
+if (
+!profile ||
+!currentAuthUser
+) {
+return false;
+}
 
-    id:
-      profile.id ||
-      currentAuthUser.id,
+const payload = {
+...profile,
 
-    authUserId:
-      currentAuthUser.id,
+id:
+  profile.id ||
+  currentAuthUser.id,
 
-    auth_user_id:
-      currentAuthUser.id
-  };
+authUserId:
+  currentAuthUser.id,
 
-  try {
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/profiles`,
-        {
-          method: "POST",
+auth_user_id:
+  currentAuthUser.id
 
-          headers: {
-            "Content-Type":
-              "application/json",
+};
 
-            "Accept":
-              "application/json"
-          },
+try {
 
-          body:
-            JSON.stringify(payload)
-        }
-      );
+const response =
+  await fetch(
+    `${API_BASE_URL}/api/profiles`,
+    {
+      method: "POST",
 
-    let result = {};
+      headers: {
+        "Content-Type":
+          "application/json",
 
-    try {
-      result =
-        await response.json();
-    } catch (_) {
-      result = {};
+        "Accept":
+          "application/json"
+      },
+
+      body:
+        JSON.stringify(payload)
     }
+  );
 
-    if (
-      !response.ok ||
-      !result.success
-    ) {
-      throw new Error(
-        result.message ||
-        "Profile sync failed."
-      );
-    }
+let result = {};
 
-    if (result.profile) {
-      profile =
-        normalizeProfile({
-          ...profile,
-          ...result.profile,
+try {
+  result =
+    await response.json();
+} catch (_) {
+  result = {};
+}
 
-          authUserId:
-            currentAuthUser.id
-        });
+if (
+  !response.ok ||
+  !result.success
+) {
+  throw new Error(
+    result.message ||
+    "Profile sync failed."
+  );
+}
 
-      saveLocalProfile();
-    }
+if (result.profile) {
 
-    return true;
+  profile =
+    normalizeProfile({
+      ...profile,
+      ...result.profile,
 
-  } catch (error) {
-    console.error(
-      "Profile sync error:",
-      error
-    );
+      authUserId:
+        currentAuthUser.id
+    });
 
-    return false;
-  }
+  saveLocalProfile();
+}
+
+return true;
+
+} catch (error) {
+
+console.error(
+  "Profile sync error:",
+  error
+);
+
+return false;
+
+}
 }
 
 /* =========================================================
-   LOAD PROFILE
+LOAD PROFILE
 ========================================================= */
 
 async function loadProfile() {
-  try {
-    currentAuthUser =
-      await getAuthenticatedUser();
 
-    if (!currentAuthUser) {
-      console.warn(
-        "No authenticated user."
+try {
+
+currentAuthUser =
+  await getAuthenticatedUser();
+
+/*
+  IMPORTANT FIX:
+
+  Do NOT immediately redirect to index.html.
+
+  A fresh page load can temporarily have no restored
+  session. Returning false lets initialization stop
+  safely instead of forcing the user back home.
+*/
+
+if (!currentAuthUser) {
+
+  console.warn(
+    "No authenticated user after session recovery."
+  );
+
+  return false;
+}
+
+const metadata =
+  currentAuthUser.user_metadata ||
+  {};
+
+let localProfile = null;
+
+const saved =
+  localStorage.getItem(
+    PROFILE_STORAGE_KEY
+  );
+
+if (saved) {
+
+  try {
+
+    localProfile =
+      normalizeProfile(
+        JSON.parse(saved)
       );
 
-      window.location.href =
-        "index.html";
+  } catch (error) {
 
-      return false;
-    }
+    console.warn(
+      "Invalid local profile.",
+      error
+    );
+  }
+}
+
+const serverProfile =
+  await fetchServerProfile(
+    currentAuthUser.id
+  );
+
+/* =====================================================
+   SERVER PROFILE EXISTS
+===================================================== */
+
+if (serverProfile) {
+
+  profile =
+    normalizeProfile({
+
+      ...serverProfile,
+
+      name:
+        serverProfile.name ||
+        metadata.name ||
+        localProfile?.name ||
+        currentAuthUser.email ||
+        "",
+
+      role:
+        serverProfile.role ||
+        metadata.role ||
+        localProfile?.role ||
+        "",
+
+      headline:
+        serverProfile.headline ||
+        metadata.headline ||
+        localProfile?.headline ||
+        "",
+
+      authUserId:
+        currentAuthUser.id
+    });
+
+  saveLocalProfile();
+
+  const needsRepair =
+    !serverProfile.name ||
+    !serverProfile.role ||
+    !serverProfile.headline;
+
+  if (needsRepair) {
+    await syncProfileToBackend();
+  }
+
+  return true;
+}
+
+/* =====================================================
+   LOCAL PROFILE EXISTS
+===================================================== */
+
+if (localProfile) {
+
+  profile =
+    normalizeProfile({
+
+      ...localProfile,
+
+      name:
+        localProfile.name ||
+        metadata.name ||
+        currentAuthUser.email ||
+        "",
+
+      role:
+        localProfile.role ||
+        metadata.role ||
+        "",
+
+      headline:
+        localProfile.headline ||
+        metadata.headline ||
+        "",
+
+      authUserId:
+        currentAuthUser.id
+    });
+
+  saveLocalProfile();
+
+  if (profile.role) {
+    await syncProfileToBackend();
+  }
+
+  return true;
+}
+
+/* =====================================================
+   CREATE PROFILE FROM SUPABASE METADATA
+===================================================== */
+
+const role =
+  metadata.role || "";
+
+if (role) {
+
+  profile =
+    normalizeProfile({
+
+      id:
+        currentAuthUser.id,
+
+      authUserId:
+        currentAuthUser.id,
+
+      name:
+        metadata.name ||
+        currentAuthUser.email ||
+        "",
+
+      role,
+
+      headline:
+        metadata.headline ||
+        ""
+    });
+
+  saveLocalProfile();
+
+  await syncProfileToBackend();
+
+  return true;
+}
+
+/* =====================================================
+   NO PROFILE
+
+   Do NOT redirect automatically.
+   The authenticated user can remain on the profile
+   page while the profile is being recovered.
+===================================================== */
+
+console.warn(
+  "Authenticated user has no profile data yet."
+);
+
+return false;
+
+} catch (error) {
+
+console.error(
+  "Profile loading error:",
+  error
+);
+
+/*
+  Try local profile as a final recovery mechanism.
+*/
+
+const saved =
+  localStorage.getItem(
+    PROFILE_STORAGE_KEY
+  );
+
+if (
+  saved &&
+  currentAuthUser
+) {
+
+  try {
+
+    const local =
+      normalizeProfile(
+        JSON.parse(saved)
+      );
 
     const metadata =
       currentAuthUser.user_metadata ||
       {};
 
-    let localProfile = null;
+    profile =
+      normalizeProfile({
 
-    const saved =
-      localStorage.getItem(
-        PROFILE_STORAGE_KEY
-      );
+        ...local,
 
-    if (saved) {
-      try {
-        localProfile =
-          normalizeProfile(
-            JSON.parse(saved)
-          );
-      } catch (error) {
-        console.warn(
-          "Invalid local profile.",
-          error
-        );
-      }
-    }
+        authUserId:
+          currentAuthUser.id,
 
-    const serverProfile =
-      await fetchServerProfile(
-        currentAuthUser.id
-      );
+        name:
+          local.name ||
+          metadata.name ||
+          currentAuthUser.email ||
+          "",
 
-    /* =====================================================
-       SERVER PROFILE EXISTS
-    ===================================================== */
+        role:
+          local.role ||
+          metadata.role ||
+          "",
 
-    if (serverProfile) {
+        headline:
+          local.headline ||
+          metadata.headline ||
+          ""
+      });
 
-      profile =
-        normalizeProfile({
-          ...serverProfile,
+    saveLocalProfile();
 
-          /*
-            Supabase metadata is now a fallback
-            instead of being ignored.
-          */
+    return !!profile.role;
 
-          name:
-            serverProfile.name ||
-            metadata.name ||
-            localProfile?.name ||
-            currentAuthUser.email ||
-            "",
+  } catch (_) {}
+}
 
-          role:
-            serverProfile.role ||
-            metadata.role ||
-            localProfile?.role ||
-            "",
+/*
+  IMPORTANT:
+  Never redirect to index.html from this error path.
+  This prevents the dashboard from disappearing because
+  of a temporary profile/backend/auth issue.
+*/
 
-          headline:
-            serverProfile.headline ||
-            metadata.headline ||
-            localProfile?.headline ||
-            "",
+return false;
 
-          authUserId:
-            currentAuthUser.id
-        });
-
-      saveLocalProfile();
-
-      /*
-        If the backend profile was missing important
-        identity information, repair it.
-      */
-
-      const needsRepair =
-        !serverProfile.name ||
-        !serverProfile.role ||
-        !serverProfile.headline;
-
-      if (needsRepair) {
-        await syncProfileToBackend();
-      }
-
-      return true;
-    }
-
-    /* =====================================================
-       LOCAL PROFILE EXISTS
-    ===================================================== */
-
-    if (localProfile) {
-
-      profile =
-        normalizeProfile({
-          ...localProfile,
-
-          name:
-            localProfile.name ||
-            metadata.name ||
-            currentAuthUser.email ||
-            "",
-
-          role:
-            localProfile.role ||
-            metadata.role ||
-            "",
-
-          headline:
-            localProfile.headline ||
-            metadata.headline ||
-            "",
-
-          authUserId:
-            currentAuthUser.id
-        });
-
-      saveLocalProfile();
-
-      if (profile.role) {
-        await syncProfileToBackend();
-      }
-
-      return true;
-    }
-
-    /* =====================================================
-       CREATE PROFILE FROM SUPABASE METADATA
-    ===================================================== */
-
-    const role =
-      metadata.role || "";
-
-    if (role) {
-
-      profile =
-        normalizeProfile({
-          id:
-            currentAuthUser.id,
-
-          authUserId:
-            currentAuthUser.id,
-
-          name:
-            metadata.name ||
-            currentAuthUser.email ||
-            "",
-
-          role,
-
-          headline:
-            metadata.headline ||
-            ""
-        });
-
-      saveLocalProfile();
-
-      await syncProfileToBackend();
-
-      return true;
-    }
-
-    /* =====================================================
-       NO PROFILE
-    ===================================================== */
-
-    window.location.href =
-      "index.html";
-
-    return false;
-
-  } catch (error) {
-
-    console.error(
-      "Profile loading error:",
-      error
-    );
-
-    const saved =
-      localStorage.getItem(
-        PROFILE_STORAGE_KEY
-      );
-
-    if (
-      saved &&
-      currentAuthUser
-    ) {
-
-      try {
-
-        const local =
-          normalizeProfile(
-            JSON.parse(saved)
-          );
-
-        const metadata =
-          currentAuthUser.user_metadata ||
-          {};
-
-        profile =
-          normalizeProfile({
-            ...local,
-
-            authUserId:
-              currentAuthUser.id,
-
-            name:
-              local.name ||
-              metadata.name ||
-              currentAuthUser.email ||
-              "",
-
-            role:
-              local.role ||
-              metadata.role ||
-              "",
-
-            headline:
-              local.headline ||
-              metadata.headline ||
-              ""
-          });
-
-        saveLocalProfile();
-
-        return !!profile.role;
-
-      } catch (_) {}
-    }
-
-    window.location.href =
-      "index.html";
-
-    return false;
-  }
+}
 }
 
 /* =========================================================
-   PROFILE DISPLAY
+PROFILE DISPLAY
 ========================================================= */
 
 function renderProfile() {
-  if (!profile) return;
 
-  setText(
-    "profileName",
-    profile.name
-  );
+if (!profile) return;
 
-  setText(
-    "profileHeadline",
-    profile.headline
-  );
+setText(
+"profileName",
+profile.name
+);
 
-  setText(
-    "profileRole",
-    profile.role === "employer"
-      ? "Employer"
-      : "Employee"
-  );
+setText(
+"profileHeadline",
+profile.headline
+);
 
-  setText(
-    "profileSkills",
-    profile.skills.length
-      ? profile.skills.join(", ")
-      : ""
-  );
+setText(
+"profileRole",
+profile.role === "employer"
+? "Employer"
+: "Employee"
+);
 
-  setText(
-    "profileEducation",
-    profile.education
-  );
+setText(
+"profileSkills",
+profile.skills.length
+? profile.skills.join(", ")
+: ""
+);
 
-  setText(
-    "profileExperience",
-    profile.experience
-  );
+setText(
+"profileEducation",
+profile.education
+);
 
-  setText(
-    "profileDesiredPosition",
-    profile.desiredPosition
-  );
+setText(
+"profileExperience",
+profile.experience
+);
 
-  setText(
-    "profileLocation",
-    profile.location
-  );
+setText(
+"profileDesiredPosition",
+profile.desiredPosition
+);
 
-  setText(
-    "profileWorkPreference",
-    profile.workPreference
-  );
+setText(
+"profileLocation",
+profile.location
+);
 
-  setText(
-    "profileCompany",
-    profile.company
-  );
+setText(
+"profileWorkPreference",
+profile.workPreference
+);
 
-  setText(
-    "profileHiringPosition",
-    profile.hiringPosition
-  );
+setText(
+"profileCompany",
+profile.company
+);
 
-  setText(
-    "profileRequiredSkills",
-    profile.requiredSkills.length
-      ? profile.requiredSkills.join(", ")
-      : ""
-  );
+setText(
+"profileHiringPosition",
+profile.hiringPosition
+);
 
-  setText(
-    "profileExperienceRequired",
-    profile.experienceRequired
-  );
+setText(
+"profileRequiredSkills",
+profile.requiredSkills.length
+? profile.requiredSkills.join(", ")
+: ""
+);
 
-  setText(
-    "profileWorkType",
-    profile.workType
-  );
+setText(
+"profileExperienceRequired",
+profile.experienceRequired
+);
 
-  setText(
-    "profileAbout",
-    profile.about
-  );
+setText(
+"profileWorkType",
+profile.workType
+);
 
-  const employerLocation =
-    document.getElementById(
-      "profileLocationEmployer"
-    );
+setText(
+"profileAbout",
+profile.about
+);
 
-  if (employerLocation) {
-    employerLocation.textContent =
-      profile.location ||
-      "Not added yet";
-  }
+const employerLocation =
+document.getElementById(
+"profileLocationEmployer"
+);
 
-  updateRoleSections();
-  updateAvatar();
-  updateCompletion();
+if (employerLocation) {
+
+employerLocation.textContent =
+  profile.location ||
+  "Not added yet";
+
+}
+
+updateRoleSections();
+updateAvatar();
+updateCompletion();
 }
 
 /* =========================================================
-   ROLE SECTIONS
+ROLE SECTIONS
 ========================================================= */
 
 function updateRoleSections() {
-  if (!profile) return;
 
-  const employee =
-    profile.role === "employee";
+if (!profile) return;
 
-  const employer =
-    profile.role === "employer";
+const employee =
+profile.role === "employee";
 
-  document
-    .querySelectorAll(
-      "[data-employee-only]"
-    )
-    .forEach(element => {
-      element.style.display =
-        employee ? "" : "none";
-    });
+const employer =
+profile.role === "employer";
 
-  document
-    .querySelectorAll(
-      "[data-employer-only]"
-    )
-    .forEach(element => {
-      element.style.display =
-        employer ? "" : "none";
-    });
+document
+.querySelectorAll(
+"[data-employee-only]"
+)
+.forEach(element => {
+
+  element.style.display =
+    employee ? "" : "none";
+});
+
+document
+.querySelectorAll(
+"[data-employer-only]"
+)
+.forEach(element => {
+
+  element.style.display =
+    employer ? "" : "none";
+});
+
 }
 
 /* =========================================================
-   AVATAR
+AVATAR
 ========================================================= */
 
 function updateAvatar() {
-  const avatar =
-    document.getElementById(
-      "profileAvatar"
-    );
 
-  if (!avatar) return;
+const avatar =
+document.getElementById(
+"profileAvatar"
+);
 
-  avatar.textContent =
-    profile.name
-      ? profile.name
-          .charAt(0)
-          .toUpperCase()
-      : "E";
+if (!avatar) return;
+
+avatar.textContent =
+profile.name
+? profile.name
+.charAt(0)
+.toUpperCase()
+: "E";
 }
 
 /* =========================================================
-   COMPLETION
+COMPLETION
 ========================================================= */
 
 function updateCompletion() {
-  if (!profile) return;
 
-  const fields =
-    profile.role === "employee"
-      ? [
-          profile.name,
-          profile.headline,
-          profile.skills.length,
-          profile.education,
-          profile.experience,
-          profile.desiredPosition,
-          profile.location,
-          profile.workPreference,
-          profile.about
-        ]
-      : [
-          profile.name,
-          profile.headline,
-          profile.company,
-          profile.hiringPosition,
-          profile.requiredSkills.length,
-          profile.experienceRequired,
-          profile.location,
-          profile.workType,
-          profile.about
-        ];
+if (!profile) return;
 
-  const completed =
-    fields.filter(Boolean).length;
+const fields =
+profile.role === "employee"
+? [
+profile.name,
+profile.headline,
+profile.skills.length,
+profile.education,
+profile.experience,
+profile.desiredPosition,
+profile.location,
+profile.workPreference,
+profile.about
+]
+: [
+profile.name,
+profile.headline,
+profile.company,
+profile.hiringPosition,
+profile.requiredSkills.length,
+profile.experienceRequired,
+profile.location,
+profile.workType,
+profile.about
+];
 
-  const total =
-    fields.length;
+const completed =
+fields.filter(Boolean).length;
 
-  const percentage =
-    total
-      ? Math.round(
-          (completed / total) * 100
-        )
-      : 0;
+const total =
+fields.length;
 
-  setText(
-    "completionNumber",
-    `${percentage}%`
-  );
+const percentage =
+total
+? Math.round(
+(completed / total) * 100
+)
+: 0;
 
-  const fill =
-    document.getElementById(
-      "completionFill"
-    );
+setText(
+"completionNumber",
+"${percentage}%"
+);
 
-  if (fill) {
-    fill.style.width =
-      `${percentage}%`;
-  }
+const fill =
+document.getElementById(
+"completionFill"
+);
 
-  setText(
-    "completionFields",
-    `${completed} of ${total} sections completed`
-  );
+if (fill) {
 
-  setText(
-    "completionText",
-    percentage === 100
-      ? "Your profile is complete."
-      : "Complete your profile to improve matching."
-  );
+fill.style.width =
+  `${percentage}%`;
 
-  setText(
-    "matchingStatus",
-    percentage === 100
-      ? "Ready for matching"
-      : "Complete your profile for stronger matches"
-  );
+}
 
-  const nextTitle =
-    document.getElementById(
-      "nextStepTitle"
-    );
+setText(
+"completionFields",
+"${completed} of ${total} sections completed"
+);
 
-  const nextText =
-    document.getElementById(
-      "nextStepText"
-    );
+setText(
+"completionText",
+percentage === 100
+? "Your profile is complete."
+: "Complete your profile to improve matching."
+);
 
-  if (percentage === 100) {
+setText(
+"matchingStatus",
+percentage === 100
+? "Ready for matching"
+: "Complete your profile for stronger matches"
+);
 
-    if (nextTitle) {
-      nextTitle.textContent =
-        "You're ready to match.";
-    }
+const nextTitle =
+document.getElementById(
+"nextStepTitle"
+);
 
-    if (nextText) {
-      nextText.textContent =
-        "Expo Go can now find relevant people and opportunities for you.";
-    }
+const nextText =
+document.getElementById(
+"nextStepText"
+);
 
-  } else {
+if (percentage === 100) {
 
-    if (nextTitle) {
-      nextTitle.textContent =
-        "Complete your profile";
-    }
+if (nextTitle) {
 
-    if (nextText) {
-      nextText.textContent =
-        "Add the missing details to improve your potential matches.";
-    }
-  }
+  nextTitle.textContent =
+    "You're ready to match.";
+}
+
+if (nextText) {
+
+  nextText.textContent =
+    "Expo Go can now find relevant people and opportunities for you.";
+}
+
+} else {
+
+if (nextTitle) {
+
+  nextTitle.textContent =
+    "Complete your profile";
+}
+
+if (nextText) {
+
+  nextText.textContent =
+    "Add the missing details to improve your potential matches.";
+}
+
+}
 }
 
 /* =========================================================
-   MATCHING
+MATCHING
 ========================================================= */
 
 async function loadMatches() {
-  const grid =
-    document.getElementById(
-      "matchesGrid"
-    );
 
-  const empty =
-    document.getElementById(
-      "matchesEmpty"
-    );
+const grid =
+document.getElementById(
+"matchesGrid"
+);
 
-  const status =
-    document.getElementById(
-      "matchesStatus"
-    );
+const empty =
+document.getElementById(
+"matchesEmpty"
+);
 
-  const title =
-    document.getElementById(
-      "matchesTitle"
-    );
+const status =
+document.getElementById(
+"matchesStatus"
+);
 
-  const subtitle =
-    document.getElementById(
-      "matchesSubtitle"
-    );
+const title =
+document.getElementById(
+"matchesTitle"
+);
 
-  if (!grid || !profile) {
-    return;
-  }
+const subtitle =
+document.getElementById(
+"matchesSubtitle"
+);
 
-  if (title) {
-    title.textContent =
-      profile.role === "employee"
-        ? "Employers matched in your domain"
-        : "Profiles matched in your domain";
-  }
+if (!grid || !profile) {
+return;
+}
 
-  if (subtitle) {
-    subtitle.textContent =
-      profile.role === "employee"
-        ? "Relevant employers based on your profile."
-        : "Relevant professionals based on your hiring needs.";
-  }
+if (title) {
 
-  if (status) {
-    status.textContent =
-      "Finding matches...";
-  }
+title.textContent =
+  profile.role === "employee"
+    ? "Employers matched in your domain"
+    : "Profiles matched in your domain";
 
-  if (empty) {
-    empty.style.display = "";
-  }
+}
 
-  try {
+if (subtitle) {
 
-    const response =
-      await fetch(
-        `${API_BASE_URL}/api/match`,
-        {
-          method: "POST",
+subtitle.textContent =
+  profile.role === "employee"
+    ? "Relevant employers based on your profile."
+    : "Relevant professionals based on your hiring needs.";
 
-          headers: {
-            "Content-Type":
-              "application/json",
+}
 
-            "Accept":
-              "application/json"
-          },
+if (status) {
 
-          body:
-            JSON.stringify(profile)
-        }
-      );
+status.textContent =
+  "Finding matches...";
 
-    let result = {};
+}
 
-    try {
-      result =
-        await response.json();
-    } catch (_) {
-      result = {};
+if (empty) {
+empty.style.display = "";
+}
+
+try {
+
+const response =
+  await fetch(
+    `${API_BASE_URL}/api/match`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        "Accept":
+          "application/json"
+      },
+
+      body:
+        JSON.stringify(profile)
     }
+  );
 
-    if (
-      !response.ok ||
-      !result.success
-    ) {
-      throw new Error(
-        result.message ||
-        "Matching failed."
-      );
-    }
+let result = {};
 
-    renderMatches(
-      result.matches || []
-    );
+try {
 
-    if (status) {
-      status.textContent =
-        `${result.count || 0} matches`;
-    }
+  result =
+    await response.json();
 
-  } catch (error) {
+} catch (_) {
 
-    console.error(
-      "Matching error:",
-      error
-    );
+  result = {};
+}
 
-    if (status) {
-      status.textContent =
-        "Matching unavailable";
-    }
+if (
+  !response.ok ||
+  !result.success
+) {
 
-    if (empty) {
+  throw new Error(
+    result.message ||
+    "Matching failed."
+  );
+}
 
-      empty.style.display =
-        "";
+renderMatches(
+  result.matches || []
+);
 
-      empty.innerHTML = `
-        <div class="matches-empty-icon">✦</div>
-        <h3>Matches are coming together</h3>
-        <p>
-          Complete your profile and make sure the
-          Expo Go backend is online to discover matches.
-        </p>
-      `;
-    }
-  }
+if (status) {
+
+  status.textContent =
+    `${result.count || 0} matches`;
+}
+
+} catch (error) {
+
+console.error(
+  "Matching error:",
+  error
+);
+
+if (status) {
+
+  status.textContent =
+    "Matching unavailable";
+}
+
+if (empty) {
+
+  empty.style.display =
+    "";
+
+  empty.innerHTML = `
+    <div class="matches-empty-icon">✦</div>
+
+    <h3>Matches are coming together</h3>
+
+    <p>
+      Complete your profile and make sure the
+      Expo Go backend is online to discover matches.
+    </p>
+  `;
+}
+
+}
 }
 
 /* =========================================================
-   RENDER MATCHES
+RENDER MATCHES
 ========================================================= */
 
 function renderMatches(matches) {
 
-  const grid =
-    document.getElementById(
-      "matchesGrid"
-    );
+const grid =
+document.getElementById(
+"matchesGrid"
+);
 
-  const empty =
-    document.getElementById(
-      "matchesEmpty"
-    );
+const empty =
+document.getElementById(
+"matchesEmpty"
+);
 
-  if (!grid) return;
+if (!grid) return;
 
-  grid
-    .querySelectorAll(
-      ".match-result-card"
-    )
-    .forEach(card =>
-      card.remove()
-    );
+grid
+.querySelectorAll(
+".match-result-card"
+)
+.forEach(card =>
+card.remove()
+);
 
-  if (!matches.length) {
+if (!matches.length) {
 
-    if (empty) {
+if (empty) {
 
-      empty.style.display =
-        "";
+  empty.style.display =
+    "";
 
-      empty.innerHTML = `
-        <div class="matches-empty-icon">✦</div>
-        <h3>No strong matches yet</h3>
-        <p>
-          Add more skills, experience, location,
-          position and work preferences to improve
-          your matching results.
-        </p>
-      `;
-    }
+  empty.innerHTML = `
+    <div class="matches-empty-icon">✦</div>
 
-    return;
-  }
+    <h3>No strong matches yet</h3>
 
-  if (empty) {
-    empty.style.display =
-      "none";
-  }
+    <p>
+      Add more skills, experience, location,
+      position and work preferences to improve
+      your matching results.
+    </p>
+  `;
+}
 
-  matches.forEach(match => {
+return;
 
-    const candidate =
-      normalizeProfile(
-        match.profile || {}
-      );
+}
 
-    const card =
-      document.createElement(
-        "article"
-      );
+if (empty) {
+empty.style.display =
+"none";
+}
 
-    card.className =
-      "match-result-card";
+matches.forEach(match => {
 
-    const initial =
-      candidate.name
-        ? candidate.name
-            .charAt(0)
-            .toUpperCase()
-        : "?";
+const candidate =
+  normalizeProfile(
+    match.profile || {}
+  );
 
-    const title =
-      candidate.role === "employer"
-        ? candidate.hiringPosition ||
-          candidate.headline ||
-          "Hiring opportunity"
-        : candidate.desiredPosition ||
-          candidate.headline ||
-          "Professional";
+const card =
+  document.createElement(
+    "article"
+  );
 
-    const company =
-      candidate.role === "employer"
-        ? candidate.company
-        : candidate.name;
+card.className =
+  "match-result-card";
 
-    const skills =
-      candidate.role === "employer"
-        ? candidate.requiredSkills
-        : candidate.skills;
+const initial =
+  candidate.name
+    ? candidate.name
+        .charAt(0)
+        .toUpperCase()
+    : "?";
 
-    const skillText =
-      skills.length
-        ? skills
-            .slice(0, 4)
-            .join(" · ")
-        : "Skills not added";
+const title =
+  candidate.role === "employer"
+    ? candidate.hiringPosition ||
+      candidate.headline ||
+      "Hiring opportunity"
+    : candidate.desiredPosition ||
+      candidate.headline ||
+      "Professional";
 
-    const matchedText =
-      match.matchedOn?.length
-        ? match.matchedOn.join(" · ")
-        : "Profile compatibility";
+const company =
+  candidate.role === "employer"
+    ? candidate.company
+    : candidate.name;
 
-    const recipientId =
-      getMatchAuthUserId(match);
+const skills =
+  candidate.role === "employer"
+    ? candidate.requiredSkills
+    : candidate.skills;
 
-    const connectionAction =
-      recipientId
-        ? createMatchConnectionButton(
-            recipientId
-          )
-        : "";
+const skillText =
+  skills.length
+    ? skills
+        .slice(0, 4)
+        .join(" · ")
+    : "Skills not added";
 
-    card.innerHTML = `
-      <div class="match-card-top">
+const matchedText =
+  match.matchedOn?.length
+    ? match.matchedOn.join(" · ")
+    : "Profile compatibility";
 
-        <div class="match-avatar">
-          ${escapeHtml(initial)}
-        </div>
+const recipientId =
+  getMatchAuthUserId(match);
 
-        <div class="match-card-identity">
+const connectionAction =
+  recipientId
+    ? createMatchConnectionButton(
+        recipientId
+      )
+    : "";
 
-          <span class="match-role">
-            ${
-              candidate.role === "employer"
-                ? "Employer"
-                : "Employee"
-            }
-          </span>
+card.innerHTML = `
 
-          <h3>
-            ${escapeHtml(
-              company ||
-              candidate.name
-            )}
-          </h3>
+  <div class="match-card-top">
 
-          <p>
-            ${escapeHtml(title)}
-          </p>
+    <div class="match-avatar">
+      ${escapeHtml(initial)}
+    </div>
 
-        </div>
+    <div class="match-card-identity">
 
-        <div class="match-score">
+      <span class="match-role">
+        ${
+          candidate.role === "employer"
+            ? "Employer"
+            : "Employee"
+        }
+      </span>
 
-          <strong>
-            ${Number(
-              match.matchScore
-            ) || 0}%
-          </strong>
+      <h3>
+        ${escapeHtml(
+          company ||
+          candidate.name
+        )}
+      </h3>
 
-          <span>
-            match
-          </span>
+      <p>
+        ${escapeHtml(title)}
+      </p>
 
-        </div>
+    </div>
 
-      </div>
+    <div class="match-score">
 
-      <div class="match-card-details">
+      <strong>
+        ${Number(
+          match.matchScore
+        ) || 0}%
+      </strong>
 
-        <div class="match-detail">
-          <span>Skills</span>
+      <span>
+        match
+      </span>
 
-          <strong>
-            ${escapeHtml(
-              skillText
-            )}
-          </strong>
-        </div>
+    </div>
 
-        <div class="match-detail">
-          <span>Location</span>
+  </div>
 
-          <strong>
-            ${escapeHtml(
-              candidate.location ||
-              "Flexible"
-            )}
-          </strong>
-        </div>
+  <div class="match-card-details">
 
-      </div>
+    <div class="match-detail">
 
-      <div class="match-card-footer">
+      <span>
+        Skills
+      </span>
 
-        <span>
-          Matched on
-          ${escapeHtml(
-            matchedText
-          )}
-        </span>
+      <strong>
+        ${escapeHtml(
+          skillText
+        )}
+      </strong>
 
-        ${connectionAction}
+    </div>
 
-      </div>
-    `;
+    <div class="match-detail">
 
-    grid.appendChild(card);
-  });
+      <span>
+        Location
+      </span>
 
-  bindMatchConnectionButtons();
+      <strong>
+        ${escapeHtml(
+          candidate.location ||
+          "Flexible"
+        )}
+      </strong>
+
+    </div>
+
+  </div>
+
+  <div class="match-card-footer">
+
+    <span>
+      Matched on
+      ${escapeHtml(
+        matchedText
+      )}
+    </span>
+
+    ${connectionAction}
+
+  </div>
+`;
+
+grid.appendChild(card);
+
+});
+
+bindMatchConnectionButtons();
 }
 
 /* =========================================================
-   EDIT MODAL
+EDIT MODAL
 ========================================================= */
 
 function openEditModal() {
 
-  if (!profile) {
-    console.warn(
-      "Cannot open edit modal: profile not loaded."
-    );
+if (!profile) {
 
-    return;
-  }
+console.warn(
+  "Cannot open edit modal: profile not loaded."
+);
 
-  setValue(
-    "editName",
-    profile.name
-  );
+return;
 
-  setValue(
-    "editHeadline",
-    profile.headline
-  );
+}
 
-  setValue(
-    "editSkills",
-    profile.skills.join(", ")
-  );
+setValue(
+"editName",
+profile.name
+);
 
-  setValue(
-    "editEducation",
-    profile.education
-  );
+setValue(
+"editHeadline",
+profile.headline
+);
 
-  setValue(
-    "editExperience",
-    profile.experience
-  );
+setValue(
+"editSkills",
+profile.skills.join(", ")
+);
 
-  setValue(
-    "editDesiredPosition",
-    profile.desiredPosition
-  );
+setValue(
+"editEducation",
+profile.education
+);
 
-  setValue(
-    "editLocation",
-    profile.location
-  );
+setValue(
+"editExperience",
+profile.experience
+);
 
-  setValue(
-    "editWorkPreference",
-    profile.workPreference
-  );
+setValue(
+"editDesiredPosition",
+profile.desiredPosition
+);
 
-  setValue(
-    "editCompany",
-    profile.company
-  );
+setValue(
+"editLocation",
+profile.location
+);
 
-  setValue(
-    "editHiringPosition",
-    profile.hiringPosition
-  );
+setValue(
+"editWorkPreference",
+profile.workPreference
+);
 
-  setValue(
-    "editRequiredSkills",
-    profile.requiredSkills.join(", ")
-  );
+setValue(
+"editCompany",
+profile.company
+);
 
-  setValue(
-    "editExperienceRequired",
-    profile.experienceRequired
-  );
+setValue(
+"editHiringPosition",
+profile.hiringPosition
+);
 
-  setValue(
-    "editEmployerLocation",
-    profile.location
-  );
+setValue(
+"editRequiredSkills",
+profile.requiredSkills.join(", ")
+);
 
-  setValue(
-    "editWorkType",
-    profile.workType
-  );
+setValue(
+"editExperienceRequired",
+profile.experienceRequired
+);
 
-  setValue(
-    "editAbout",
-    profile.about
-  );
+setValue(
+"editEmployerLocation",
+profile.location
+);
 
-  const status =
-    document.getElementById(
-      "editStatus"
-    );
+setValue(
+"editWorkType",
+profile.workType
+);
 
-  if (status) {
-    status.textContent =
-      "";
+setValue(
+"editAbout",
+profile.about
+);
 
-    status.className =
-      "edit-status";
-  }
+const status =
+document.getElementById(
+"editStatus"
+);
 
-  const modal =
-    document.getElementById(
-      "editModal"
-    );
+if (status) {
 
-  if (!modal) {
-    console.error(
-      "editModal element was not found."
-    );
+status.textContent =
+  "";
 
-    return;
-  }
+status.className =
+  "edit-status";
 
-  modal.classList.add(
-    "active"
-  );
+}
 
-  modal.setAttribute(
-    "aria-hidden",
-    "false"
-  );
+const modal =
+document.getElementById(
+"editModal"
+);
 
-  document.body.classList.add(
-    "modal-open"
-  );
+if (!modal) {
+
+console.error(
+  "editModal element was not found."
+);
+
+return;
+
+}
+
+modal.classList.add(
+"active"
+);
+
+modal.setAttribute(
+"aria-hidden",
+"false"
+);
+
+document.body.classList.add(
+"modal-open"
+);
 }
 
 function closeEditModal() {
 
-  const modal =
-    document.getElementById(
-      "editModal"
-    );
+const modal =
+document.getElementById(
+"editModal"
+);
 
-  if (modal) {
+if (modal) {
 
-    modal.classList.remove(
-      "active"
-    );
+modal.classList.remove(
+  "active"
+);
 
-    modal.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-  }
+modal.setAttribute(
+  "aria-hidden",
+  "true"
+);
 
-  document.body.classList.remove(
-    "modal-open"
-  );
+}
+
+document.body.classList.remove(
+"modal-open"
+);
 }
 
 /* =========================================================
-   SAVE PROFILE
+SAVE PROFILE
 ========================================================= */
 
 async function saveProfile() {
 
-  if (!profile) {
-    return;
-  }
+if (!profile) {
+return;
+}
 
-  currentAuthUser =
+currentAuthUser =
+await getAuthenticatedUser();
+
+if (!currentAuthUser) {
+
+const status =
+  document.getElementById(
+    "editStatus"
+  );
+
+if (status) {
+
+  status.textContent =
+    "Your session has expired. Please log in again.";
+
+  status.className =
+    "edit-status error";
+}
+
+return;
+
+}
+
+profile.authUserId =
+currentAuthUser.id;
+
+profile.id =
+profile.id ||
+currentAuthUser.id;
+
+profile.name =
+document.getElementById(
+"editName"
+)?.value.trim() || "";
+
+if (!profile.name) {
+
+const status =
+  document.getElementById(
+    "editStatus"
+  );
+
+if (status) {
+
+  status.textContent =
+    "Please enter your name.";
+
+  status.className =
+    "edit-status error";
+}
+
+return;
+
+}
+
+profile.headline =
+document.getElementById(
+"editHeadline"
+)?.value.trim() || "";
+
+profile.skills =
+normalizeArray(
+document.getElementById(
+"editSkills"
+)?.value
+);
+
+profile.education =
+document.getElementById(
+"editEducation"
+)?.value.trim() || "";
+
+profile.experience =
+document.getElementById(
+"editExperience"
+)?.value.trim() || "";
+
+profile.desiredPosition =
+document.getElementById(
+"editDesiredPosition"
+)?.value.trim() || "";
+
+profile.location =
+profile.role === "employer"
+? document.getElementById(
+"editEmployerLocation"
+)?.value.trim() || ""
+: document.getElementById(
+"editLocation"
+)?.value.trim() || "";
+
+profile.workPreference =
+document.getElementById(
+"editWorkPreference"
+)?.value.trim() || "";
+
+profile.company =
+document.getElementById(
+"editCompany"
+)?.value.trim() || "";
+
+profile.hiringPosition =
+document.getElementById(
+"editHiringPosition"
+)?.value.trim() || "";
+
+profile.requiredSkills =
+normalizeArray(
+document.getElementById(
+"editRequiredSkills"
+)?.value
+);
+
+profile.experienceRequired =
+document.getElementById(
+"editExperienceRequired"
+)?.value.trim() || "";
+
+profile.workType =
+document.getElementById(
+"editWorkType"
+)?.value.trim() || "";
+
+profile.about =
+document.getElementById(
+"editAbout"
+)?.value.trim() || "";
+
+profile.updatedAt =
+new Date().toISOString();
+
+saveLocalProfile();
+
+/*
+Update Supabase metadata.
+*/
+
+try {
+
+const {
+  error
+} =
+  await supabaseClient.auth.updateUser({
+    data: {
+
+      name:
+        profile.name,
+
+      role:
+        profile.role,
+
+      headline:
+        profile.headline
+    }
+  });
+
+if (error) {
+
+  console.warn(
+    "Supabase metadata update failed:",
+    error
+  );
+
+} else {
+
+  const refreshed =
     await getAuthenticatedUser();
 
-  if (!currentAuthUser) {
+  if (refreshed) {
 
-    const status =
-      document.getElementById(
-        "editStatus"
-      );
-
-    if (status) {
-
-      status.textContent =
-        "Your session has expired. Please log in again.";
-
-      status.className =
-        "edit-status error";
-    }
-
-    return;
-  }
-
-  profile.authUserId =
-    currentAuthUser.id;
-
-  profile.id =
-    profile.id ||
-    currentAuthUser.id;
-
-  profile.name =
-    document.getElementById(
-      "editName"
-    )?.value.trim() || "";
-
-  if (!profile.name) {
-
-    const status =
-      document.getElementById(
-        "editStatus"
-      );
-
-    if (status) {
-
-      status.textContent =
-        "Please enter your name.";
-
-      status.className =
-        "edit-status error";
-    }
-
-    return;
-  }
-
-  profile.headline =
-    document.getElementById(
-      "editHeadline"
-    )?.value.trim() || "";
-
-  profile.skills =
-    normalizeArray(
-      document.getElementById(
-        "editSkills"
-      )?.value
-    );
-
-  profile.education =
-    document.getElementById(
-      "editEducation"
-    )?.value.trim() || "";
-
-  profile.experience =
-    document.getElementById(
-      "editExperience"
-    )?.value.trim() || "";
-
-  profile.desiredPosition =
-    document.getElementById(
-      "editDesiredPosition"
-    )?.value.trim() || "";
-
-  profile.location =
-    profile.role === "employer"
-      ? document.getElementById(
-          "editEmployerLocation"
-        )?.value.trim() || ""
-      : document.getElementById(
-          "editLocation"
-        )?.value.trim() || "";
-
-  profile.workPreference =
-    document.getElementById(
-      "editWorkPreference"
-    )?.value.trim() || "";
-
-  profile.company =
-    document.getElementById(
-      "editCompany"
-    )?.value.trim() || "";
-
-  profile.hiringPosition =
-    document.getElementById(
-      "editHiringPosition"
-    )?.value.trim() || "";
-
-  profile.requiredSkills =
-    normalizeArray(
-      document.getElementById(
-        "editRequiredSkills"
-      )?.value
-    );
-
-  profile.experienceRequired =
-    document.getElementById(
-      "editExperienceRequired"
-    )?.value.trim() || "";
-
-  profile.workType =
-    document.getElementById(
-      "editWorkType"
-    )?.value.trim() || "";
-
-  profile.about =
-    document.getElementById(
-      "editAbout"
-    )?.value.trim() || "";
-
-  profile.updatedAt =
-    new Date().toISOString();
-
-  saveLocalProfile();
-
-  /*
-    Also update the Supabase user's metadata.
-    This keeps the name connected to the authenticated
-    account itself.
-  */
-
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient.auth.updateUser({
-        data: {
-          name:
-            profile.name,
-
-          role:
-            profile.role,
-
-          headline:
-            profile.headline
-        }
-      });
-
-    if (error) {
-      console.warn(
-        "Supabase metadata update failed:",
-        error
-      );
-    } else {
-
-      const refreshed =
-        await getAuthenticatedUser();
-
-      if (refreshed) {
-        currentAuthUser =
-          refreshed;
-      }
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "Supabase metadata update error:",
-      error
-    );
-  }
-
-  const button =
-    document.getElementById(
-      "saveProfileBtn"
-    );
-
-  const status =
-    document.getElementById(
-      "editStatus"
-    );
-
-  if (button) {
-
-    button.disabled =
-      true;
-
-    button.textContent =
-      "Saving...";
-  }
-
-  if (status) {
-
-    status.textContent =
-      "";
-
-    status.className =
-      "edit-status";
-  }
-
-  try {
-
-    const synced =
-      await syncProfileToBackend();
-
-    if (!synced) {
-      throw new Error(
-        "Server sync failed."
-      );
-    }
-
-    renderProfile();
-
-    if (status) {
-
-      status.textContent =
-        "Profile saved successfully.";
-
-      status.className =
-        "edit-status success";
-    }
-
-    await loadConnections();
-    await loadMatches();
-
-    setTimeout(
-      closeEditModal,
-      500
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Profile save error:",
-      error
-    );
-
-    saveLocalProfile();
-    renderProfile();
-
-    if (status) {
-
-      status.textContent =
-        "Saved locally. Server sync unavailable.";
-
-      status.className =
-        "edit-status error";
-    }
-
-  } finally {
-
-    if (button) {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        "Save profile";
-    }
+    currentAuthUser =
+      refreshed;
   }
 }
 
+} catch (error) {
+
+console.warn(
+  "Supabase metadata update error:",
+  error
+);
+
+}
+
+const button =
+document.getElementById(
+"saveProfileBtn"
+);
+
+const status =
+document.getElementById(
+"editStatus"
+);
+
+if (button) {
+
+button.disabled =
+  true;
+
+button.textContent =
+  "Saving...";
+
+}
+
+if (status) {
+
+status.textContent =
+  "";
+
+status.className =
+  "edit-status";
+
+}
+
+try {
+
+const synced =
+  await syncProfileToBackend();
+
+if (!synced) {
+
+  throw new Error(
+    "Server sync failed."
+  );
+}
+
+renderProfile();
+
+if (status) {
+
+  status.textContent =
+    "Profile saved successfully.";
+
+  status.className =
+    "edit-status success";
+}
+
+await loadConnections();
+await loadMatches();
+
+setTimeout(
+  closeEditModal,
+  500
+);
+
+} catch (error) {
+
+console.error(
+  "Profile save error:",
+  error
+);
+
+saveLocalProfile();
+renderProfile();
+
+if (status) {
+
+  status.textContent =
+    "Saved locally. Server sync unavailable.";
+
+  status.className =
+    "edit-status error";
+}
+
+} finally {
+
+if (button) {
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Save profile";
+}
+
+}
+}
+
 /* =========================================================
-   HOME
+HOME
 ========================================================= */
 
 function goHome() {
-  window.location.href =
-    "index.html";
+
+window.location.href =
+"index.html";
 }
 
 /* =========================================================
-   CONNECTIONS — LOAD
+CONNECTIONS — LOAD
 ========================================================= */
 
 async function loadConnections() {
 
-  if (
-    !supabaseClient ||
-    !currentAuthUser
-  ) {
-    return;
-  }
+if (
+!supabaseClient ||
+!currentAuthUser
+) {
+return;
+}
 
-  try {
+try {
 
-    const userId =
-      currentAuthUser.id;
+const userId =
+  currentAuthUser.id;
 
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("connections")
-        .select("*")
-        .or(
-          `requester_id.eq.${userId},recipient_id.eq.${userId}`
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    connections =
-      data || [];
-
-    await loadConnectionProfiles();
-
-  } catch (error) {
-
-    console.error(
-      "Connections loading error:",
-      error
+const {
+  data,
+  error
+} =
+  await supabaseClient
+    .from("connections")
+    .select("*")
+    .or(
+      `requester_id.eq.${userId},recipient_id.eq.${userId}`
+    )
+    .order(
+      "created_at",
+      {
+        ascending: false
+      }
     );
 
-    connections = [];
-    connectionProfiles = {};
-  }
+if (error) {
+  throw error;
+}
+
+connections =
+  data || [];
+
+await loadConnectionProfiles();
+
+} catch (error) {
+
+console.error(
+  "Connections loading error:",
+  error
+);
+
+connections = [];
+connectionProfiles = {};
+
+}
 }
 
 /* =========================================================
-   LOAD CONNECTION PROFILES
+LOAD CONNECTION PROFILES
 ========================================================= */
 
 async function loadConnectionProfiles() {
 
-  connectionProfiles = {};
+connectionProfiles = {};
 
-  if (!currentAuthUser) {
-    return;
+if (!currentAuthUser) {
+return;
+}
+
+const ids =
+new Set();
+
+connections.forEach(
+connection => {
+
+  if (
+    connection.requester_id &&
+    connection.requester_id !==
+      currentAuthUser.id
+  ) {
+
+    ids.add(
+      connection.requester_id
+    );
   }
 
-  const ids =
-    new Set();
+  if (
+    connection.recipient_id &&
+    connection.recipient_id !==
+      currentAuthUser.id
+  ) {
 
-  connections.forEach(
-    connection => {
-
-      if (
-        connection.requester_id &&
-        connection.requester_id !==
-          currentAuthUser.id
-      ) {
-        ids.add(
-          connection.requester_id
-        );
-      }
-
-      if (
-        connection.recipient_id &&
-        connection.recipient_id !==
-          currentAuthUser.id
-      ) {
-        ids.add(
-          connection.recipient_id
-        );
-      }
-    }
-  );
-
-  for (const id of ids) {
-
-    try {
-
-      const response =
-        await fetch(
-          `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(id)}`
-        );
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const result =
-        await response.json();
-
-      if (
-        result.success &&
-        result.profile
-      ) {
-
-        connectionProfiles[id] =
-          normalizeProfile({
-            ...result.profile,
-
-            authUserId:
-              id
-          });
-      }
-
-    } catch (error) {
-
-      console.warn(
-        "Connection profile lookup failed:",
-        id,
-        error
-      );
-    }
+    ids.add(
+      connection.recipient_id
+    );
   }
 }
 
+);
+
+for (const id of ids) {
+
+try {
+
+  const response =
+    await fetch(
+      `${API_BASE_URL}/api/profiles/me/${encodeURIComponent(id)}`
+    );
+
+  if (!response.ok) {
+    continue;
+  }
+
+  const result =
+    await response.json();
+
+  if (
+    result.success &&
+    result.profile
+  ) {
+
+    connectionProfiles[id] =
+      normalizeProfile({
+
+        ...result.profile,
+
+        authUserId:
+          id
+      });
+  }
+
+} catch (error) {
+
+  console.warn(
+    "Connection profile lookup failed:",
+    id,
+    error
+  );
+}
+
+}
+}
+
 /* =========================================================
-   FIND CONNECTION WITH USER
+FIND CONNECTION WITH USER
 ========================================================= */
 
 function getConnectionWithUser(
-  userId
+userId
 ) {
 
-  if (
-    !currentAuthUser ||
-    !userId
-  ) {
-    return null;
-  }
+if (
+!currentAuthUser ||
+!userId
+) {
+return null;
+}
 
-  const matches =
-    connections.filter(
-      connection =>
-        (
-          connection.requester_id ===
-            currentAuthUser.id &&
-          connection.recipient_id ===
-            userId
-        ) ||
-        (
-          connection.requester_id ===
-            userId &&
-          connection.recipient_id ===
-            currentAuthUser.id
-        )
-    );
+const matches =
+connections.filter(
+connection =>
 
-  return (
-    matches.find(
-      connection =>
-        connection.status ===
-        "accepted"
+    (
+      connection.requester_id ===
+        currentAuthUser.id &&
+
+      connection.recipient_id ===
+        userId
     ) ||
 
-    matches.find(
-      connection =>
-        connection.status ===
-        "pending"
-    ) ||
+    (
+      connection.requester_id ===
+        userId &&
 
-    matches.find(
-      connection =>
-        connection.status ===
-        "declined"
-    ) ||
+      connection.recipient_id ===
+        currentAuthUser.id
+    )
+);
 
-    null
-  );
+return (
+
+matches.find(
+  connection =>
+    connection.status ===
+    "accepted"
+) ||
+
+matches.find(
+  connection =>
+    connection.status ===
+    "pending"
+) ||
+
+matches.find(
+  connection =>
+    connection.status ===
+    "declined"
+) ||
+
+null
+
+);
 }
 
 /* =========================================================
-   CONNECTION STATE
+CONNECTION STATE
 ========================================================= */
 
 function getConnectionState(
-  userId
+userId
 ) {
 
-  if (
-    !currentAuthUser ||
-    !userId
-  ) {
-    return "none";
-  }
+if (
+!currentAuthUser ||
+!userId
+) {
+return "none";
+}
 
-  const connection =
-    getConnectionWithUser(
-      userId
-    );
+const connection =
+getConnectionWithUser(
+userId
+);
 
-  if (!connection) {
-    return "none";
-  }
+if (!connection) {
+return "none";
+}
 
-  if (
-    connection.status ===
-    "accepted"
-  ) {
-    return "accepted";
-  }
+if (
+connection.status ===
+"accepted"
+) {
 
-  if (
-    connection.status ===
-    "pending"
-  ) {
+return "accepted";
 
-    if (
-      connection.requester_id ===
-      currentAuthUser.id
-    ) {
-      return "sent";
-    }
+}
 
-    if (
-      connection.recipient_id ===
-      currentAuthUser.id
-    ) {
-      return "incoming";
-    }
-  }
+if (
+connection.status ===
+"pending"
+) {
 
-  if (
-    connection.status ===
-      "declined" &&
-    connection.recipient_id ===
-      currentAuthUser.id
-  ) {
-    return "none";
-  }
+if (
+  connection.requester_id ===
+  currentAuthUser.id
+) {
 
-  if (
-    connection.status ===
-      "declined" &&
-    connection.requester_id ===
-      currentAuthUser.id
-  ) {
-    return "declined";
-  }
+  return "sent";
+}
 
-  return "none";
+if (
+  connection.recipient_id ===
+  currentAuthUser.id
+) {
+
+  return "incoming";
+}
+
+}
+
+if (
+connection.status ===
+"declined" &&
+
+connection.recipient_id ===
+  currentAuthUser.id
+
+) {
+
+return "none";
+
+}
+
+if (
+connection.status ===
+"declined" &&
+
+connection.requester_id ===
+  currentAuthUser.id
+
+) {
+
+return "declined";
+
+}
+
+return "none";
 }
 
 /* =========================================================
-   SEND CONNECTION REQUEST
+SEND CONNECTION REQUEST
 ========================================================= */
 
 async function sendConnectionRequest(
-  recipientId,
-  button = null
+recipientId,
+button = null
 ) {
 
-  if (
-    !supabaseClient ||
-    !currentAuthUser ||
-    !recipientId
-  ) {
-    return;
-  }
+if (
+!supabaseClient ||
+!currentAuthUser ||
+!recipientId
+) {
+return;
+}
 
-  if (
-    recipientId ===
+if (
+recipientId ===
+currentAuthUser.id
+) {
+return;
+}
+
+const existing =
+getConnectionWithUser(
+recipientId
+);
+
+if (existing) {
+
+if (
+  existing.status ===
+  "accepted"
+) {
+  return;
+}
+
+if (
+  existing.status ===
+  "pending"
+) {
+  return;
+}
+
+if (
+  existing.status ===
+    "declined" &&
+
+  existing.requester_id ===
     currentAuthUser.id
-  ) {
-    return;
-  }
+) {
+  return;
+}
 
-  const existing =
-    getConnectionWithUser(
-      recipientId
-    );
+}
 
-  if (existing) {
+if (button) {
 
-    if (
-      existing.status ===
-      "accepted"
-    ) {
-      return;
-    }
+button.disabled =
+  true;
 
-    if (
-      existing.status ===
+button.textContent =
+  "Sending...";
+
+}
+
+try {
+
+const {
+  data,
+  error
+} =
+  await supabaseClient
+    .from("connections")
+    .insert({
+
+      requester_id:
+        currentAuthUser.id,
+
+      recipient_id:
+        recipientId,
+
+      status:
         "pending"
-    ) {
-      return;
-    }
+    })
+    .select()
+    .single();
 
-    if (
-      existing.status ===
-        "declined" &&
-      existing.requester_id ===
-        currentAuthUser.id
-    ) {
-      return;
-    }
-  }
-
-  if (button) {
-
-    button.disabled =
-      true;
-
-    button.textContent =
-      "Sending...";
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("connections")
-        .insert({
-          requester_id:
-            currentAuthUser.id,
-
-          recipient_id:
-            recipientId,
-
-          status:
-            "pending"
-        })
-        .select()
-        .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-      connections.unshift(
-        data
-      );
-    }
-
-    await loadConnections();
-    await loadMatches();
-
-  } catch (error) {
-
-    console.error(
-      "Connection request error:",
-      error
-    );
-
-    if (button) {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        "Connect";
-    }
-
-    alert(
-      error.message ||
-      "Unable to send connection request."
-    );
-  }
+if (error) {
+  throw error;
 }
 
-/* =========================================================
-   ACCEPT / DECLINE
-========================================================= */
+if (data) {
 
-async function updateConnectionStatus(
-  connectionId,
-  status
-) {
-
-  if (
-    !supabaseClient ||
-    !currentAuthUser ||
-    !connectionId
-  ) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("connections")
-        .update({
-          status
-        })
-        .eq(
-          "id",
-          connectionId
-        )
-        .eq(
-          "recipient_id",
-          currentAuthUser.id
-        )
-        .select()
-        .single();
-
-    if (error) {
-      throw error;
-    }
-
-    const index =
-      connections.findIndex(
-        connection =>
-          connection.id ===
-          connectionId
-      );
-
-    if (index !== -1) {
-      connections[index] =
-        data;
-    }
-
-    await loadConnections();
-    await loadMatches();
-
-  } catch (error) {
-
-    console.error(
-      "Connection status update error:",
-      error
-    );
-
-    alert(
-      error.message ||
-      "Unable to update connection."
-    );
-  }
-}
-
-/* =========================================================
-   MATCH AUTH USER ID
-========================================================= */
-
-function getMatchAuthUserId(
-  match
-) {
-
-  const candidate =
-    match?.profile || {};
-
-  return (
-    candidate.authUserId ||
-    candidate.auth_user_id ||
-    ""
+  connections.unshift(
+    data
   );
 }
 
-/* =========================================================
-   MATCH CONNECTION BUTTON
-========================================================= */
+await loadConnections();
+await loadMatches();
 
-function createMatchConnectionButton(
-  recipientId
-) {
+} catch (error) {
 
-  if (
-    !recipientId ||
-    !currentAuthUser
-  ) {
-    return "";
-  }
+console.error(
+  "Connection request error:",
+  error
+);
 
-  const state =
-    getConnectionState(
-      recipientId
-    );
+if (button) {
 
-  if (
-    state ===
-    "accepted"
-  ) {
+  button.disabled =
+    false;
 
-    return `
-      <button
-        type="button"
-        class="match-connection-action connected"
-        disabled
-      >
-        Connected
-      </button>
-    `;
-  }
+  button.textContent =
+    "Connect";
+}
 
-  if (
-    state ===
-    "sent"
-  ) {
+alert(
+  error.message ||
+  "Unable to send connection request."
+);
 
-    return `
-      <button
-        type="button"
-        class="match-connection-action pending"
-        disabled
-      >
-        Request sent
-      </button>
-    `;
-  }
-
-  if (
-    state ===
-    "incoming"
-  ) {
-
-    const connection =
-      getConnectionWithUser(
-        recipientId
-      );
-
-    return `
-      <button
-        type="button"
-        class="match-connection-action respond"
-        data-match-accept="${escapeHtml(
-          connection?.id || ""
-        )}"
-      >
-        Accept request
-      </button>
-    `;
-  }
-
-  if (
-    state ===
-    "declined"
-  ) {
-
-    return `
-      <button
-        type="button"
-        class="match-connection-action pending"
-        disabled
-      >
-        Request declined
-      </button>
-    `;
-  }
-
-  return `
-    <button
-      type="button"
-      class="match-connection-action"
-      data-match-connect="${escapeHtml(
-        recipientId
-      )}"
-    >
-      Connect
-    </button>
-  `;
+}
 }
 
 /* =========================================================
-   MATCH CONNECTION EVENTS
+ACCEPT / DECLINE
+========================================================= */
+
+async function updateConnectionStatus(
+connectionId,
+status
+) {
+
+if (
+!supabaseClient ||
+!currentAuthUser ||
+!connectionId
+) {
+return;
+}
+
+try {
+
+const {
+  data,
+  error
+} =
+  await supabaseClient
+    .from("connections")
+    .update({
+      status
+    })
+    .eq(
+      "id",
+      connectionId
+    )
+    .eq(
+      "recipient_id",
+      currentAuthUser.id
+    )
+    .select()
+    .single();
+
+if (error) {
+  throw error;
+}
+
+const index =
+  connections.findIndex(
+    connection =>
+      connection.id ===
+      connectionId
+  );
+
+if (index !== -1) {
+
+  connections[index] =
+    data;
+}
+
+await loadConnections();
+await loadMatches();
+
+} catch (error) {
+
+console.error(
+  "Connection status update error:",
+  error
+);
+
+alert(
+  error.message ||
+  "Unable to update connection."
+);
+
+}
+}
+
+/* =========================================================
+MATCH AUTH USER ID
+========================================================= */
+
+function getMatchAuthUserId(
+match
+) {
+
+const candidate =
+match?.profile || {};
+
+return (
+candidate.authUserId ||
+candidate.auth_user_id ||
+""
+);
+}
+
+/* =========================================================
+MATCH CONNECTION BUTTON
+========================================================= */
+
+function createMatchConnectionButton(
+recipientId
+) {
+
+if (
+!recipientId ||
+!currentAuthUser
+) {
+return "";
+}
+
+const state =
+getConnectionState(
+recipientId
+);
+
+if (
+state ===
+"accepted"
+) {
+
+return `
+  <button
+    type="button"
+    class="match-connection-action connected"
+    disabled
+  >
+    Connected
+  </button>
+`;
+
+}
+
+if (
+state ===
+"sent"
+) {
+
+return `
+  <button
+    type="button"
+    class="match-connection-action pending"
+    disabled
+  >
+    Request sent
+  </button>
+`;
+
+}
+
+if (
+state ===
+"incoming"
+) {
+
+const connection =
+  getConnectionWithUser(
+    recipientId
+  );
+
+return `
+  <button
+    type="button"
+    class="match-connection-action respond"
+    data-match-accept="${escapeHtml(
+      connection?.id || ""
+    )}"
+  >
+    Accept request
+  </button>
+`;
+
+}
+
+if (
+state ===
+"declined"
+) {
+
+return `
+  <button
+    type="button"
+    class="match-connection-action pending"
+    disabled
+  >
+    Request declined
+  </button>
+`;
+
+}
+
+return "<button type="button" class="match-connection-action" data-match-connect="${escapeHtml( recipientId )}" > Connect </button>";
+}
+
+/* =========================================================
+MATCH CONNECTION EVENTS
 ========================================================= */
 
 function bindMatchConnectionButtons() {
 
-  document
-    .querySelectorAll(
-      "[data-match-connect]"
-    )
-    .forEach(button => {
+document
+.querySelectorAll(
+"[data-match-connect]"
+)
+.forEach(button => {
 
-      button.addEventListener(
-        "click",
-        async () => {
+  button.addEventListener(
+    "click",
+    async () => {
 
-          if (
-            button.disabled
-          ) {
-            return;
-          }
+      if (
+        button.disabled
+      ) {
+        return;
+      }
 
-          const recipientId =
-            button.dataset.matchConnect;
+      const recipientId =
+        button.dataset.matchConnect;
 
-          await sendConnectionRequest(
-            recipientId,
-            button
-          );
-        }
+      await sendConnectionRequest(
+        recipientId,
+        button
       );
-    });
+    }
+  );
+});
 
-  document
-    .querySelectorAll(
-      "[data-match-accept]"
-    )
-    .forEach(button => {
+document
+.querySelectorAll(
+"[data-match-accept]"
+)
+.forEach(button => {
 
-      button.addEventListener(
-        "click",
-        async () => {
+  button.addEventListener(
+    "click",
+    async () => {
 
-          if (
-            button.disabled
-          ) {
-            return;
-          }
+      if (
+        button.disabled
+      ) {
+        return;
+      }
 
-          const connectionId =
-            button.dataset.matchAccept;
+      const connectionId =
+        button.dataset.matchAccept;
 
-          if (!connectionId) {
-            return;
-          }
+      if (!connectionId) {
+        return;
+      }
 
-          button.disabled =
-            true;
+      button.disabled =
+        true;
 
-          button.textContent =
-            "Accepting...";
+      button.textContent =
+        "Accepting...";
 
-          await updateConnectionStatus(
-            connectionId,
-            "accepted"
-          );
-        }
+      await updateConnectionStatus(
+        connectionId,
+        "accepted"
       );
-    });
+    }
+  );
+});
+
 }
 
 /* =========================================================
-   BUTTON EVENTS
+BUTTON EVENTS
 ========================================================= */
 
 function initializePageEvents() {
 
-  const editButton =
-    document.getElementById(
-      "editProfileBtn"
-    );
+const editButton =
+document.getElementById(
+"editProfileBtn"
+);
 
-  if (editButton) {
+if (editButton) {
 
-    editButton.addEventListener(
-      "click",
-      event => {
+editButton.addEventListener(
+  "click",
+  event => {
 
-        event.preventDefault();
+    event.preventDefault();
 
-        openEditModal();
-      }
-    );
-
-  } else {
-
-    console.error(
-      "editProfileBtn was not found."
-    );
+    openEditModal();
   }
+);
 
-  const saveButton =
-    document.getElementById(
-      "saveProfileBtn"
-    );
+} else {
 
-  if (saveButton) {
+console.error(
+  "editProfileBtn was not found."
+);
 
-    saveButton.addEventListener(
-      "click",
-      event => {
+}
 
-        event.preventDefault();
+const saveButton =
+document.getElementById(
+"saveProfileBtn"
+);
 
-        saveProfile();
-      }
-    );
+if (saveButton) {
+
+saveButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+
+    saveProfile();
   }
+);
 
-  document
-    .querySelectorAll(
-      ".edit-modal-close, [data-close-edit]"
-    )
-    .forEach(button => {
+}
 
-      button.addEventListener(
-        "click",
-        event => {
+document
+.querySelectorAll(
+".edit-modal-close, [data-close-edit]"
+)
+.forEach(button => {
 
-          event.preventDefault();
-
-          closeEditModal();
-        }
-      );
-    });
-
-  const editModal =
-    document.getElementById(
-      "editModal"
-    );
-
-  if (editModal) {
-
-    editModal.addEventListener(
-      "click",
-      event => {
-
-        if (
-          event.target ===
-          editModal
-        ) {
-          closeEditModal();
-        }
-      }
-    );
-  }
-
-  const homeButton =
-    document.querySelector(
-      ".profile-home-btn"
-    );
-
-  if (homeButton) {
-
-    homeButton.addEventListener(
-      "click",
-      goHome
-    );
-  }
-
-  const completeButton =
-    document.getElementById(
-      "completeProfileBtn"
-    );
-
-  if (completeButton) {
-
-    completeButton.addEventListener(
-      "click",
-      event => {
-
-        event.preventDefault();
-
-        openEditModal();
-      }
-    );
-  }
-
-  document.addEventListener(
-    "keydown",
+  button.addEventListener(
+    "click",
     event => {
 
-      if (
-        event.key ===
-        "Escape"
-      ) {
-        closeEditModal();
-      }
+      event.preventDefault();
+
+      closeEditModal();
     }
   );
+});
+
+const editModal =
+document.getElementById(
+"editModal"
+);
+
+if (editModal) {
+
+editModal.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      editModal
+    ) {
+      closeEditModal();
+    }
+  }
+);
+
+}
+
+const homeButton =
+document.querySelector(
+".profile-home-btn"
+);
+
+if (homeButton) {
+
+homeButton.addEventListener(
+  "click",
+  goHome
+);
+
+}
+
+const completeButton =
+document.getElementById(
+"completeProfileBtn"
+);
+
+if (completeButton) {
+
+completeButton.addEventListener(
+  "click",
+  event => {
+
+    event.preventDefault();
+
+    openEditModal();
+  }
+);
+
+}
+
+document.addEventListener(
+"keydown",
+event => {
+
+  if (
+    event.key ===
+    "Escape"
+  ) {
+
+    closeEditModal();
+  }
+}
+
+);
 }
 
 /* =========================================================
-   INITIALIZE
+INITIALIZE
 ========================================================= */
 
 async function initialize() {
 
-  try {
+try {
 
-    if (!initializeSupabase()) {
-      return;
-    }
+if (!initializeSupabase()) {
+  return;
+}
 
-    /*
-      Bind page events immediately.
-      The DOM already exists because this script
-      is loaded at the bottom of profile.html.
-    */
+initializePageEvents();
 
-    initializePageEvents();
+const loaded =
+  await loadProfile();
 
-    const loaded =
-      await loadProfile();
+if (!loaded) {
+  return;
+}
 
-    if (!loaded) {
-      return;
-    }
+renderProfile();
 
-    renderProfile();
+await loadConnections();
 
-    await loadConnections();
+await loadMatches();
 
-    await loadMatches();
+console.log(
+  "Expo Go profile is ready.",
+  {
+    userId:
+      currentAuthUser?.id,
 
-    console.log(
-      "Expo Go profile is ready.",
-      {
-        userId:
-          currentAuthUser?.id,
+    name:
+      profile?.name,
 
-        name:
-          profile?.name,
-
-        role:
-          profile?.role
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Expo Go profile initialization error:",
-      error
-    );
+    role:
+      profile?.role
   }
+);
+
+} catch (error) {
+
+console.error(
+  "Expo Go profile initialization error:",
+  error
+);
+
+}
 }
 
 initialize();
