@@ -25,25 +25,35 @@ function normalizeArray(value) {
 function normalizeProfile(profile = {}) {
   return {
     id: profile.id || `expo_${Date.now()}`,
+
     name: profile.name || "",
+
     role: profile.role || "",
+
     headline: profile.headline || "",
 
     skills: normalizeArray(profile.skills),
+
     education: profile.education || "",
+
     experience: profile.experience || "",
+
     desiredPosition:
       profile.desiredPosition ||
       profile.desired_position ||
       "",
+
     location: profile.location || "",
+
     workPreference:
       profile.workPreference ||
       profile.work_preference ||
       "",
+
     about: profile.about || "",
 
     company: profile.company || "",
+
     hiringPosition:
       profile.hiringPosition ||
       profile.hiring_position ||
@@ -81,11 +91,16 @@ function getStoredProfile() {
     const saved =
       localStorage.getItem(PROFILE_STORAGE_KEY);
 
-    return saved
-      ? normalizeProfile(JSON.parse(saved))
-      : null;
+    if (!saved) {
+      return null;
+    }
+
+    return normalizeProfile(
+      JSON.parse(saved)
+    );
 
   } catch (error) {
+
     console.error(
       "Unable to read stored profile:",
       error
@@ -109,6 +124,7 @@ function saveLocalProfile(profile) {
 ========================================================= */
 
 async function saveProfileToBackend(profile) {
+
   const normalized =
     normalizeProfile(profile);
 
@@ -153,6 +169,9 @@ async function saveProfileToBackend(profile) {
 const authModal =
   document.getElementById("authModal");
 
+const authForm =
+  document.getElementById("authForm");
+
 const authStatus =
   document.getElementById("authStatus");
 
@@ -161,6 +180,11 @@ const employeeBtn =
 
 const employerBtn =
   document.getElementById("employerBtn");
+
+const createProfileBtn =
+  document.getElementById(
+    "createProfileBtn"
+  );
 
 const continueProfileBtn =
   document.getElementById(
@@ -220,22 +244,41 @@ const mobileJoinBtn =
     "mobileJoinBtn"
   );
 
+const closeModalBtn =
+  document.getElementById(
+    "closeModal"
+  );
+
+const modalBackdrop =
+  document.getElementById(
+    "modalBackdrop"
+  );
+
 /* =========================================================
    STATE
 ========================================================= */
 
 let selectedRole = null;
+let profileCreationInProgress = false;
 
 /* =========================================================
    MODAL
 ========================================================= */
 
 function openCreateModal(role = null) {
-  if (!authModal) return;
+
+  if (!authModal) {
+    return;
+  }
 
   resetCreateView();
 
   authModal.classList.add("active");
+
+  authModal.setAttribute(
+    "aria-hidden",
+    "false"
+  );
 
   document.body.classList.add(
     "modal-open"
@@ -251,9 +294,19 @@ function openCreateModal(role = null) {
 }
 
 function closeCreateModal() {
-  if (!authModal) return;
 
-  authModal.classList.remove("active");
+  if (!authModal) {
+    return;
+  }
+
+  authModal.classList.remove(
+    "active"
+  );
+
+  authModal.setAttribute(
+    "aria-hidden",
+    "true"
+  );
 
   document.body.classList.remove(
     "modal-open"
@@ -261,7 +314,10 @@ function closeCreateModal() {
 }
 
 function resetCreateView() {
+
   selectedRole = null;
+
+  profileCreationInProgress = false;
 
   if (fullNameInput) {
     fullNameInput.value = "";
@@ -278,47 +334,23 @@ function resetCreateView() {
   }
 
   roleOptions.forEach(option => {
+
     option.classList.remove(
       "selected",
       "active"
     );
+
   });
 
-  const createForm =
-    document.querySelector(
-      ".create-form"
-    );
-
-  const roleSelector =
-    document.querySelector(
-      ".role-selector"
-    );
-
-  const profilePreview =
-    document.querySelector(
-      ".profile-preview"
-    );
-
-  if (createForm) {
-    createForm.style.display = "";
-  }
-
-  if (roleSelector) {
-    roleSelector.style.display = "";
-  }
-
-  if (profilePreview) {
-    profilePreview.style.display =
-      "";
+  if (createProfileBtn) {
+    createProfileBtn.disabled = false;
   }
 
   if (continueProfileBtn) {
-    continueProfileBtn.style.display =
-      "";
-
-    continueProfileBtn.disabled =
-      false;
+    continueProfileBtn.disabled = false;
   }
+
+  updatePreview();
 }
 
 /* =========================================================
@@ -326,6 +358,7 @@ function resetCreateView() {
 ========================================================= */
 
 function selectRole(role) {
+
   if (
     !["employee", "employer"]
       .includes(role)
@@ -336,6 +369,7 @@ function selectRole(role) {
   selectedRole = role;
 
   roleOptions.forEach(option => {
+
     const active =
       option.dataset.role === role;
 
@@ -348,20 +382,27 @@ function selectRole(role) {
       "active",
       active
     );
+
   });
 
   updatePreview();
 }
 
 roleOptions.forEach(option => {
+
   option.addEventListener(
     "click",
-    () => {
+    event => {
+
+      event.preventDefault();
+
       selectRole(
         option.dataset.role
       );
+
     }
   );
+
 });
 
 /* =========================================================
@@ -369,6 +410,7 @@ roleOptions.forEach(option => {
 ========================================================= */
 
 function updatePreview() {
+
   const name =
     fullNameInput?.value.trim() ||
     "Your name";
@@ -406,7 +448,26 @@ profileHeadlineInput?.addEventListener(
    CREATE PROFILE
 ========================================================= */
 
-async function createProfile() {
+async function createProfile(event) {
+
+  /*
+    CRITICAL FIX:
+    Stop ALL native browser form submission.
+
+    This prevents:
+    ?fullName=...
+    from appearing in the URL.
+  */
+
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if (profileCreationInProgress) {
+    return;
+  }
+
   const name =
     fullNameInput?.value.trim() ||
     "";
@@ -416,7 +477,9 @@ async function createProfile() {
     "";
 
   if (!selectedRole) {
+
     if (authStatus) {
+
       authStatus.textContent =
         "Please select Employee or Employer.";
 
@@ -428,7 +491,9 @@ async function createProfile() {
   }
 
   if (!name) {
+
     if (authStatus) {
+
       authStatus.textContent =
         "Please enter your name.";
 
@@ -441,11 +506,30 @@ async function createProfile() {
     return;
   }
 
+  if (!headline) {
+
+    if (authStatus) {
+
+      authStatus.textContent =
+        "Please enter what you do.";
+
+      authStatus.className =
+        "auth-status error";
+    }
+
+    profileHeadlineInput?.focus();
+
+    return;
+  }
+
+  profileCreationInProgress = true;
+
   const existingProfile =
     getStoredProfile();
 
   const profile =
     normalizeProfile({
+
       ...(existingProfile || {}),
 
       id:
@@ -464,14 +548,19 @@ async function createProfile() {
 
       updatedAt:
         new Date().toISOString()
+
     });
 
+  if (createProfileBtn) {
+    createProfileBtn.disabled = true;
+  }
+
   if (continueProfileBtn) {
-    continueProfileBtn.disabled =
-      true;
+    continueProfileBtn.disabled = true;
   }
 
   if (authStatus) {
+
     authStatus.textContent =
       "Creating your Expo Go profile...";
 
@@ -479,28 +568,26 @@ async function createProfile() {
       "auth-status";
   }
 
+  /*
+    SAVE LOCALLY FIRST
+  */
+
+  saveLocalProfile(profile);
+
   try {
 
-    /* -----------------------------------------
-       SAVE LOCALLY FIRST
-    ----------------------------------------- */
-
-    saveLocalProfile(profile);
-
-
-    /* -----------------------------------------
-       SAVE TO BACKEND / SUPABASE
-    ----------------------------------------- */
+    /*
+      SAVE TO RENDER / SUPABASE
+    */
 
     const savedProfile =
       await saveProfileToBackend(
         profile
       );
 
-
-    /* -----------------------------------------
-       NORMALIZE BACKEND RESPONSE
-    ----------------------------------------- */
+    /*
+      NORMALIZE BACKEND RESPONSE
+    */
 
     const frontendProfile =
       normalizeProfile({
@@ -578,19 +665,15 @@ async function createProfile() {
         updatedAt:
           savedProfile?.updated_at ||
           profile.updatedAt
-      });
 
+      });
 
     saveLocalProfile(
       frontendProfile
     );
 
-
-    /* -----------------------------------------
-       SUCCESS
-    ----------------------------------------- */
-
     if (authStatus) {
+
       authStatus.textContent =
         "Profile created successfully.";
 
@@ -598,24 +681,20 @@ async function createProfile() {
         "auth-status success";
     }
 
+    /*
+      DIRECT PROFILE PAGE
 
-    /* -----------------------------------------
-       RELIABLE PROFILE REDIRECT
-    ----------------------------------------- */
+      IMPORTANT:
+      No query parameters.
+      No form submission.
+    */
 
     setTimeout(() => {
 
-      const profileUrl =
-        new URL(
-          "profile.html",
-          window.location.href
-        ).href;
+      window.location.href =
+        "/profile.html";
 
-      window.location.assign(
-        profileUrl
-      );
-
-    }, 350);
+    }, 250);
 
   } catch (error) {
 
@@ -624,42 +703,60 @@ async function createProfile() {
       error
     );
 
-
-    /* -----------------------------------------
-       KEEP LOCAL PROFILE
-    ----------------------------------------- */
+    /*
+      LOCAL PROFILE IS ALREADY SAVED.
+      Allow the user to continue anyway.
+    */
 
     saveLocalProfile(profile);
 
-
     if (authStatus) {
+
       authStatus.textContent =
-        "Profile saved locally. We couldn't sync with the server yet.";
+        "Profile saved. Opening your profile...";
 
       authStatus.className =
-        "auth-status error";
+        "auth-status success";
     }
-
-
-    /* -----------------------------------------
-       STILL OPEN PROFILE PAGE
-    ----------------------------------------- */
 
     setTimeout(() => {
 
-      const profileUrl =
-        new URL(
-          "profile.html",
-          window.location.href
-        ).href;
+      window.location.href =
+        "/profile.html";
 
-      window.location.assign(
-        profileUrl
-      );
-
-    }, 900);
+    }, 500);
   }
 }
+
+/* =========================================================
+   IMPORTANT FORM PROTECTION
+========================================================= */
+
+/*
+  Catch the form's submit event directly.
+
+  This is the main protection against:
+  /?fullName=...
+*/
+
+authForm?.addEventListener(
+  "submit",
+  createProfile
+);
+
+/*
+  Also connect the Create My Profile button
+  directly.
+*/
+
+createProfileBtn?.addEventListener(
+  "click",
+  createProfile
+);
+
+/*
+  Keep the Continue button working too.
+*/
 
 continueProfileBtn?.addEventListener(
   "click",
@@ -672,22 +769,34 @@ continueProfileBtn?.addEventListener(
 
 employeeBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
+
     openCreateModal("employee");
+
   }
 );
 
 employerBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
+
     openCreateModal("employer");
+
   }
 );
 
 bottomJoinBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
+
     openCreateModal();
+
   }
 );
 
@@ -702,15 +811,8 @@ function handleLogin() {
 
   if (existingProfile) {
 
-    const profileUrl =
-      new URL(
-        "profile.html",
-        window.location.href
-      ).href;
-
-    window.location.assign(
-      profileUrl
-    );
+    window.location.href =
+      "/profile.html";
 
     return;
   }
@@ -718,22 +820,27 @@ function handleLogin() {
   openCreateModal();
 }
 
-document
-  .querySelectorAll(
-    '[data-action="login"], .login-btn'
-  )
-  .forEach(button => {
+const loginBtn =
+  document.getElementById(
+    "loginBtn"
+  );
 
-    button.addEventListener(
-      "click",
-      handleLogin
-    );
+loginBtn?.addEventListener(
+  "click",
+  event => {
 
-  });
+    event.preventDefault();
+
+    handleLogin();
+
+  }
+);
 
 mobileLoginBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
 
     closeMobileMenu();
 
@@ -748,7 +855,9 @@ mobileLoginBtn?.addEventListener(
 
 function closeMobileMenu() {
 
-  if (!mobileNav) return;
+  if (!mobileNav) {
+    return;
+  }
 
   mobileNav.classList.remove(
     "active"
@@ -761,7 +870,9 @@ function closeMobileMenu() {
 
 mobileMenuBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
 
     mobileNav?.classList.toggle(
       "active"
@@ -776,7 +887,9 @@ mobileMenuBtn?.addEventListener(
 
 mobileHowLink?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
 
     closeMobileMenu();
 
@@ -793,7 +906,9 @@ mobileHowLink?.addEventListener(
 
 mobileJoinBtn?.addEventListener(
   "click",
-  () => {
+  event => {
+
+    event.preventDefault();
 
     closeMobileMenu();
 
@@ -806,31 +921,27 @@ mobileJoinBtn?.addEventListener(
    MODAL CLOSE
 ========================================================= */
 
-authModal?.addEventListener(
+closeModalBtn?.addEventListener(
   "click",
   event => {
 
-    if (
-      event.target === authModal
-    ) {
-      closeCreateModal();
-    }
+    event.preventDefault();
+
+    closeCreateModal();
 
   }
 );
 
-document
-  .querySelectorAll(
-    "[data-close-modal], .modal-close"
-  )
-  .forEach(button => {
+modalBackdrop?.addEventListener(
+  "click",
+  event => {
 
-    button.addEventListener(
-      "click",
-      closeCreateModal
-    );
+    event.preventDefault();
 
-  });
+    closeCreateModal();
+
+  }
+);
 
 document.addEventListener(
   "keydown",
@@ -846,6 +957,29 @@ document.addEventListener(
 
   }
 );
+
+/* =========================================================
+   GENERIC MODAL CLOSE BUTTONS
+========================================================= */
+
+document
+  .querySelectorAll(
+    "[data-close-modal]"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      event => {
+
+        event.preventDefault();
+
+        closeCreateModal();
+
+      }
+    );
+
+  });
 
 /* =========================================================
    SMOOTH SCROLL
@@ -878,7 +1012,9 @@ document
             targetId
           );
 
-        if (!target) return;
+        if (!target) {
+          return;
+        }
 
         event.preventDefault();
 
@@ -908,18 +1044,22 @@ if (matchVisual) {
   matchVisual.addEventListener(
     "mouseenter",
     () => {
+
       matchVisual.classList.add(
         "is-active"
       );
+
     }
   );
 
   matchVisual.addEventListener(
     "mouseleave",
     () => {
+
       matchVisual.classList.remove(
         "is-active"
       );
+
     }
   );
 
