@@ -1,113 +1,129 @@
-"use strict";
-
 /* =========================================================
    EXPO GO — PROFILE DASHBOARD
-   Frontend MVP
+   Stage 2 — Extended Profile
 ========================================================= */
 
 const PROFILE_STORAGE_KEY = "expoGoProfile";
 
+const profileAvatar = document.getElementById("profileAvatar");
+const profileRole = document.getElementById("profileRole");
+const profileName = document.getElementById("profileName");
+const profileHeadline = document.getElementById("profileHeadline");
 
-/* =========================================================
-   ELEMENTS
-========================================================= */
+const infoName = document.getElementById("infoName");
+const infoHeadline = document.getElementById("infoHeadline");
+const infoRole = document.getElementById("infoRole");
+const infoSkills = document.getElementById("infoSkills");
+const infoEducation = document.getElementById("infoEducation");
+const infoExperience = document.getElementById("infoExperience");
+const infoLocation = document.getElementById("infoLocation");
 
-const profileAvatar =
-  document.getElementById("profileAvatar");
+const completionNumber = document.getElementById("completionNumber");
+const completionFill = document.getElementById("completionFill");
+const completionText = document.getElementById("completionText");
 
-const profileRole =
-  document.getElementById("profileRole");
+const editProfileBtn = document.getElementById("editProfileBtn");
+const completeProfileBtn = document.getElementById("completeProfileBtn");
 
-const profileName =
-  document.getElementById("profileName");
+const editModal = document.getElementById("editModal");
+const editBackdrop = document.getElementById("editBackdrop");
+const closeEdit = document.getElementById("closeEdit");
 
-const profileHeadline =
-  document.getElementById("profileHeadline");
+const editForm = document.getElementById("editForm");
 
-const infoName =
-  document.getElementById("infoName");
+const editName = document.getElementById("editName");
+const editHeadline = document.getElementById("editHeadline");
+const editSkills = document.getElementById("editSkills");
+const editEducation = document.getElementById("editEducation");
+const editExperience = document.getElementById("editExperience");
+const editLocation = document.getElementById("editLocation");
 
-const infoHeadline =
-  document.getElementById("infoHeadline");
-
-const infoRole =
-  document.getElementById("infoRole");
-
-const homeBtn =
-  document.getElementById("homeBtn");
-
-const editProfileBtn =
-  document.getElementById("editProfileBtn");
-
-const completeProfileBtn =
-  document.getElementById("completeProfileBtn");
-
-const editModal =
-  document.getElementById("editModal");
-
-const editBackdrop =
-  document.getElementById("editBackdrop");
-
-const closeEdit =
-  document.getElementById("closeEdit");
-
-const editForm =
-  document.getElementById("editForm");
-
-const editName =
-  document.getElementById("editName");
-
-const editHeadline =
-  document.getElementById("editHeadline");
-
-const editStatus =
-  document.getElementById("editStatus");
+const editStatus = document.getElementById("editStatus");
 
 
 /* =========================================================
    LOAD PROFILE
 ========================================================= */
 
-function getProfile() {
+let profile = null;
 
-  try {
+try {
+  profile = JSON.parse(
+    localStorage.getItem(PROFILE_STORAGE_KEY)
+  );
+} catch (error) {
+  profile = null;
+}
 
-    const saved =
-      localStorage.getItem(
-        PROFILE_STORAGE_KEY
-      );
-
-    if (!saved) {
-      return null;
-    }
-
-    return JSON.parse(saved);
-
-  } catch (error) {
-
-    console.error(
-      "Expo Go profile could not be loaded:",
-      error
-    );
-
-    return null;
-
-  }
-
+if (!profile) {
+  window.location.href = "index.html";
 }
 
 
 /* =========================================================
-   SAVE PROFILE
+   HELPERS
 ========================================================= */
 
-function saveProfile(profile) {
+function escapeHTML(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
-  localStorage.setItem(
-    PROFILE_STORAGE_KEY,
-    JSON.stringify(profile)
-  );
 
+function displayValue(value) {
+  return value && String(value).trim()
+    ? escapeHTML(value)
+    : "Not added";
+}
+
+
+/* =========================================================
+   PROFILE STRENGTH
+========================================================= */
+
+function calculateCompletion(data) {
+
+  const fields = [
+    data.name,
+    data.headline,
+    data.skills,
+    data.education,
+    data.experience,
+    data.location
+  ];
+
+  const completed = fields.filter(
+    field => field && String(field).trim()
+  ).length;
+
+  return Math.round((completed / fields.length) * 100);
+}
+
+
+function updateCompletion(data) {
+
+  const percentage = calculateCompletion(data);
+
+  completionNumber.textContent = `${percentage}%`;
+  completionFill.style.width = `${percentage}%`;
+
+  if (percentage >= 100) {
+    completionText.textContent =
+      "Your profile is complete and ready for matching.";
+  } else if (percentage >= 80) {
+    completionText.textContent =
+      "Almost there. Add the remaining information.";
+  } else if (percentage >= 60) {
+    completionText.textContent =
+      "Good start. A few more details will strengthen your profile.";
+  } else {
+    completionText.textContent =
+      "Add more information to improve your profile.";
+  }
 }
 
 
@@ -115,208 +131,80 @@ function saveProfile(profile) {
    DISPLAY PROFILE
 ========================================================= */
 
-function displayProfile(profile) {
+function displayProfile(data) {
 
-  if (!profile) {
+  const name = data.name || "Your Name";
+  const headline = data.headline || "Your professional headline";
 
-    window.location.href =
-      "index.html";
+  const firstLetter =
+    name.trim().charAt(0).toUpperCase() || "E";
 
-    return;
+  profileAvatar.textContent = firstLetter;
 
-  }
-
-
-  const name =
-    profile.name || "Your Name";
-
-  const headline =
-    profile.headline || "Your profession";
-
-  const role =
-    profile.role || "employee";
-
-
-  const roleLabel =
-    role === "employer"
+  profileRole.textContent =
+    data.role === "employer"
       ? "EMPLOYER"
       : "EMPLOYEE";
 
+  profileName.textContent = name;
 
-  const roleText =
-    role === "employer"
+  profileHeadline.textContent = headline;
+
+  infoName.innerHTML = displayValue(data.name);
+  infoHeadline.innerHTML = displayValue(data.headline);
+
+  infoRole.innerHTML =
+    data.role === "employer"
       ? "Employer"
       : "Employee";
 
+  infoSkills.innerHTML = displayValue(data.skills);
+  infoEducation.innerHTML = displayValue(data.education);
+  infoExperience.innerHTML = displayValue(data.experience);
+  infoLocation.innerHTML = displayValue(data.location);
 
-  const initial =
-    name.charAt(0).toUpperCase();
-
-
-  profileAvatar.textContent =
-    initial;
-
-  profileName.textContent =
-    name;
-
-  profileHeadline.textContent =
-    headline;
-
-  profileRole.textContent =
-    roleLabel;
-
-  infoName.textContent =
-    name;
-
-  infoHeadline.textContent =
-    headline;
-
-  infoRole.textContent =
-    roleText;
-
+  updateCompletion(data);
 }
 
 
 /* =========================================================
-   EDIT PROFILE
+   OPEN EDIT MODAL
 ========================================================= */
 
 function openEditModal() {
 
-  const profile =
-    getProfile();
-
-  if (!profile) {
-    return;
-  }
-
-
-  editName.value =
-    profile.name || "";
-
-  editHeadline.value =
-    profile.headline || "";
+  editName.value = profile.name || "";
+  editHeadline.value = profile.headline || "";
+  editSkills.value = profile.skills || "";
+  editEducation.value = profile.education || "";
+  editExperience.value = profile.experience || "";
+  editLocation.value = profile.location || "";
 
   editStatus.textContent = "";
+  editStatus.className = "edit-status";
 
-  editModal.classList.remove("hidden");
-
-  document.body.style.overflow =
-    "hidden";
-
+  editModal.classList.add("active");
 
   setTimeout(() => {
-
     editName.focus();
-
-  }, 150);
-
+  }, 100);
 }
 
+
+/* =========================================================
+   CLOSE EDIT MODAL
+========================================================= */
 
 function closeEditModal() {
 
-  editModal.classList.add("hidden");
+  editModal.classList.remove("active");
 
-  document.body.style.overflow =
-    "";
-
+  editStatus.textContent = "";
 }
 
 
 /* =========================================================
-   SAVE EDITED PROFILE
-========================================================= */
-
-editForm.addEventListener(
-  "submit",
-  event => {
-
-    event.preventDefault();
-
-
-    const profile =
-      getProfile();
-
-    if (!profile) {
-      return;
-    }
-
-
-    const name =
-      editName.value.trim();
-
-    const headline =
-      editHeadline.value.trim();
-
-
-    if (!name) {
-
-      editStatus.textContent =
-        "Please enter your name.";
-
-      editName.focus();
-
-      return;
-
-    }
-
-
-    if (!headline) {
-
-      editStatus.textContent =
-        "Please enter what you do.";
-
-      editHeadline.focus();
-
-      return;
-
-    }
-
-
-    profile.name =
-      name;
-
-    profile.headline =
-      headline;
-
-
-    saveProfile(profile);
-
-    displayProfile(profile);
-
-
-    editStatus.textContent =
-      "Profile updated successfully.";
-
-
-    setTimeout(() => {
-
-      closeEditModal();
-
-    }, 700);
-
-  }
-);
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-homeBtn.addEventListener(
-  "click",
-  () => {
-
-    window.location.href =
-      "index.html";
-
-  }
-);
-
-
-/* =========================================================
-   EDIT BUTTON
+   EDIT BUTTONS
 ========================================================= */
 
 editProfileBtn.addEventListener(
@@ -324,30 +212,15 @@ editProfileBtn.addEventListener(
   openEditModal
 );
 
-
-/* =========================================================
-   COMPLETE PROFILE
-========================================================= */
-
 completeProfileBtn.addEventListener(
   "click",
-  () => {
-
-    openEditModal();
-
-  }
+  openEditModal
 );
-
-
-/* =========================================================
-   MODAL CLOSE
-========================================================= */
 
 closeEdit.addEventListener(
   "click",
   closeEditModal
 );
-
 
 editBackdrop.addEventListener(
   "click",
@@ -355,17 +228,98 @@ editBackdrop.addEventListener(
 );
 
 
+/* =========================================================
+   SAVE PROFILE
+========================================================= */
+
+editForm.addEventListener(
+  "submit",
+  function (event) {
+
+    event.preventDefault();
+
+    const name = editName.value.trim();
+    const headline = editHeadline.value.trim();
+
+    if (!name) {
+
+      editStatus.textContent =
+        "Please enter your name.";
+
+      editStatus.className =
+        "edit-status error";
+
+      editName.focus();
+
+      return;
+    }
+
+    if (!headline) {
+
+      editStatus.textContent =
+        "Please enter what you do.";
+
+      editStatus.className =
+        "edit-status error";
+
+      editHeadline.focus();
+
+      return;
+    }
+
+
+    profile = {
+      ...profile,
+
+      name,
+      headline,
+
+      skills: editSkills.value.trim(),
+      education: editEducation.value.trim(),
+      experience: editExperience.value.trim(),
+      location: editLocation.value.trim(),
+
+      updatedAt: new Date().toISOString()
+    };
+
+
+    localStorage.setItem(
+      PROFILE_STORAGE_KEY,
+      JSON.stringify(profile)
+    );
+
+
+    displayProfile(profile);
+
+
+    editStatus.textContent =
+      "Profile saved successfully.";
+
+    editStatus.className =
+      "edit-status success";
+
+
+    setTimeout(() => {
+      closeEditModal();
+    }, 700);
+
+  }
+);
+
+
+/* =========================================================
+   ESC KEY
+========================================================= */
+
 document.addEventListener(
   "keydown",
-  event => {
+  function (event) {
 
     if (
       event.key === "Escape" &&
-      !editModal.classList.contains("hidden")
+      editModal.classList.contains("active")
     ) {
-
       closeEditModal();
-
     }
 
   }
@@ -376,17 +330,4 @@ document.addEventListener(
    INITIALIZE
 ========================================================= */
 
-const existingProfile =
-  getProfile();
-
-
-if (!existingProfile) {
-
-  window.location.href =
-    "index.html";
-
-} else {
-
-  displayProfile(existingProfile);
-
-}
+displayProfile(profile);
