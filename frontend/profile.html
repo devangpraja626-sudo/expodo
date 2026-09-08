@@ -2,383 +2,802 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <title>Expo Go — Your Profile</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
 
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="profile-page">
 
+  <!-- =====================================================
+       AMBIENT BACKGROUND
+       ===================================================== -->
+
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
 
-  <header class="profile-header">
-    <a href="index.html" class="brand">EXPO <span>GO</span></a>
+  <div class="page-grid"></div>
 
-    <a href="index.html" class="profile-home-btn">
-      Home
+
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
+
+  <header class="profile-header">
+
+    <a
+      href="index.html"
+      class="brand"
+      aria-label="Expo Go home"
+    >
+      <span class="brand-mark">E</span>
+      <span class="brand-text">EXPO GO</span>
     </a>
+
+    <a
+      href="index.html"
+      class="profile-home-btn"
+    >
+      <span>Home</span>
+      <span class="arrow">↗</span>
+    </a>
+
   </header>
 
-  <main class="profile-layout">
 
-    <!-- MAIN PROFILE -->
-    <section class="dashboard-card profile-main-card">
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
 
-      <div class="profile-main-top">
+  <main class="profile-main">
 
-        <div class="large-avatar" id="profileAvatar">
-          E
-        </div>
+    <section class="profile-intro">
 
-        <div>
-          <div class="profile-role" id="profileRole">
-            EMPLOYEE
-          </div>
+      <div>
+        <span class="eyebrow">YOUR PROFILE</span>
 
-          <h1 id="profileName">Your Name</h1>
+        <h1>
+          Your profile.
+          <span>This is how opportunities will see you.</span>
+        </h1>
 
-          <p id="profileHeadline">
-            Your professional headline
-          </p>
-        </div>
-
+        <p>
+          Keep your information accurate and complete.
+          Expo Go uses your profile to create better opportunities.
+        </p>
       </div>
-
-      <div class="profile-divider"></div>
-
-      <div class="profile-info-grid">
-
-        <div class="profile-info">
-          <span>NAME</span>
-          <strong id="infoName">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span id="headlineLabel">HEADLINE</span>
-          <strong id="infoHeadline">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span>ROLE</span>
-          <strong id="infoRole">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span id="skillsLabel">SKILLS</span>
-          <strong id="infoSkills">—</strong>
-        </div>
-
-        <div class="profile-info" id="educationInfo">
-          <span>EDUCATION</span>
-          <strong id="infoEducation">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span id="experienceLabel">EXPERIENCE</span>
-          <strong id="infoExperience">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span id="locationLabel">LOCATION</span>
-          <strong id="infoLocation">—</strong>
-        </div>
-
-        <div class="profile-info" id="workPreferenceInfo">
-          <span>WORK PREFERENCE</span>
-          <strong id="infoWorkPreference">—</strong>
-        </div>
-
-        <div class="profile-info" id="companyInfo" style="display:none;">
-          <span>COMPANY</span>
-          <strong id="infoCompany">—</strong>
-        </div>
-
-        <div class="profile-info" id="workTypeInfo" style="display:none;">
-          <span>WORK TYPE</span>
-          <strong id="infoWorkType">—</strong>
-        </div>
-
-        <div class="profile-info">
-          <span>STATUS</span>
-          <strong class="status-active">ACTIVE</strong>
-        </div>
-
-      </div>
-
-      <button class="profile-edit-btn" id="editProfileBtn">
-        Edit profile
-      </button>
 
     </section>
 
 
-    <!-- SIDEBAR -->
-    <aside class="dashboard-side">
+    <!-- ===================================================
+         PROFILE LAYOUT
+         =================================================== -->
 
-      <div class="dashboard-card completion-card">
+    <section class="profile-layout">
 
-        <div class="card-label">
-          PROFILE STRENGTH
+      <!-- ================================================
+           MAIN PROFILE CARD
+           ================================================ -->
+
+      <article class="dashboard-card profile-main-card">
+
+        <div class="profile-main-top">
+
+          <div class="large-avatar" id="profileAvatar">
+            E
+          </div>
+
+          <div class="profile-identity">
+
+            <div
+              class="profile-role"
+              id="profileRole"
+            >
+              EMPLOYEE
+            </div>
+
+            <h2 id="profileName">
+              Your Name
+            </h2>
+
+            <p id="profileHeadline">
+              Your professional headline
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            class="profile-edit-btn"
+            id="editProfileBtn"
+          >
+            Edit profile
+          </button>
+
         </div>
 
-        <div class="completion-number" id="completionNumber">
-          40%
+
+        <!-- ==============================================
+             BASIC INFORMATION
+             ============================================== -->
+
+        <div class="profile-section">
+
+          <div class="section-heading">
+            <span>PROFILE INFORMATION</span>
+          </div>
+
+          <div class="profile-info-grid">
+
+            <div class="profile-info">
+              <span>Name</span>
+              <strong id="infoName">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Profile</span>
+              <strong id="infoHeadline">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Role</span>
+              <strong id="infoRole">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Status</span>
+              <strong class="status-active">
+                ACTIVE
+              </strong>
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="completion-bar">
-          <div class="completion-fill" id="completionFill"></div>
+
+        <!-- ==============================================
+             EMPLOYEE INFORMATION
+             ============================================== -->
+
+        <div
+          class="profile-section role-section"
+          id="employeeSection"
+        >
+
+          <div class="section-heading">
+            <span>PROFESSIONAL DETAILS</span>
+          </div>
+
+          <div class="profile-info-grid">
+
+            <div class="profile-info">
+              <span>Skills</span>
+              <strong id="infoSkills">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Education</span>
+              <strong id="infoEducation">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Experience</span>
+              <strong id="infoExperience">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Desired position</span>
+              <strong id="infoDesiredPosition">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Location</span>
+              <strong id="infoLocation">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Work preference</span>
+              <strong id="infoWorkPreference">—</strong>
+            </div>
+
+          </div>
+
         </div>
 
-        <p id="completionText">
-          Add more information to improve your profile.
-        </p>
 
-      </div>
+        <!-- ==============================================
+             EMPLOYER INFORMATION
+             ============================================== -->
 
+        <div
+          class="profile-section role-section"
+          id="employerSection"
+        >
 
-      <div class="dashboard-card next-card">
+          <div class="section-heading">
+            <span>HIRING DETAILS</span>
+          </div>
 
-        <div class="card-label">
-          NEXT STEP
+          <div class="profile-info-grid">
+
+            <div class="profile-info">
+              <span>Company</span>
+              <strong id="infoCompany">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Hiring position</span>
+              <strong id="infoHiringPosition">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Required skills</span>
+              <strong id="infoRequiredSkills">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Experience required</span>
+              <strong id="infoExperienceRequired">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Location</span>
+              <strong id="infoEmployerLocation">—</strong>
+            </div>
+
+            <div class="profile-info">
+              <span>Work type</span>
+              <strong id="infoWorkType">—</strong>
+            </div>
+
+          </div>
+
         </div>
 
-        <h3>
-          Complete your profile.
-        </h3>
 
-        <p>
-          Give Expo Go more information so opportunities can understand exactly what you need.
-        </p>
+        <!-- ==============================================
+             ABOUT
+             ============================================== -->
 
-        <button id="completeProfileBtn">
-          Complete profile
-        </button>
+        <div class="profile-section">
 
-      </div>
+          <div class="section-heading">
+            <span>ABOUT</span>
+          </div>
 
-    </aside>
+          <div class="about-profile">
+            <p id="infoAbout">
+              Complete your profile to tell Expo Go more about you.
+            </p>
+          </div>
+
+        </div>
+
+      </article>
+
+
+      <!-- ================================================
+           SIDE DASHBOARD
+           ================================================ -->
+
+      <aside class="dashboard-side">
+
+        <!-- PROFILE COMPLETION -->
+
+        <article class="dashboard-card completion-card">
+
+          <div class="card-label">
+            PROFILE STRENGTH
+          </div>
+
+          <div class="completion-number">
+            <span id="completionNumber">0</span>%
+          </div>
+
+          <p>
+            A complete profile gives Expo Go more information
+            to find relevant opportunities.
+          </p>
+
+          <div class="completion-bar">
+            <div
+              class="completion-fill"
+              id="completionFill"
+              style="width: 0%"
+            ></div>
+          </div>
+
+          <div class="completion-meta">
+            <span id="completionText">
+              Getting started
+            </span>
+
+            <span id="completionFields">
+              0 / 0
+            </span>
+          </div>
+
+        </article>
+
+
+        <!-- NEXT STEP -->
+
+        <article class="dashboard-card next-card">
+
+          <div class="card-label">
+            NEXT STEP
+          </div>
+
+          <h3 id="nextStepTitle">
+            Complete your profile.
+          </h3>
+
+          <p id="nextStepText">
+            Add your professional information so Expo Go
+            can understand what you're looking for.
+          </p>
+
+          <button
+            type="button"
+            class="edit-save-btn"
+            id="completeProfileBtn"
+          >
+            Complete profile
+            <span>↗</span>
+          </button>
+
+        </article>
+
+
+        <!-- MATCHING STATUS -->
+
+        <article class="dashboard-card matching-card">
+
+          <div class="card-label">
+            EXPO MATCHING
+          </div>
+
+          <div class="matching-indicator">
+            <span class="matching-dot"></span>
+            <span id="matchingStatus">
+              Profile data required
+            </span>
+          </div>
+
+          <p>
+            Once your profile has enough information,
+            it becomes ready for opportunity matching.
+          </p>
+
+        </article>
+
+      </aside>
+
+    </section>
 
   </main>
 
 
-  <!-- EDIT PROFILE MODAL -->
-  <div class="edit-modal" id="editModal">
+  <!-- =====================================================
+       EDIT PROFILE MODAL
+       ===================================================== -->
 
-    <div class="edit-backdrop" id="editBackdrop"></div>
+  <div
+    class="edit-modal"
+    id="editModal"
+    aria-hidden="true"
+  >
 
-    <div class="edit-panel">
+    <div
+      class="edit-backdrop"
+      id="editBackdrop"
+    ></div>
 
-      <button class="edit-close" id="closeEdit">
+
+    <div
+      class="edit-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="editTitle"
+    >
+
+      <button
+        type="button"
+        class="modal-close"
+        id="closeEdit"
+        aria-label="Close"
+      >
         ×
       </button>
 
-      <div class="edit-heading">
-        <span id="editorType">PROFILE</span>
 
-        <h2 id="editorTitle">
-          Build your profile.
+      <div class="edit-header">
+
+        <span class="eyebrow">
+          EDIT PROFILE
+        </span>
+
+        <h2 id="editTitle">
+          Refine your profile.
         </h2>
 
-        <p id="editorSubtitle">
-          Add the information opportunities need.
+        <p id="editSubtitle">
+          Keep your professional information up to date.
         </p>
+
       </div>
 
 
+      <!-- ================================================
+           EDIT FORM
+           ================================================ -->
+
       <form id="editForm">
 
-        <!-- COMMON -->
+        <!-- BASIC -->
+
+        <div class="edit-section-title">
+          BASIC INFORMATION
+        </div>
+
+
         <div class="edit-field">
-          <label for="editName">Full name</label>
+
+          <label for="editName">
+            Name
+          </label>
 
           <input
             type="text"
             id="editName"
+            name="name"
             placeholder="Your full name"
             autocomplete="name"
           />
+
         </div>
 
 
-        <!-- EMPLOYEE -->
-        <div class="edit-field employee-field">
+        <div class="edit-field">
+
           <label for="editHeadline">
-            What do you do?
+            Professional headline
           </label>
 
           <input
             type="text"
             id="editHeadline"
+            name="headline"
             placeholder="e.g. Frontend Developer"
           />
+
         </div>
 
-        <div class="edit-field employee-field">
-          <label for="editSkills">
-            Skills
+
+        <!-- ==============================================
+             EMPLOYEE FIELDS
+             ============================================== -->
+
+        <div
+          id="employeeEditFields"
+          class="role-edit-fields"
+        >
+
+          <div class="edit-section-title">
+            PROFESSIONAL DETAILS
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editSkills">
+              Skills
+            </label>
+
+            <input
+              type="text"
+              id="editSkills"
+              name="skills"
+              placeholder="e.g. React, JavaScript, UI/UX"
+            />
+
+            <small>
+              Separate multiple skills with commas.
+            </small>
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editEducation">
+              Education
+            </label>
+
+            <input
+              type="text"
+              id="editEducation"
+              name="education"
+              placeholder="e.g. B.Tech Computer Science"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editExperience">
+              Experience
+            </label>
+
+            <input
+              type="text"
+              id="editExperience"
+              name="experience"
+              placeholder="e.g. 2 years"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editDesiredPosition">
+              Desired position
+            </label>
+
+            <input
+              type="text"
+              id="editDesiredPosition"
+              name="desiredPosition"
+              placeholder="e.g. Frontend Developer"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editLocation">
+              Location
+            </label>
+
+            <input
+              type="text"
+              id="editLocation"
+              name="location"
+              placeholder="e.g. Indore, India"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editWorkPreference">
+              Work preference
+            </label>
+
+            <select
+              id="editWorkPreference"
+              name="workPreference"
+            >
+              <option value="">
+                Select preference
+              </option>
+
+              <option value="Remote">
+                Remote
+              </option>
+
+              <option value="Hybrid">
+                Hybrid
+              </option>
+
+              <option value="On-site">
+                On-site
+              </option>
+
+              <option value="Flexible">
+                Flexible
+              </option>
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- ==============================================
+             EMPLOYER FIELDS
+             ============================================== -->
+
+        <div
+          id="employerEditFields"
+          class="role-edit-fields"
+        >
+
+          <div class="edit-section-title">
+            HIRING DETAILS
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editCompany">
+              Company
+            </label>
+
+            <input
+              type="text"
+              id="editCompany"
+              name="company"
+              placeholder="Company name"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editHiringPosition">
+              Hiring position
+            </label>
+
+            <input
+              type="text"
+              id="editHiringPosition"
+              name="hiringPosition"
+              placeholder="e.g. Frontend Developer"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editRequiredSkills">
+              Required skills
+            </label>
+
+            <input
+              type="text"
+              id="editRequiredSkills"
+              name="requiredSkills"
+              placeholder="e.g. React, JavaScript, CSS"
+            />
+
+            <small>
+              Separate multiple skills with commas.
+            </small>
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editExperienceRequired">
+              Experience required
+            </label>
+
+            <input
+              type="text"
+              id="editExperienceRequired"
+              name="experienceRequired"
+              placeholder="e.g. 2+ years"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editEmployerLocation">
+              Location
+            </label>
+
+            <input
+              type="text"
+              id="editEmployerLocation"
+              name="employerLocation"
+              placeholder="e.g. Indore, India"
+            />
+
+          </div>
+
+
+          <div class="edit-field">
+
+            <label for="editWorkType">
+              Work type
+            </label>
+
+            <select
+              id="editWorkType"
+              name="workType"
+            >
+              <option value="">
+                Select work type
+              </option>
+
+              <option value="Remote">
+                Remote
+              </option>
+
+              <option value="Hybrid">
+                Hybrid
+              </option>
+
+              <option value="On-site">
+                On-site
+              </option>
+
+              <option value="Flexible">
+                Flexible
+              </option>
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- ==============================================
+             ABOUT
+             ============================================== -->
+
+        <div class="edit-section-title">
+          ABOUT
+        </div>
+
+
+        <div class="edit-field">
+
+          <label for="editAbout">
+            About
           </label>
 
-          <input
-            type="text"
-            id="editSkills"
-            placeholder="e.g. JavaScript, React, Python"
-          />
+          <textarea
+            id="editAbout"
+            name="about"
+            rows="4"
+            placeholder="Tell us a little about yourself or your company..."
+          ></textarea>
 
-          <small>
-            Separate multiple skills with commas.
-          </small>
-        </div>
-
-        <div class="edit-field employee-field">
-          <label for="editEducation">
-            Education
-          </label>
-
-          <input
-            type="text"
-            id="editEducation"
-            placeholder="e.g. B.Tech Computer Science"
-          />
-        </div>
-
-        <div class="edit-field employee-field">
-          <label for="editExperience">
-            Experience
-          </label>
-
-          <input
-            type="text"
-            id="editExperience"
-            placeholder="e.g. Fresher / 2 years"
-          />
-        </div>
-
-        <div class="edit-field employee-field">
-          <label for="editDesiredPosition">
-            Desired position
-          </label>
-
-          <input
-            type="text"
-            id="editDesiredPosition"
-            placeholder="e.g. Software Engineer"
-          />
-        </div>
-
-        <div class="edit-field employee-field">
-          <label for="editLocation">
-            Location
-          </label>
-
-          <input
-            type="text"
-            id="editLocation"
-            placeholder="e.g. Indore, India"
-          />
-        </div>
-
-        <div class="edit-field employee-field">
-          <label for="editWorkPreference">
-            Work preference
-          </label>
-
-          <input
-            type="text"
-            id="editWorkPreference"
-            placeholder="e.g. Remote / Hybrid / On-site"
-          />
         </div>
 
 
-        <!-- EMPLOYER -->
-        <div class="edit-field employer-field">
-          <label for="editCompany">
-            Company / organization
-          </label>
+        <!-- STATUS -->
 
-          <input
-            type="text"
-            id="editCompany"
-            placeholder="e.g. Expo Technologies"
-          />
-        </div>
-
-        <div class="edit-field employer-field">
-          <label for="editHiringPosition">
-            Hiring position
-          </label>
-
-          <input
-            type="text"
-            id="editHiringPosition"
-            placeholder="e.g. Frontend Developer"
-          />
-        </div>
-
-        <div class="edit-field employer-field">
-          <label for="editRequiredSkills">
-            Required skills
-          </label>
-
-          <input
-            type="text"
-            id="editRequiredSkills"
-            placeholder="e.g. React, JavaScript, CSS"
-          />
-
-          <small>
-            Separate multiple skills with commas.
-          </small>
-        </div>
-
-        <div class="edit-field employer-field">
-          <label for="editRequiredExperience">
-            Experience required
-          </label>
-
-          <input
-            type="text"
-            id="editRequiredExperience"
-            placeholder="e.g. 0–2 years"
-          />
-        </div>
-
-        <div class="edit-field employer-field">
-          <label for="editEmployerLocation">
-            Location
-          </label>
-
-          <input
-            type="text"
-            id="editEmployerLocation"
-            placeholder="e.g. Indore, India"
-          />
-        </div>
-
-        <div class="edit-field employer-field">
-          <label for="editWorkType">
-            Work type
-          </label>
-
-          <input
-            type="text"
-            id="editWorkType"
-            placeholder="e.g. Full-time / Part-time"
-          />
-        </div>
+        <div
+          class="edit-status"
+          id="editStatus"
+        ></div>
 
 
-        <div class="edit-status" id="editStatus"></div>
+        <!-- SAVE -->
 
-        <button type="submit" class="edit-save-btn">
-          Save profile
+        <button
+          type="submit"
+          class="edit-save-btn"
+        >
+          Save changes
+          <span>↗</span>
         </button>
 
       </form>
@@ -387,6 +806,10 @@
 
   </div>
 
+
+  <!-- =====================================================
+       SCRIPT
+       ===================================================== -->
 
   <script src="profile.js"></script>
 
