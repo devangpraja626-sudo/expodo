@@ -1,4 +1,10 @@
-const API_BASE_URL = "https://expodo.onrender.com";
+/* =========================================================
+   EXPO GO — FRONTEND CONTROLLER
+   Supabase Authentication + Profile Sync
+========================================================= */
+
+const API_BASE_URL =
+  "https://expodo.onrender.com";
 
 const SUPABASE_URL =
   "https://inhxlwsjlddhnpalbocl.supabase.co";
@@ -6,8 +12,11 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
   "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
 
-const STORAGE_KEY = "expoGoPrototype";
-const PROFILE_STORAGE_KEY = "expoGoProfile";
+const STORAGE_KEY =
+  "expoGoPrototype";
+
+const PROFILE_STORAGE_KEY =
+  "expoGoProfile";
 
 let supabaseClient = null;
 let authMode = "signup";
@@ -39,32 +48,56 @@ const DEFAULT_DATA = {
 
 let data = loadData();
 
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
 function loadData() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
 
     if (!saved) {
-      return structuredClone(DEFAULT_DATA);
+      return structuredClone(
+        DEFAULT_DATA
+      );
     }
 
-    const parsed = JSON.parse(saved);
+    const parsed =
+      JSON.parse(saved);
 
     return {
-      ...structuredClone(DEFAULT_DATA),
+      ...structuredClone(
+        DEFAULT_DATA
+      ),
+
       ...parsed,
 
       profile: {
-        ...structuredClone(DEFAULT_DATA.profile),
+        ...structuredClone(
+          DEFAULT_DATA.profile
+        ),
+
         ...(parsed.profile || {})
       }
     };
 
   } catch (error) {
-    console.error("Storage loading error:", error);
 
-    return structuredClone(DEFAULT_DATA);
+    console.error(
+      "Storage loading error:",
+      error
+    );
+
+    return structuredClone(
+      DEFAULT_DATA
+    );
   }
 }
+
 
 function saveData() {
   localStorage.setItem(
@@ -73,35 +106,56 @@ function saveData() {
   );
 }
 
+
 function normalizeArray(value) {
+
   if (Array.isArray(value)) {
+
     return value
-      .map(item => String(item).trim())
+      .map(item =>
+        String(item).trim()
+      )
       .filter(Boolean);
   }
 
   if (typeof value === "string") {
+
     return value
       .split(",")
-      .map(item => item.trim())
+      .map(item =>
+        item.trim()
+      )
       .filter(Boolean);
   }
 
   return [];
 }
 
-function createProfileObject(authUserId = null) {
-  const profile = data.profile || {};
+
+/* =========================================================
+   PROFILE OBJECT
+========================================================= */
+
+function createProfileObject(
+  authUserId = null
+) {
+
+  const profile =
+    data.profile || {};
 
   return {
-    id: profile.id || authUserId,
+
+    id:
+      profile.id ||
+      authUserId,
 
     authUserId:
       authUserId ||
       profile.authUserId ||
       null,
 
-    name: profile.name || "",
+    name:
+      profile.name || "",
 
     role:
       data.userType ||
@@ -112,7 +166,9 @@ function createProfileObject(authUserId = null) {
       profile.headline || "",
 
     skills:
-      normalizeArray(profile.skills),
+      normalizeArray(
+        profile.skills
+      ),
 
     education:
       profile.education || "",
@@ -139,23 +195,32 @@ function createProfileObject(authUserId = null) {
       profile.hiringPosition || "",
 
     requiredSkills:
-      normalizeArray(profile.requiredSkills),
+      normalizeArray(
+        profile.requiredSkills
+      ),
 
     experienceRequired:
-      profile.experienceRequired || "",
+      profile.experienceRequired ||
+      "",
 
     workType:
       profile.workType || ""
   };
 }
 
+
 /* =========================================================
    SUPABASE
 ========================================================= */
 
 function initializeSupabase() {
+
   if (!window.supabase) {
-    console.error("Supabase library not loaded.");
+
+    console.error(
+      "Supabase library not loaded."
+    );
+
     return false;
   }
 
@@ -168,218 +233,9 @@ function initializeSupabase() {
   return true;
 }
 
-/* =========================================================
-   AUTH FIELDS
-========================================================= */
-
-function createAuthFields() {
-  const form =
-    document.getElementById("authForm");
-
-  if (!form || document.getElementById("expoAuthFields")) {
-    return;
-  }
-
-  const wrapper =
-    document.createElement("div");
-
-  wrapper.id = "expoAuthFields";
-
-  wrapper.innerHTML = `
-    <div style="margin-top:18px;">
-      <input
-        id="authEmail"
-        type="email"
-        autocomplete="email"
-        placeholder="Email address"
-        required
-        style="
-          width:100%;
-          box-sizing:border-box;
-          padding:14px 16px;
-          border-radius:12px;
-          border:1px solid rgba(255,255,255,.12);
-          background:rgba(255,255,255,.04);
-          color:#fff;
-          outline:none;
-          font:inherit;
-          margin-bottom:12px;
-        "
-      >
-
-      <input
-        id="authPassword"
-        type="password"
-        autocomplete="new-password"
-        placeholder="Password"
-        required
-        minlength="6"
-        style="
-          width:100%;
-          box-sizing:border-box;
-          padding:14px 16px;
-          border-radius:12px;
-          border:1px solid rgba(255,255,255,.12);
-          background:rgba(255,255,255,.04);
-          color:#fff;
-          outline:none;
-          font:inherit;
-        "
-      >
-
-      <button
-        type="button"
-        id="authModeToggle"
-        style="
-          margin-top:10px;
-          background:none;
-          border:0;
-          color:#a78bfa;
-          cursor:pointer;
-          padding:4px 0;
-          font:inherit;
-        "
-      >
-        Already have an account? Log in
-      </button>
-
-      <button
-        type="button"
-        id="resendVerificationBtn"
-        style="
-          display:none;
-          margin-top:8px;
-          background:none;
-          border:0;
-          color:#a78bfa;
-          cursor:pointer;
-          padding:4px 0;
-          font:inherit;
-        "
-      >
-        Resend verification email
-      </button>
-    </div>
-  `;
-
-  const submitButton =
-    form.querySelector(
-      'button[type="submit"]'
-    );
-
-  if (submitButton) {
-    form.insertBefore(
-      wrapper,
-      submitButton
-    );
-  } else {
-    form.appendChild(wrapper);
-  }
-
-  document
-    .getElementById("authModeToggle")
-    ?.addEventListener(
-      "click",
-      toggleAuthMode
-    );
-
-  document
-    .getElementById("resendVerificationBtn")
-    ?.addEventListener(
-      "click",
-      resendVerification
-    );
-
-  updateAuthMode();
-}
-
-function updateAuthMode() {
-  const toggle =
-    document.getElementById(
-      "authModeToggle"
-    );
-
-  const submit =
-    document.getElementById(
-      "createProfileBtn"
-    );
-
-  const name =
-    document.getElementById(
-      "fullName"
-    );
-
-  const headline =
-    document.getElementById(
-      "profileHeadline"
-    );
-
-  if (authMode === "login") {
-
-    if (toggle) {
-      toggle.textContent =
-        "New to Expo Go? Create an account";
-    }
-
-    if (submit) {
-      submit.innerHTML =
-        'Log in <span>→</span>';
-    }
-
-    if (name) {
-      name.style.display = "none";
-      name.required = false;
-    }
-
-    if (headline) {
-      headline.style.display = "none";
-      headline.required = false;
-    }
-
-  } else {
-
-    if (toggle) {
-      toggle.textContent =
-        "Already have an account? Log in";
-    }
-
-    if (submit) {
-      submit.innerHTML =
-        'Create my profile <span>→</span>';
-    }
-
-    if (name) {
-      name.style.display = "";
-      name.required = true;
-    }
-
-    if (headline) {
-      headline.style.display = "";
-      headline.required = false;
-    }
-  }
-}
-
-function toggleAuthMode() {
-  authMode =
-    authMode === "signup"
-      ? "login"
-      : "signup";
-
-  updateAuthMode();
-
-  const status =
-    document.getElementById(
-      "authStatus"
-    );
-
-  if (status) {
-    status.textContent = "";
-  }
-}
 
 /* =========================================================
-   MODAL
+   ELEMENTS
 ========================================================= */
 
 const authModal =
@@ -422,84 +278,390 @@ const roleOptions =
     ".role-option"
   );
 
-roleOptions.forEach(option => {
-  option.addEventListener(
-    "click",
-    () => {
 
-      roleOptions.forEach(item => {
-        item.classList.remove("active");
+/* =========================================================
+   AUTH FIELDS
+========================================================= */
 
-        item.setAttribute(
-          "aria-selected",
-          "false"
-        );
-      });
+function createAuthFields() {
 
-      option.classList.add("active");
+  const form =
+    document.getElementById(
+      "authForm"
+    );
 
-      option.setAttribute(
-        "aria-selected",
-        "true"
-      );
+  if (
+    !form ||
+    document.getElementById(
+      "expoAuthFields"
+    )
+  ) {
+    return;
+  }
 
-      data.userType =
-        option.dataset.role || null;
+  const wrapper =
+    document.createElement(
+      "div"
+    );
 
-      saveData();
+  wrapper.id =
+    "expoAuthFields";
 
-      if (authStatus) {
-        authStatus.textContent = "";
-      }
+  wrapper.innerHTML = `
+    <div class="form-field">
+      <label for="authEmail">
+        Email address
+      </label>
+
+      <input
+        type="email"
+        id="authEmail"
+        name="email"
+        placeholder="you@example.com"
+        autocomplete="email"
+        required
+      />
+    </div>
+
+    <div class="form-field">
+      <label for="authPassword">
+        Password
+      </label>
+
+      <input
+        type="password"
+        id="authPassword"
+        name="password"
+        placeholder="Minimum 6 characters"
+        autocomplete="new-password"
+        minlength="6"
+        required
+      />
+    </div>
+
+    <button
+      type="button"
+      id="authModeToggle"
+      class="auth-mode-toggle"
+    >
+      Already have an account? Log in
+    </button>
+
+    <button
+      type="button"
+      id="resendVerificationBtn"
+      class="auth-mode-toggle"
+      style="display:none;"
+    >
+      Resend verification email
+    </button>
+  `;
+
+  const status =
+    document.getElementById(
+      "authStatus"
+    );
+
+  if (status) {
+
+    form.insertBefore(
+      wrapper,
+      status
+    );
+
+  } else {
+
+    form.appendChild(
+      wrapper
+    );
+  }
+
+  document
+    .getElementById(
+      "authModeToggle"
+    )
+    ?.addEventListener(
+      "click",
+      toggleAuthMode
+    );
+
+  document
+    .getElementById(
+      "resendVerificationBtn"
+    )
+    ?.addEventListener(
+      "click",
+      resendVerification
+    );
+
+  updateAuthMode();
+}
+
+
+/* =========================================================
+   AUTH MODE
+========================================================= */
+
+function updateAuthMode() {
+
+  const toggle =
+    document.getElementById(
+      "authModeToggle"
+    );
+
+  const submit =
+    document.getElementById(
+      "createProfileBtn"
+    );
+
+  const name =
+    document.getElementById(
+      "fullName"
+    );
+
+  const headline =
+    document.getElementById(
+      "profileHeadline"
+    );
+
+  const title =
+    document.getElementById(
+      "authTitle"
+    );
+
+  const subtitle =
+    document.getElementById(
+      "authSubtitle"
+    );
+
+  if (authMode === "login") {
+
+    if (toggle) {
+      toggle.textContent =
+        "New to Expo Go? Create an account";
     }
-  );
-});
 
-function openAuthModal(role = null) {
+    if (submit) {
+      submit.innerHTML =
+        'Log in <span>→</span>';
+    }
+
+    if (name) {
+      name.closest(".form-field")
+        ?.style.setProperty(
+          "display",
+          "none"
+        );
+
+      name.required = false;
+    }
+
+    if (headline) {
+      headline.closest(".form-field")
+        ?.style.setProperty(
+          "display",
+          "none"
+        );
+
+      headline.required = false;
+    }
+
+    if (title) {
+      title.textContent =
+        "Welcome back.";
+    }
+
+    if (subtitle) {
+      subtitle.textContent =
+        "Log in to continue to your Expo Go profile.";
+    }
+
+  } else {
+
+    if (toggle) {
+      toggle.textContent =
+        "Already have an account? Log in";
+    }
+
+    if (submit) {
+      submit.innerHTML =
+        'Create my profile <span>→</span>';
+    }
+
+    if (name) {
+      name.closest(".form-field")
+        ?.style.removeProperty(
+          "display"
+        );
+
+      name.required = true;
+    }
+
+    if (headline) {
+      headline.closest(".form-field")
+        ?.style.removeProperty(
+          "display"
+        );
+
+      headline.required = false;
+    }
+
+    if (title) {
+      title.textContent =
+        "Let's build your profile.";
+    }
+
+    if (subtitle) {
+      subtitle.textContent =
+        "Start with the basics. You can complete your profile next.";
+    }
+  }
+}
+
+
+function toggleAuthMode() {
+
+  authMode =
+    authMode === "signup"
+      ? "login"
+      : "signup";
+
+  updateAuthMode();
+
+  if (authStatus) {
+    authStatus.textContent = "";
+  }
+
+  const resend =
+    document.getElementById(
+      "resendVerificationBtn"
+    );
+
+  if (resend) {
+    resend.style.display =
+      "none";
+  }
+}
+
+
+/* =========================================================
+   ROLE SELECTION
+========================================================= */
+
+roleOptions.forEach(
+  option => {
+
+    option.addEventListener(
+      "click",
+      () => {
+
+        roleOptions.forEach(
+          item => {
+
+            item.classList.remove(
+              "active"
+            );
+
+            item.setAttribute(
+              "aria-selected",
+              "false"
+            );
+          }
+        );
+
+        option.classList.add(
+          "active"
+        );
+
+        option.setAttribute(
+          "aria-selected",
+          "true"
+        );
+
+        data.userType =
+          option.dataset.role ||
+          null;
+
+        saveData();
+
+        if (authStatus) {
+          authStatus.textContent =
+            "";
+        }
+      }
+    );
+  }
+);
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function openAuthModal(
+  role = null,
+  mode = "signup"
+) {
 
   if (role) {
 
-    data.userType = role;
+    data.userType =
+      role;
 
     saveData();
 
-    roleOptions.forEach(option => {
+    roleOptions.forEach(
+      option => {
 
-      const active =
-        option.dataset.role === role;
+        const active =
+          option.dataset.role ===
+          role;
 
-      option.classList.toggle(
-        "active",
-        active
-      );
+        option.classList.toggle(
+          "active",
+          active
+        );
 
-      option.setAttribute(
-        "aria-selected",
-        active
-          ? "true"
-          : "false"
-      );
-    });
+        option.setAttribute(
+          "aria-selected",
+          active
+            ? "true"
+            : "false"
+        );
+      }
+    );
   }
 
   createAuthFields();
 
-  authMode = "signup";
+  authMode = mode;
 
   updateAuthMode();
 
-  authModal?.classList.add("active");
+  authModal?.classList.add(
+    "active"
+  );
+
+  authModal?.setAttribute(
+    "aria-hidden",
+    "false"
+  );
 
   document.body.classList.add(
     "modal-open"
   );
 
   setTimeout(() => {
+
     document
-      .getElementById("authEmail")
+      .getElementById(
+        "authEmail"
+      )
       ?.focus();
+
   }, 100);
 }
+
 
 function closeAuthModal() {
 
@@ -507,62 +669,89 @@ function closeAuthModal() {
     "active"
   );
 
+  authModal?.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
   document.body.classList.remove(
     "modal-open"
   );
 
   if (authStatus) {
-    authStatus.textContent = "";
+    authStatus.textContent =
+      "";
   }
 }
 
+
 /* =========================================================
-   SIGNUP
+   SIGN UP
 ========================================================= */
 
 async function signup() {
 
   const name =
-    fullNameInput?.value.trim() || "";
+    fullNameInput?.value.trim() ||
+    "";
 
   const headline =
-    profileHeadlineInput?.value.trim() || "";
+    profileHeadlineInput
+      ?.value.trim() ||
+    "";
 
   const email =
     document
-      .getElementById("authEmail")
-      ?.value.trim() || "";
+      .getElementById(
+        "authEmail"
+      )
+      ?.value.trim() ||
+    "";
 
   const password =
     document
-      .getElementById("authPassword")
-      ?.value || "";
+      .getElementById(
+        "authPassword"
+      )
+      ?.value ||
+    "";
 
   if (!data.userType) {
+
     authStatus.textContent =
       "Please select Employee or Employer.";
+
     return;
   }
 
   if (!name) {
+
     authStatus.textContent =
       "Please enter your name.";
+
+    fullNameInput?.focus();
+
     return;
   }
 
   if (!email) {
+
     authStatus.textContent =
       "Please enter your email.";
+
     return;
   }
 
   if (password.length < 6) {
+
     authStatus.textContent =
       "Password must be at least 6 characters.";
+
     return;
   }
 
-  createProfileBtn.disabled = true;
+  createProfileBtn.disabled =
+    true;
 
   authStatus.textContent =
     "Creating your secure account...";
@@ -573,74 +762,76 @@ async function signup() {
       data: authData,
       error
     } =
-      await supabaseClient.auth.signUp({
-        email,
-        password,
+      await supabaseClient.auth
+        .signUp({
 
-        options: {
-          data: {
-            name,
-            role: data.userType,
-            headline
-          },
+          email,
 
-          emailRedirectTo:
-            `${window.location.origin}/index.html`
-        }
-      });
+          password,
+
+          options: {
+
+            data: {
+              name,
+              role:
+                data.userType,
+              headline
+            },
+
+            emailRedirectTo:
+              `${window.location.origin}/index.html`
+          }
+        });
 
     if (error) {
       throw error;
     }
 
-    if (!authData.user) {
+    if (!authData?.user) {
       throw new Error(
         "Unable to create account."
       );
     }
 
-    const profileId =
-      authData.user.id;
-
     data.profile = {
+
       ...data.profile,
 
-      id: profileId,
+      id:
+        authData.user.id,
 
       authUserId:
         authData.user.id,
 
       name,
+
       headline,
 
       role:
         data.userType
     };
 
-    data.userType =
-      data.userType;
-
     saveData();
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify({
-        ...data.profile,
-        role: data.userType
-      })
+      JSON.stringify(
+        data.profile
+      )
     );
 
     authStatus.innerHTML =
       "Account created. <strong>Check your email</strong> and click the verification link to continue.";
 
-    document
-      .getElementById(
+    const resend =
+      document.getElementById(
         "resendVerificationBtn"
-      )
-      ?.style.setProperty(
-        "display",
-        "block"
       );
+
+    if (resend) {
+      resend.style.display =
+        "block";
+    }
 
   } catch (error) {
 
@@ -660,6 +851,7 @@ async function signup() {
   }
 }
 
+
 /* =========================================================
    LOGIN
 ========================================================= */
@@ -668,17 +860,25 @@ async function login() {
 
   const email =
     document
-      .getElementById("authEmail")
-      ?.value.trim() || "";
+      .getElementById(
+        "authEmail"
+      )
+      ?.value.trim() ||
+    "";
 
   const password =
     document
-      .getElementById("authPassword")
-      ?.value || "";
+      .getElementById(
+        "authPassword"
+      )
+      ?.value ||
+    "";
 
   if (!email || !password) {
+
     authStatus.textContent =
       "Enter your email and password.";
+
     return;
   }
 
@@ -696,7 +896,9 @@ async function login() {
     } =
       await supabaseClient.auth
         .signInWithPassword({
+
           email,
+
           password
         });
 
@@ -704,7 +906,7 @@ async function login() {
       throw error;
     }
 
-    if (!authData.user) {
+    if (!authData?.user) {
       throw new Error(
         "Unable to sign in."
       );
@@ -718,8 +920,10 @@ async function login() {
       "Login successful.";
 
     setTimeout(() => {
+
       window.location.href =
         "profile.html";
+
     }, 300);
 
   } catch (error) {
@@ -740,8 +944,9 @@ async function login() {
   }
 }
 
+
 /* =========================================================
-   AUTHENTICATED PROFILE
+   LOAD AUTH PROFILE
 ========================================================= */
 
 async function loadOrCreateAuthenticatedProfile(
@@ -765,6 +970,7 @@ async function loadOrCreateAuthenticatedProfile(
       result.profile;
 
     data.profile = {
+
       ...data.profile,
 
       id:
@@ -854,14 +1060,18 @@ async function loadOrCreateAuthenticatedProfile(
   }
 
   const metadata =
-    user.user_metadata || {};
+    user.user_metadata ||
+    {};
 
   data.profile = {
+
     ...data.profile,
 
-    id: user.id,
+    id:
+      user.id,
 
-    authUserId: user.id,
+    authUserId:
+      user.id,
 
     name:
       data.profile.name ||
@@ -890,8 +1100,9 @@ async function loadOrCreateAuthenticatedProfile(
   );
 }
 
+
 /* =========================================================
-   SYNC PROFILE
+   PROFILE SYNC
 ========================================================= */
 
 async function syncProfileToBackend(
@@ -907,9 +1118,11 @@ async function syncProfileToBackend(
     await fetch(
       `${API_BASE_URL}/api/profiles`,
       {
+
         method: "POST",
 
         headers: {
+
           "Content-Type":
             "application/json",
 
@@ -918,7 +1131,9 @@ async function syncProfileToBackend(
         },
 
         body:
-          JSON.stringify(payload)
+          JSON.stringify(
+            payload
+          )
       }
     );
 
@@ -928,11 +1143,14 @@ async function syncProfileToBackend(
   let result = {};
 
   try {
+
     result =
       raw
         ? JSON.parse(raw)
         : {};
+
   } catch {
+
     result = {};
   }
 
@@ -940,6 +1158,7 @@ async function syncProfileToBackend(
     !response.ok ||
     !result.success
   ) {
+
     throw new Error(
       result.message ||
       "Profile sync failed."
@@ -949,6 +1168,7 @@ async function syncProfileToBackend(
   if (result.profile) {
 
     data.profile = {
+
       ...data.profile,
 
       ...result.profile,
@@ -997,39 +1217,6 @@ async function syncProfileToBackend(
   }
 }
 
-/* =========================================================
-   FORM
-========================================================= */
-
-async function createProfile(event) {
-
-  event?.preventDefault();
-  event?.stopPropagation();
-
-  createAuthFields();
-
-  if (authMode === "login") {
-    await login();
-    return;
-  }
-
-  await signup();
-}
-
-authForm?.addEventListener(
-  "submit",
-  createProfile
-);
-
-createProfileBtn?.addEventListener(
-  "click",
-  createProfile
-);
-
-continueProfileBtn?.addEventListener(
-  "click",
-  createProfile
-);
 
 /* =========================================================
    RESEND VERIFICATION
@@ -1039,12 +1226,16 @@ async function resendVerification() {
 
   const email =
     document
-      .getElementById("authEmail")
+      .getElementById(
+        "authEmail"
+      )
       ?.value.trim();
 
   if (!email) {
+
     authStatus.textContent =
       "Enter your email first.";
+
     return;
   }
 
@@ -1053,16 +1244,19 @@ async function resendVerification() {
     const {
       error
     } =
-      await supabaseClient.auth.resend({
-        type: "signup",
+      await supabaseClient.auth
+        .resend({
 
-        email,
+          type: "signup",
 
-        options: {
-          emailRedirectTo:
-            `${window.location.origin}/index.html`
-        }
-      });
+          email,
+
+          options: {
+
+            emailRedirectTo:
+              `${window.location.origin}/index.html`
+          }
+        });
 
     if (error) {
       throw error;
@@ -1073,11 +1267,17 @@ async function resendVerification() {
 
   } catch (error) {
 
+    console.error(
+      "Verification resend error:",
+      error
+    );
+
     authStatus.textContent =
       error.message ||
-      "Unable to resend email.";
+      "Unable to resend verification email.";
   }
 }
+
 
 /* =========================================================
    SESSION CHECK
@@ -1090,9 +1290,21 @@ async function checkSession() {
   }
 
   const {
-    data: sessionData
+    data: sessionData,
+    error
   } =
-    await supabaseClient.auth.getSession();
+    await supabaseClient.auth
+      .getSession();
+
+  if (error) {
+
+    console.error(
+      "Session error:",
+      error
+    );
+
+    return;
+  }
 
   const session =
     sessionData?.session;
@@ -1114,163 +1326,230 @@ async function checkSession() {
       user
     );
 
-    /*
-      Only redirect when we already have
-      enough information to enter the profile.
-    */
-
     if (
       data.profile?.id &&
       data.profile?.role
     ) {
-      const modal =
-        document.getElementById(
-          "authModal"
-        );
 
-      if (
-        modal?.classList.contains(
-          "active"
-        )
-      ) {
-        window.location.href =
-          "profile.html";
-      }
+      window.location.href =
+        "profile.html";
     }
 
   } catch (error) {
 
     console.error(
-      "Authenticated profile sync error:",
+      "Authenticated profile error:",
       error
     );
   }
 }
 
+
 /* =========================================================
-   GENERAL UI
+   AUTH STATE
 ========================================================= */
 
-authModal?.addEventListener(
-  "click",
-  event => {
+function setupAuthListener() {
 
-    if (
-      event.target === authModal
-    ) {
-      closeAuthModal();
-    }
+  if (!supabaseClient) {
+    return;
   }
-);
 
-document
-  .querySelectorAll(
-    "[data-close-modal], .modal-close"
-  )
-  .forEach(button => {
+  supabaseClient.auth
+    .onAuthStateChange(
+      async (
+        event,
+        session
+      ) => {
 
-    button.addEventListener(
-      "click",
-      closeAuthModal
+        console.log(
+          "Expo Go auth event:",
+          event
+        );
+
+        if (
+          event === "SIGNED_IN" &&
+          session?.user
+        ) {
+
+          if (
+            !session.user
+              .email_confirmed_at
+          ) {
+            return;
+          }
+
+          try {
+
+            await loadOrCreateAuthenticatedProfile(
+              session.user
+            );
+
+            window.location.href =
+              "profile.html";
+
+          } catch (error) {
+
+            console.error(
+              "Auth profile error:",
+              error
+            );
+          }
+        }
+      }
     );
-  });
+}
 
-document.addEventListener(
-  "keydown",
-  event => {
 
-    if (
-      event.key === "Escape"
-    ) {
-      closeAuthModal();
-    }
-  }
-);
+/* =========================================================
+   NAVIGATION / UI
+========================================================= */
 
 document
-  .getElementById("employeeBtn")
+  .getElementById(
+    "employeeBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal("employee");
+
+      openAuthModal(
+        "employee",
+        "signup"
+      );
     }
   );
 
+
 document
-  .getElementById("employerBtn")
+  .getElementById(
+    "employerBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal("employer");
+
+      openAuthModal(
+        "employer",
+        "signup"
+      );
     }
   );
 
+
 document
-  .getElementById("bottomJoinBtn")
+  .getElementById(
+    "bottomJoinBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal();
+
+      openAuthModal(
+        null,
+        "signup"
+      );
     }
   );
 
+
 document
-  .getElementById("loginBtn")
+  .getElementById(
+    "joinBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal();
-      authMode = "login";
-      updateAuthMode();
+
+      openAuthModal(
+        null,
+        "signup"
+      );
     }
   );
 
+
 document
-  .getElementById("mobileLoginBtn")
+  .getElementById(
+    "loginBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal();
-      authMode = "login";
-      updateAuthMode();
+
+      openAuthModal(
+        null,
+        "login"
+      );
     }
   );
 
+
 document
-  .getElementById("mobileJoinBtn")
+  .getElementById(
+    "mobileLoginBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
-      openAuthModal();
+
+      openAuthModal(
+        null,
+        "login"
+      );
     }
   );
+
+
+document
+  .getElementById(
+    "mobileJoinBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+
+      openAuthModal(
+        null,
+        "signup"
+      );
+    }
+  );
+
 
 document
   .querySelectorAll(
     'a[href="#how-it-works"], #mobileHowLink'
   )
-  .forEach(link => {
+  .forEach(
+    link => {
 
-    link.addEventListener(
-      "click",
-      event => {
+      link.addEventListener(
+        "click",
+        event => {
 
-        const section =
-          document.getElementById(
-            "how-it-works"
-          );
+          const section =
+            document.getElementById(
+              "how-it-works"
+            );
 
-        if (section) {
+          if (section) {
 
-          event.preventDefault();
+            event.preventDefault();
 
-          section.scrollIntoView({
-            behavior: "smooth"
-          });
+            section.scrollIntoView({
+              behavior: "smooth"
+            });
+
+            mobileNav?.classList.remove(
+              "active"
+            );
+          }
         }
-      }
-    );
-  });
+      );
+    }
+  );
+
 
 const mobileMenuBtn =
   document.getElementById(
@@ -1296,52 +1575,140 @@ mobileMenuBtn?.addEventListener(
   }
 );
 
+
 /* =========================================================
-   START
+   MODAL EVENTS
 ========================================================= */
 
-function loadSupabaseScript() {
+authForm?.addEventListener(
+  "submit",
+  event => {
 
-  return new Promise(
-    (resolve, reject) => {
+    event.preventDefault();
 
-      if (window.supabase) {
-        resolve();
-        return;
-      }
+    createProfile();
+  }
+);
 
-      const script =
-        document.createElement(
-          "script"
-        );
 
-      script.src =
-        "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+createProfileBtn?.addEventListener(
+  "click",
+  createProfile
+);
 
-      script.onload =
-        resolve;
 
-      script.onerror =
-        reject;
+continueProfileBtn?.addEventListener(
+  "click",
+  createProfile
+);
 
-      document.head.appendChild(
-        script
-      );
-    }
+
+document
+  .getElementById(
+    "closeModal"
+  )
+  ?.addEventListener(
+    "click",
+    closeAuthModal
   );
+
+
+document
+  .getElementById(
+    "modalBackdrop"
+  )
+  ?.addEventListener(
+    "click",
+    closeAuthModal
+  );
+
+
+authModal?.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      authModal
+    ) {
+      closeAuthModal();
+    }
+  }
+);
+
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key ===
+      "Escape"
+    ) {
+      closeAuthModal();
+    }
+  }
+);
+
+
+/* =========================================================
+   FORM CONTROLLER
+========================================================= */
+
+async function createProfile() {
+
+  if (
+    authMode ===
+    "login"
+  ) {
+
+    await login();
+
+  } else {
+
+    await signup();
+  }
 }
+
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
 
 async function initialize() {
 
   try {
 
-    await loadSupabaseScript();
+    /*
+      Supabase is loaded directly by index.html
+      BEFORE this file runs.
+    */
 
-    initializeSupabase();
+    if (!window.supabase) {
+
+      console.error(
+        "Expo Go: Supabase library unavailable."
+      );
+
+      return;
+    }
+
+    const initialized =
+      initializeSupabase();
+
+    if (!initialized) {
+      return;
+    }
 
     createAuthFields();
 
+    setupAuthListener();
+
     await checkSession();
+
+    console.log(
+      "Expo Go is ready."
+    );
 
   } catch (error) {
 
@@ -1351,5 +1718,6 @@ async function initialize() {
     );
   }
 }
+
 
 initialize();
