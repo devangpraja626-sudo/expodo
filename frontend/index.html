@@ -14,7 +14,6 @@
 
   <title>Expo Go — The right people. The right opportunities.</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -23,19 +22,15 @@
     rel="stylesheet"
   />
 
-  <!-- Main stylesheet -->
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-  <!-- =====================================================
-       BACKGROUND
-  ====================================================== -->
+  <!-- BACKGROUND -->
 
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
-
   <div class="background-grid"></div>
 
   <div class="particles" aria-hidden="true">
@@ -50,9 +45,7 @@
   </div>
 
 
-  <!-- =====================================================
-       NAVBAR
-  ====================================================== -->
+  <!-- NAVBAR -->
 
   <header class="navbar">
 
@@ -61,11 +54,23 @@
     </a>
 
     <nav class="nav-links">
-      <a href="#how-it-works">How it works</a>
-      <button id="loginBtn" type="button">Log in</button>
-      <button id="joinBtn" type="button" class="nav-cta">
+
+      <a href="#how-it-works">
+        How it works
+      </a>
+
+      <button id="loginBtn" type="button">
+        Log in
+      </button>
+
+      <button
+        id="joinBtn"
+        type="button"
+        class="nav-cta"
+      >
         Get started
       </button>
+
     </nav>
 
     <button
@@ -81,30 +86,35 @@
   </header>
 
 
-  <!-- =====================================================
-       MOBILE NAV
-  ====================================================== -->
+  <!-- MOBILE NAV -->
 
   <div class="mobile-nav" id="mobileNav">
 
-    <a href="#how-it-works" id="mobileHowLink">
+    <a
+      href="#how-it-works"
+      id="mobileHowLink"
+    >
       How it works
     </a>
 
-    <button type="button" id="mobileLoginBtn">
+    <button
+      type="button"
+      id="mobileLoginBtn"
+    >
       Log in
     </button>
 
-    <button type="button" id="mobileJoinBtn">
+    <button
+      type="button"
+      id="mobileJoinBtn"
+    >
       Get started
     </button>
 
   </div>
 
 
-  <!-- =====================================================
-       HERO
-  ====================================================== -->
+  <!-- HERO -->
 
   <main>
 
@@ -158,15 +168,12 @@
       </div>
 
 
-      <!-- =================================================
-           MATCH VISUAL
-      ================================================== -->
+      <!-- MATCH VISUAL -->
 
       <div class="match-visual">
 
         <div class="visual-glow"></div>
 
-        <!-- Employee card -->
         <div class="floating-card employee-card">
 
           <div class="mini-card-top">
@@ -176,6 +183,7 @@
             </div>
 
             <div>
+
               <span class="mini-label">
                 EMPLOYEE
               </span>
@@ -183,6 +191,7 @@
               <strong>
                 Alex Morgan
               </strong>
+
             </div>
 
           </div>
@@ -198,7 +207,6 @@
         </div>
 
 
-        <!-- Employer card -->
         <div class="floating-card employer-card">
 
           <div class="mini-card-top">
@@ -208,6 +216,7 @@
             </div>
 
             <div>
+
               <span class="mini-label">
                 EMPLOYER
               </span>
@@ -215,6 +224,7 @@
               <strong>
                 Nova Labs
               </strong>
+
             </div>
 
           </div>
@@ -222,14 +232,20 @@
           <div class="mini-card-line"></div>
 
           <div class="mini-job">
-            <span>LOOKING FOR</span>
-            <strong>Frontend Developer</strong>
+
+            <span>
+              LOOKING FOR
+            </span>
+
+            <strong>
+              Frontend Developer
+            </strong>
+
           </div>
 
         </div>
 
 
-        <!-- AI Core -->
         <div class="ai-core">
 
           <div class="ai-ring ring-one"></div>
@@ -244,7 +260,6 @@
         </div>
 
 
-        <!-- Match score -->
         <div class="match-score">
 
           <span class="match-score-label">
@@ -262,7 +277,6 @@
         </div>
 
 
-        <!-- Floating chips -->
         <div class="floating-chip chip-one">
           Skills
           <span>✓</span>
@@ -283,9 +297,7 @@
     </section>
 
 
-    <!-- =====================================================
-         HOW IT WORKS
-    ====================================================== -->
+    <!-- HOW IT WORKS -->
 
     <section
       class="how-section"
@@ -380,9 +392,7 @@
     </section>
 
 
-    <!-- =====================================================
-         BOTTOM CTA
-    ====================================================== -->
+    <!-- BOTTOM CTA -->
 
     <section class="bottom-cta">
 
@@ -421,9 +431,7 @@
   </main>
 
 
-  <!-- =====================================================
-       FOOTER
-  ====================================================== -->
+  <!-- FOOTER -->
 
   <footer class="footer">
 
@@ -442,9 +450,7 @@
   </footer>
 
 
-  <!-- =====================================================
-       PROFILE CREATION MODAL
-  ====================================================== -->
+  <!-- PROFILE CREATION MODAL -->
 
   <div
     class="auth-modal"
@@ -498,18 +504,25 @@
           class="role-option active"
           data-role="employee"
         >
+
           <span class="role-option-icon">
             ◉
           </span>
 
           <span>
-            <strong>I'm looking for work</strong>
-            <small>Build an employee profile</small>
+            <strong>
+              I'm looking for work
+            </strong>
+
+            <small>
+              Build an employee profile
+            </small>
           </span>
 
           <span class="role-check">
             ✓
           </span>
+
         </button>
 
 
@@ -518,18 +531,25 @@
           class="role-option"
           data-role="employer"
         >
+
           <span class="role-option-icon">
             ◈
           </span>
 
           <span>
-            <strong>I'm hiring</strong>
-            <small>Build an employer profile</small>
+            <strong>
+              I'm hiring
+            </strong>
+
+            <small>
+              Build an employer profile
+            </small>
           </span>
 
           <span class="role-check">
             ✓
           </span>
+
         </button>
 
       </div>
@@ -537,7 +557,11 @@
 
       <!-- PROFILE FORM -->
 
-      <form id="authForm">
+      <form
+        id="authForm"
+        onsubmit="return false;"
+        novalidate
+      >
 
         <div class="form-field">
 
@@ -580,9 +604,15 @@
         ></div>
 
 
+        <!-- IMPORTANT:
+             This is now a normal button.
+             It cannot submit the HTML form or
+             change the URL to ?fullName=... -->
+
         <button
-          type="submit"
+          type="button"
           class="modal-submit"
+          id="createProfileBtn"
         >
           Create my profile
           <span>→</span>
@@ -632,9 +662,7 @@
   </div>
 
 
-  <!-- =====================================================
-       MAIN JAVASCRIPT
-  ====================================================== -->
+  <!-- MAIN JAVASCRIPT -->
 
   <script src="app.js"></script>
 
