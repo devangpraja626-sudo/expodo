@@ -5,7 +5,7 @@ let profile = null;
 
 /* =========================================================
    HELPERS
-   ========================================================= */
+========================================================= */
 
 function normalizeArray(value) {
   if (Array.isArray(value)) {
@@ -82,43 +82,26 @@ function saveLocalProfile() {
   );
 }
 
-/* =========================================================
-   BACKEND SYNC
-   ========================================================= */
+function setText(id, value) {
+  const element = document.getElementById(id);
 
-async function syncProfile() {
-  const response = await fetch(
-    `${API_BASE_URL}/api/profiles`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(profile)
-    }
-  );
-
-  let result = null;
-
-  try {
-    result = await response.json();
-  } catch {
-    result = null;
+  if (element) {
+    element.textContent =
+      value || "Not added yet";
   }
+}
 
-  if (!response.ok || !result?.success) {
-    throw new Error(
-      result?.message ||
-      "Unable to synchronize profile."
-    );
+function setValue(id, value) {
+  const element = document.getElementById(id);
+
+  if (element) {
+    element.value = value || "";
   }
-
-  return result.profile;
 }
 
 /* =========================================================
    LOAD PROFILE
-   ========================================================= */
+========================================================= */
 
 function loadProfile() {
   try {
@@ -155,41 +138,8 @@ function loadProfile() {
 }
 
 /* =========================================================
-   DOM HELPERS
-   ========================================================= */
-
-function setText(id, value) {
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-    element.textContent =
-      value || "Not added yet";
-  }
-}
-
-function setValue(id, value) {
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-    element.value = value || "";
-  }
-}
-
-function show(id, visible) {
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-    element.style.display =
-      visible ? "" : "none";
-  }
-}
-
-/* =========================================================
    PROFILE DISPLAY
-   ========================================================= */
+========================================================= */
 
 function renderProfile() {
   setText("profileName", profile.name);
@@ -269,13 +219,25 @@ function renderProfile() {
     profile.about
   );
 
+  const employerLocation =
+    document.getElementById(
+      "profileLocationEmployer"
+    );
+
+  if (employerLocation) {
+    employerLocation.textContent =
+      profile.location ||
+      "Not added yet";
+  }
+
   updateRoleSections();
+  updateAvatar();
   updateCompletion();
 }
 
 /* =========================================================
    ROLE SECTIONS
-   ========================================================= */
+========================================================= */
 
 function updateRoleSections() {
   const employee =
@@ -297,18 +259,31 @@ function updateRoleSections() {
       element.style.display =
         employer ? "" : "none";
     });
+}
 
-  setText(
-    "profileRoleLabel",
-    employee
-      ? "Professional"
-      : "Hiring"
-  );
+/* =========================================================
+   AVATAR
+========================================================= */
+
+function updateAvatar() {
+  const avatar =
+    document.getElementById(
+      "profileAvatar"
+    );
+
+  if (!avatar) return;
+
+  avatar.textContent =
+    profile.name
+      ? profile.name
+          .charAt(0)
+          .toUpperCase()
+      : "E";
 }
 
 /* =========================================================
    COMPLETION
-   ========================================================= */
+========================================================= */
 
 function updateCompletion() {
   const fields =
@@ -362,6 +337,11 @@ function updateCompletion() {
   }
 
   setText(
+    "completionFields",
+    `${completed} of ${total} sections completed`
+  );
+
+  setText(
     "completionText",
     percentage === 100
       ? "Your profile is complete."
@@ -374,16 +354,6 @@ function updateCompletion() {
       ? "Ready for matching"
       : "Complete your profile for stronger matches"
   );
-
-  const fieldsElement =
-    document.getElementById(
-      "completionFields"
-    );
-
-  if (fieldsElement) {
-    fieldsElement.textContent =
-      `${completed} of ${total} sections completed`;
-  }
 
   const nextTitle =
     document.getElementById(
@@ -419,8 +389,298 @@ function updateCompletion() {
 }
 
 /* =========================================================
+   MATCHING
+========================================================= */
+
+async function loadMatches() {
+  const grid =
+    document.getElementById(
+      "matchesGrid"
+    );
+
+  const empty =
+    document.getElementById(
+      "matchesEmpty"
+    );
+
+  const status =
+    document.getElementById(
+      "matchesStatus"
+    );
+
+  const title =
+    document.getElementById(
+      "matchesTitle"
+    );
+
+  const subtitle =
+    document.getElementById(
+      "matchesSubtitle"
+    );
+
+  if (!grid) return;
+
+  if (title) {
+    title.textContent =
+      profile.role === "employee"
+        ? "Employers matched in your domain"
+        : "Profiles matched in your domain";
+  }
+
+  if (subtitle) {
+    subtitle.textContent =
+      profile.role === "employee"
+        ? "Relevant employers based on your profile."
+        : "Relevant professionals based on your hiring needs.";
+  }
+
+  if (status) {
+    status.textContent =
+      "Finding matches...";
+  }
+
+  if (empty) {
+    empty.style.display = "";
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/match`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(profile)
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+        "Matching failed."
+      );
+    }
+
+    renderMatches(
+      result.matches || []
+    );
+
+    if (status) {
+      status.textContent =
+        `${result.count || 0} matches`;
+    }
+
+  } catch (error) {
+    console.error(
+      "Matching error:",
+      error
+    );
+
+    if (status) {
+      status.textContent =
+        "Matching unavailable";
+    }
+
+    if (empty) {
+      empty.style.display = "";
+
+      empty.innerHTML = `
+        <div class="matches-empty-icon">✦</div>
+        <h3>Matches are coming together</h3>
+        <p>
+          Complete your profile and make sure the
+          Expo Go backend is online to discover matches.
+        </p>
+      `;
+    }
+  }
+}
+
+/* =========================================================
+   RENDER MATCHES
+========================================================= */
+
+function renderMatches(matches) {
+  const grid =
+    document.getElementById(
+      "matchesGrid"
+    );
+
+  const empty =
+    document.getElementById(
+      "matchesEmpty"
+    );
+
+  if (!grid) return;
+
+  if (!matches.length) {
+    if (empty) {
+      empty.style.display = "";
+      empty.innerHTML = `
+        <div class="matches-empty-icon">✦</div>
+        <h3>No strong matches yet</h3>
+        <p>
+          Add more skills, experience, location,
+          position and work preferences to improve
+          your matching results.
+        </p>
+      `;
+    }
+
+    return;
+  }
+
+  if (empty) {
+    empty.style.display = "none";
+  }
+
+  grid
+    .querySelectorAll(
+      ".match-result-card"
+    )
+    .forEach(card => card.remove());
+
+  matches.forEach(match => {
+    const candidate =
+      normalizeProfile(
+        match.profile || {}
+      );
+
+    const card =
+      document.createElement("article");
+
+    card.className =
+      "match-result-card";
+
+    const initial =
+      candidate.name
+        ? candidate.name
+            .charAt(0)
+            .toUpperCase()
+        : "?";
+
+    const title =
+      candidate.role === "employer"
+        ? candidate.hiringPosition ||
+          candidate.headline ||
+          "Hiring opportunity"
+        : candidate.desiredPosition ||
+          candidate.headline ||
+          "Professional";
+
+    const company =
+      candidate.role === "employer"
+        ? candidate.company
+        : candidate.name;
+
+    const skills =
+      candidate.role === "employer"
+        ? candidate.requiredSkills
+        : candidate.skills;
+
+    const skillText =
+      skills.length
+        ? skills.slice(0, 4).join(" · ")
+        : "Skills not added";
+
+    const matchedText =
+      match.matchedOn?.length
+        ? match.matchedOn.join(" · ")
+        : "Profile compatibility";
+
+    card.innerHTML = `
+      <div class="match-card-top">
+
+        <div class="match-avatar">
+          ${initial}
+        </div>
+
+        <div class="match-card-identity">
+
+          <span class="match-role">
+            ${
+              candidate.role === "employer"
+                ? "Employer"
+                : "Employee"
+            }
+          </span>
+
+          <h3>
+            ${escapeHtml(company || candidate.name)}
+          </h3>
+
+          <p>
+            ${escapeHtml(title)}
+          </p>
+
+        </div>
+
+        <div class="match-score">
+          <strong>
+            ${Number(match.matchScore) || 0}%
+          </strong>
+
+          <span>
+            match
+          </span>
+        </div>
+
+      </div>
+
+      <div class="match-card-details">
+
+        <div class="match-detail">
+          <span>Skills</span>
+          <strong>
+            ${escapeHtml(skillText)}
+          </strong>
+        </div>
+
+        <div class="match-detail">
+          <span>Location</span>
+          <strong>
+            ${escapeHtml(
+              candidate.location ||
+              "Flexible"
+            )}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="match-card-footer">
+
+        <span>
+          Matched on ${escapeHtml(matchedText)}
+        </span>
+
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* =========================================================
    EDIT MODAL
-   ========================================================= */
+========================================================= */
 
 function openEditModal() {
   setValue(
@@ -498,12 +758,9 @@ function openEditModal() {
     profile.about
   );
 
-  const modal =
-    document.getElementById(
-      "editModal"
-    );
-
-  modal?.classList.add("active");
+  document
+    .getElementById("editModal")
+    ?.classList.add("active");
 
   document.body.classList.add(
     "modal-open"
@@ -511,12 +768,9 @@ function openEditModal() {
 }
 
 function closeEditModal() {
-  const modal =
-    document.getElementById(
-      "editModal"
-    );
-
-  modal?.classList.remove("active");
+  document
+    .getElementById("editModal")
+    ?.classList.remove("active");
 
   document.body.classList.remove(
     "modal-open"
@@ -524,8 +778,8 @@ function closeEditModal() {
 }
 
 /* =========================================================
-   SAVE EDITS
-   ========================================================= */
+   SAVE PROFILE
+========================================================= */
 
 async function saveProfile() {
   profile.name =
@@ -623,9 +877,11 @@ async function saveProfile() {
   profile.updatedAt =
     new Date().toISOString();
 
-  const saveButton =
-    document.querySelector(
-      ".edit-save-btn"
+  saveLocalProfile();
+
+  const button =
+    document.getElementById(
+      "saveProfileBtn"
     );
 
   const status =
@@ -633,34 +889,43 @@ async function saveProfile() {
       "editStatus"
     );
 
-  if (saveButton) {
-    saveButton.disabled = true;
-  }
-
-  if (status) {
-    status.textContent =
-      "Saving profile...";
-    status.className =
-      "edit-status";
+  if (button) {
+    button.disabled = true;
+    button.textContent =
+      "Saving...";
   }
 
   try {
-    const saved =
-      await syncProfile();
+    const response =
+      await fetch(
+        `${API_BASE_URL}/api/profiles`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(profile)
+        }
+      );
 
-    profile = normalizeProfile({
-      ...profile,
+    const result =
+      await response.json();
 
-      id: saved?.id || profile.id,
-      createdAt:
-        saved?.created_at ||
-        profile.createdAt,
-      updatedAt:
-        saved?.updated_at ||
-        profile.updatedAt
-    });
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+        "Unable to save profile."
+      );
+    }
+
+    profile =
+      normalizeProfile({
+        ...profile,
+        ...result.profile
+      });
 
     saveLocalProfile();
+
     renderProfile();
 
     if (status) {
@@ -670,6 +935,8 @@ async function saveProfile() {
         "edit-status success";
     }
 
+    await loadMatches();
+
     setTimeout(
       closeEditModal,
       500
@@ -677,34 +944,33 @@ async function saveProfile() {
 
   } catch (error) {
     console.error(
-      "Profile synchronization failed:",
+      "Profile save error:",
       error
     );
 
-    /*
-      Local save remains available even
-      if Render is temporarily unavailable.
-    */
     saveLocalProfile();
+
     renderProfile();
 
     if (status) {
       status.textContent =
-        "Saved locally. Server sync will retry later.";
+        "Saved locally. Server sync unavailable.";
       status.className =
         "edit-status error";
     }
 
   } finally {
-    if (saveButton) {
-      saveButton.disabled = false;
+    if (button) {
+      button.disabled = false;
+      button.textContent =
+        "Save profile";
     }
   }
 }
 
 /* =========================================================
-   BUTTON EVENTS
-   ========================================================= */
+   BUTTONS
+========================================================= */
 
 document
   .querySelectorAll(
@@ -754,8 +1020,8 @@ document
   );
 
 /* =========================================================
-   HOME BUTTON
-   ========================================================= */
+   HOME
+========================================================= */
 
 document
   .querySelectorAll(
@@ -773,7 +1039,7 @@ document
 
 /* =========================================================
    NEXT STEP
-   ========================================================= */
+========================================================= */
 
 document
   .getElementById(
@@ -786,7 +1052,7 @@ document
 
 /* =========================================================
    ESCAPE
-   ========================================================= */
+========================================================= */
 
 document.addEventListener(
   "keydown",
@@ -799,8 +1065,16 @@ document.addEventListener(
 
 /* =========================================================
    INITIALIZE
-   ========================================================= */
+========================================================= */
 
-if (loadProfile()) {
+async function initialize() {
+  if (!loadProfile()) {
+    return;
+  }
+
   renderProfile();
+
+  await loadMatches();
 }
+
+initialize();
