@@ -70,7 +70,10 @@ function loadData() {
     };
 
   } catch (error) {
-    console.error("Storage loading error:", error);
+    console.error(
+      "Storage loading error:",
+      error
+    );
 
     return structuredClone(DEFAULT_DATA);
   }
@@ -86,14 +89,18 @@ function saveData() {
 function normalizeArray(value) {
   if (Array.isArray(value)) {
     return value
-      .map(item => String(item).trim())
+      .map(item =>
+        String(item).trim()
+      )
       .filter(Boolean);
   }
 
   if (typeof value === "string") {
     return value
       .split(",")
-      .map(item => item.trim())
+      .map(item =>
+        item.trim()
+      )
       .filter(Boolean);
   }
 
@@ -105,7 +112,8 @@ function normalizeArray(value) {
 ========================================================= */
 
 function createProfileObject(authUserId = null) {
-  const profile = data.profile || {};
+  const profile =
+    data.profile || {};
 
   return {
     id:
@@ -129,7 +137,9 @@ function createProfileObject(authUserId = null) {
       profile.headline || "",
 
     skills:
-      normalizeArray(profile.skills),
+      normalizeArray(
+        profile.skills
+      ),
 
     education:
       profile.education || "",
@@ -156,7 +166,9 @@ function createProfileObject(authUserId = null) {
       profile.hiringPosition || "",
 
     requiredSkills:
-      normalizeArray(profile.requiredSkills),
+      normalizeArray(
+        profile.requiredSkills
+      ),
 
     experienceRequired:
       profile.experienceRequired || "",
@@ -203,28 +215,54 @@ function initializeSupabase() {
 ========================================================= */
 
 const authModal =
-  document.getElementById("authModal");
+  document.getElementById(
+    "authModal"
+  );
 
 const authForm =
-  document.getElementById("authForm");
+  document.getElementById(
+    "authForm"
+  );
 
 const createProfileBtn =
-  document.getElementById("createProfileBtn");
+  document.getElementById(
+    "createProfileBtn"
+  );
 
 const continueProfileBtn =
-  document.getElementById("continueProfileBtn");
+  document.getElementById(
+    "continueProfileBtn"
+  );
 
 const authStatus =
-  document.getElementById("authStatus");
+  document.getElementById(
+    "authStatus"
+  );
 
 const fullNameInput =
-  document.getElementById("fullName");
+  document.getElementById(
+    "fullName"
+  );
 
 const profileHeadlineInput =
-  document.getElementById("profileHeadline");
+  document.getElementById(
+    "profileHeadline"
+  );
 
 const roleOptions =
-  document.querySelectorAll(".role-option");
+  document.querySelectorAll(
+    ".role-option"
+  );
+
+const mobileMenuBtn =
+  document.getElementById(
+    "mobileMenuBtn"
+  );
+
+const mobileNav =
+  document.getElementById(
+    "mobileNav"
+  );
 
 /* =========================================================
    AUTH FIELDS
@@ -232,19 +270,29 @@ const roleOptions =
 
 function createAuthFields() {
   const form =
-    document.getElementById("authForm");
+    document.getElementById(
+      "authForm"
+    );
+
+  if (!form) {
+    return;
+  }
 
   if (
-    !form ||
-    document.getElementById("expoAuthFields")
+    document.getElementById(
+      "expoAuthFields"
+    )
   ) {
     return;
   }
 
   const wrapper =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
-  wrapper.id = "expoAuthFields";
+  wrapper.id =
+    "expoAuthFields";
 
   wrapper.innerHTML = `
     <div class="form-field">
@@ -297,29 +345,38 @@ function createAuthFields() {
   `;
 
   const status =
-    document.getElementById("authStatus");
+    document.getElementById(
+      "authStatus"
+    );
 
   if (status) {
-    form.insertBefore(wrapper, status);
+    form.insertBefore(
+      wrapper,
+      status
+    );
   } else {
-    form.appendChild(wrapper);
+    form.appendChild(
+      wrapper
+    );
   }
 
   document
-    .getElementById("authModeToggle")
+    .getElementById(
+      "authModeToggle"
+    )
     ?.addEventListener(
       "click",
       toggleAuthMode
     );
 
   document
-    .getElementById("resendVerificationBtn")
+    .getElementById(
+      "resendVerificationBtn"
+    )
     ?.addEventListener(
       "click",
       resendVerification
     );
-
-  updateAuthMode();
 }
 
 /* =========================================================
@@ -338,7 +395,9 @@ function updateAuthMode() {
     );
 
   const name =
-    document.getElementById("fullName");
+    document.getElementById(
+      "fullName"
+    );
 
   const headline =
     document.getElementById(
@@ -346,14 +405,22 @@ function updateAuthMode() {
     );
 
   const title =
-    document.getElementById("authTitle");
+    document.getElementById(
+      "authTitle"
+    );
 
   const subtitle =
     document.getElementById(
       "authSubtitle"
     );
 
+  const resend =
+    document.getElementById(
+      "resendVerificationBtn"
+    );
+
   if (authMode === "login") {
+
     if (toggle) {
       toggle.textContent =
         "New to Expo Go? Create an account";
@@ -365,21 +432,29 @@ function updateAuthMode() {
     }
 
     if (name) {
-      name.closest(".form-field")
-        ?.style.setProperty(
-          "display",
-          "none"
+      const field =
+        name.closest(
+          ".form-field"
         );
+
+      if (field) {
+        field.style.display =
+          "none";
+      }
 
       name.required = false;
     }
 
     if (headline) {
-      headline.closest(".form-field")
-        ?.style.setProperty(
-          "display",
-          "none"
+      const field =
+        headline.closest(
+          ".form-field"
         );
+
+      if (field) {
+        field.style.display =
+          "none";
+      }
 
       headline.required = false;
     }
@@ -394,7 +469,13 @@ function updateAuthMode() {
         "Log in to continue to your Expo Go profile.";
     }
 
+    if (resend) {
+      resend.style.display =
+        "none";
+    }
+
   } else {
+
     if (toggle) {
       toggle.textContent =
         "Already have an account? Log in";
@@ -406,19 +487,31 @@ function updateAuthMode() {
     }
 
     if (name) {
-      name.closest(".form-field")
-        ?.style.removeProperty(
+      const field =
+        name.closest(
+          ".form-field"
+        );
+
+      if (field) {
+        field.style.removeProperty(
           "display"
         );
+      }
 
       name.required = true;
     }
 
     if (headline) {
-      headline.closest(".form-field")
-        ?.style.removeProperty(
+      const field =
+        headline.closest(
+          ".form-field"
+        );
+
+      if (field) {
+        field.style.removeProperty(
           "display"
         );
+      }
 
       headline.required = false;
     }
@@ -436,24 +529,18 @@ function updateAuthMode() {
 }
 
 function toggleAuthMode() {
-  authMode =
-    authMode === "signup"
-      ? "login"
-      : "signup";
+
+  if (authMode === "signup") {
+    authMode = "login";
+  } else {
+    authMode = "signup";
+  }
 
   updateAuthMode();
 
   if (authStatus) {
-    authStatus.textContent = "";
-  }
-
-  const resend =
-    document.getElementById(
-      "resendVerificationBtn"
-    );
-
-  if (resend) {
-    resend.style.display = "none";
+    authStatus.textContent =
+      "";
   }
 }
 
@@ -461,40 +548,53 @@ function toggleAuthMode() {
    ROLE SELECTION
 ========================================================= */
 
-roleOptions.forEach(option => {
-  option.addEventListener(
-    "click",
-    () => {
-      roleOptions.forEach(item => {
-        item.classList.remove("active");
+roleOptions.forEach(
+  option => {
 
-        item.setAttribute(
-          "aria-selected",
-          "false"
+    option.addEventListener(
+      "click",
+      () => {
+
+        roleOptions.forEach(
+          item => {
+
+            item.classList.remove(
+              "active"
+            );
+
+            item.setAttribute(
+              "aria-selected",
+              "false"
+            );
+          }
         );
-      });
 
-      option.classList.add("active");
+        option.classList.add(
+          "active"
+        );
 
-      option.setAttribute(
-        "aria-selected",
-        "true"
-      );
+        option.setAttribute(
+          "aria-selected",
+          "true"
+        );
 
-      data.userType =
-        option.dataset.role || null;
+        data.userType =
+          option.dataset.role ||
+          null;
 
-      data.profile.role =
-        data.userType;
+        data.profile.role =
+          data.userType;
 
-      saveData();
+        saveData();
 
-      if (authStatus) {
-        authStatus.textContent = "";
+        if (authStatus) {
+          authStatus.textContent =
+            "";
+        }
       }
-    }
-  );
-});
+    );
+  }
+);
 
 /* =========================================================
    MODAL
@@ -504,35 +604,86 @@ function openAuthModal(
   role = null,
   mode = "signup"
 ) {
+
+  /*
+    IMPORTANT:
+    Set mode BEFORE creating/updating
+    the authentication fields.
+  */
+
+  authMode =
+    mode === "login"
+      ? "login"
+      : "signup";
+
+  /*
+    Only change role when a role was
+    explicitly provided.
+  */
+
   if (role) {
-    data.userType = role;
-    data.profile.role = role;
+
+    data.userType =
+      role;
+
+    data.profile.role =
+      role;
+
+    roleOptions.forEach(
+      option => {
+
+        const active =
+          option.dataset.role ===
+          role;
+
+        option.classList.toggle(
+          "active",
+          active
+        );
+
+        option.setAttribute(
+          "aria-selected",
+          active
+            ? "true"
+            : "false"
+        );
+      }
+    );
 
     saveData();
-
-    roleOptions.forEach(option => {
-      const active =
-        option.dataset.role === role;
-
-      option.classList.toggle(
-        "active",
-        active
-      );
-
-      option.setAttribute(
-        "aria-selected",
-        active ? "true" : "false"
-      );
-    });
   }
+
+  /*
+    Make sure authentication fields
+    exist before updating their state.
+  */
 
   createAuthFields();
 
-  authMode = mode;
+  /*
+    Apply the requested mode again.
+  */
 
   updateAuthMode();
 
-  authModal?.classList.add("active");
+  if (authStatus) {
+    authStatus.textContent =
+      "";
+  }
+
+  const resend =
+    document.getElementById(
+      "resendVerificationBtn"
+    );
+
+  if (resend) {
+    resend.style.display =
+      "none";
+  }
+
+  authModal?.classList.add(
+    "active"
+  );
 
   authModal?.setAttribute(
     "aria-hidden",
@@ -542,9 +693,25 @@ function openAuthModal(
   document.body.classList.add(
     "modal-open"
   );
+
+  /*
+    Focus email field when
+    opening login.
+  */
+
+  if (authMode === "login") {
+    setTimeout(() => {
+      document
+        .getElementById(
+          "authEmail"
+        )
+        ?.focus();
+    }, 50);
+  }
 }
 
 function closeAuthModal() {
+
   authModal?.classList.remove(
     "active"
   );
@@ -559,7 +726,8 @@ function closeAuthModal() {
   );
 
   if (authStatus) {
-    authStatus.textContent = "";
+    authStatus.textContent =
+      "";
   }
 }
 
@@ -568,54 +736,73 @@ function closeAuthModal() {
 ========================================================= */
 
 async function signup() {
+
   const name =
-    fullNameInput?.value.trim() || "";
+    fullNameInput?.value.trim() ||
+    "";
 
   const headline =
-    profileHeadlineInput?.value.trim() || "";
+    profileHeadlineInput?.value.trim() ||
+    "";
 
   const email =
     document
-      .getElementById("authEmail")
-      ?.value.trim() || "";
+      .getElementById(
+        "authEmail"
+      )
+      ?.value.trim() ||
+    "";
 
   const password =
     document
-      .getElementById("authPassword")
-      ?.value || "";
+      .getElementById(
+        "authPassword"
+      )
+      ?.value ||
+    "";
 
   if (!data.userType) {
+
     authStatus.textContent =
       "Please select Employee or Employer.";
+
     return;
   }
 
   if (!name) {
+
     authStatus.textContent =
       "Please enter your name.";
 
     fullNameInput?.focus();
+
     return;
   }
 
   if (!email) {
+
     authStatus.textContent =
       "Please enter your email.";
+
     return;
   }
 
   if (password.length < 6) {
+
     authStatus.textContent =
       "Password must be at least 6 characters.";
+
     return;
   }
 
-  createProfileBtn.disabled = true;
+  createProfileBtn.disabled =
+    true;
 
   authStatus.textContent =
     "Creating your secure account...";
 
   try {
+
     const {
       data: authData,
       error
@@ -625,9 +812,11 @@ async function signup() {
         password,
 
         options: {
+
           data: {
             name,
-            role: data.userType,
+            role:
+              data.userType,
             headline
           },
 
@@ -670,18 +859,24 @@ async function signup() {
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify(data.profile)
+      JSON.stringify(
+        data.profile
+      )
     );
 
     /*
-      Persist immediately.
+      Persist the profile
+      immediately.
     */
 
     try {
+
       await syncProfileToBackend(
         authData.user.id
       );
+
     } catch (syncError) {
+
       console.error(
         "Initial profile sync failed:",
         syncError
@@ -697,10 +892,12 @@ async function signup() {
       );
 
     if (resend) {
-      resend.style.display = "block";
+      resend.style.display =
+        "block";
     }
 
   } catch (error) {
+
     console.error(
       "Supabase signup error:",
       error
@@ -711,7 +908,9 @@ async function signup() {
       "Unable to create account.";
 
   } finally {
-    createProfileBtn.disabled = false;
+
+    createProfileBtn.disabled =
+      false;
   }
 }
 
@@ -720,37 +919,47 @@ async function signup() {
 ========================================================= */
 
 async function login() {
+
   const email =
     document
-      .getElementById("authEmail")
-      ?.value.trim() || "";
+      .getElementById(
+        "authEmail"
+      )
+      ?.value.trim() ||
+    "";
 
   const password =
     document
-      .getElementById("authPassword")
-      ?.value || "";
+      .getElementById(
+        "authPassword"
+      )
+      ?.value ||
+    "";
 
   if (!email || !password) {
+
     authStatus.textContent =
       "Enter your email and password.";
+
     return;
   }
 
-  createProfileBtn.disabled = true;
+  createProfileBtn.disabled =
+    true;
 
   authStatus.textContent =
     "Signing you in...";
 
   try {
+
     const {
       data: authData,
       error
     } =
-      await supabaseClient.auth
-        .signInWithPassword({
-          email,
-          password
-        });
+      await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
 
     if (error) {
       throw error;
@@ -770,16 +979,19 @@ async function login() {
       "Login successful.";
 
     /*
-      ONLY the explicit login flow redirects.
-      Auth state listener does NOT redirect anymore.
+      Only the explicit login flow
+      redirects to the profile page.
     */
 
     setTimeout(() => {
+
       window.location.href =
         "profile.html";
+
     }, 300);
 
   } catch (error) {
+
     console.error(
       "Login error:",
       error
@@ -790,7 +1002,9 @@ async function login() {
       "Unable to log in.";
 
   } finally {
-    createProfileBtn.disabled = false;
+
+    createProfileBtn.disabled =
+      false;
   }
 }
 
@@ -798,8 +1012,12 @@ async function login() {
    LOAD AUTH PROFILE
 ========================================================= */
 
-async function loadOrCreateAuthenticatedProfile(user) {
+async function loadOrCreateAuthenticatedProfile(
+  user
+) {
+
   try {
+
     const response =
       await fetch(
         `${API_BASE_URL}/api/profiles/me/${user.id}`
@@ -808,16 +1026,25 @@ async function loadOrCreateAuthenticatedProfile(user) {
     let result = {};
 
     try {
-      result = await response.json();
+
+      result =
+        await response.json();
+
     } catch (_) {
+
       result = {};
     }
+
+    /*
+      Existing server profile.
+    */
 
     if (
       response.ok &&
       result.success &&
       result.profile
     ) {
+
       const serverProfile =
         result.profile;
 
@@ -907,19 +1134,22 @@ async function loadOrCreateAuthenticatedProfile(user) {
 
       localStorage.setItem(
         PROFILE_STORAGE_KEY,
-        JSON.stringify(data.profile)
+        JSON.stringify(
+          data.profile
+        )
       );
 
       return;
     }
 
     /*
-      Server profile does not exist.
-      Recover from local storage / metadata.
+      No server profile.
+      Recover from metadata/local data.
     */
 
     const metadata =
-      user.user_metadata || {};
+      user.user_metadata ||
+      {};
 
     data.profile = {
       ...data.profile,
@@ -965,19 +1195,21 @@ async function loadOrCreateAuthenticatedProfile(user) {
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify(data.profile)
+      JSON.stringify(
+        data.profile
+      )
     );
 
-    /*
-      Recreate server profile if necessary.
-    */
-
     if (data.profile.role) {
+
       try {
+
         await syncProfileToBackend(
           user.id
         );
+
       } catch (syncError) {
+
         console.error(
           "Profile recreation sync failed:",
           syncError
@@ -986,14 +1218,14 @@ async function loadOrCreateAuthenticatedProfile(user) {
     }
 
   } catch (error) {
+
     console.error(
       "Authenticated profile loading error:",
       error
     );
 
     /*
-      Do NOT redirect here.
-      Local profile can still be recovered.
+      Never redirect from here.
     */
 
     const saved =
@@ -1002,13 +1234,16 @@ async function loadOrCreateAuthenticatedProfile(user) {
       );
 
     if (saved) {
+
       try {
+
         const local =
           JSON.parse(saved);
 
         data.profile = {
           ...data.profile,
           ...local,
+
           authUserId:
             user.id
         };
@@ -1019,6 +1254,7 @@ async function loadOrCreateAuthenticatedProfile(user) {
         saveData();
 
         return;
+
       } catch (_) {}
     }
 
@@ -1030,7 +1266,10 @@ async function loadOrCreateAuthenticatedProfile(user) {
    PROFILE SYNC
 ========================================================= */
 
-async function syncProfileToBackend(authUserId) {
+async function syncProfileToBackend(
+  authUserId
+) {
+
   const payload =
     createProfileObject(
       authUserId
@@ -1051,7 +1290,9 @@ async function syncProfileToBackend(authUserId) {
         },
 
         body:
-          JSON.stringify(payload)
+          JSON.stringify(
+            payload
+          )
       }
     );
 
@@ -1061,11 +1302,14 @@ async function syncProfileToBackend(authUserId) {
   let result = {};
 
   try {
+
     result =
       raw
         ? JSON.parse(raw)
         : {};
+
   } catch {
+
     result = {};
   }
 
@@ -1073,6 +1317,7 @@ async function syncProfileToBackend(authUserId) {
     !response.ok ||
     !result.success
   ) {
+
     throw new Error(
       result.message ||
       "Profile sync failed."
@@ -1080,6 +1325,7 @@ async function syncProfileToBackend(authUserId) {
   }
 
   if (result.profile) {
+
     const server =
       result.profile;
 
@@ -1162,7 +1408,9 @@ async function syncProfileToBackend(authUserId) {
 
     localStorage.setItem(
       PROFILE_STORAGE_KEY,
-      JSON.stringify(data.profile)
+      JSON.stringify(
+        data.profile
+      )
     );
   }
 }
@@ -1172,19 +1420,27 @@ async function syncProfileToBackend(authUserId) {
 ========================================================= */
 
 async function resendVerification() {
+
   const email =
     document
-      .getElementById("authEmail")
+      .getElementById(
+        "authEmail"
+      )
       ?.value.trim();
 
   if (!email) {
+
     authStatus.textContent =
       "Enter your email first.";
+
     return;
   }
 
   try {
-    const { error } =
+
+    const {
+      error
+    } =
       await supabaseClient.auth.resend({
         type: "signup",
 
@@ -1204,6 +1460,7 @@ async function resendVerification() {
       "Verification email sent again.";
 
   } catch (error) {
+
     console.error(
       "Verification resend error:",
       error
@@ -1217,11 +1474,10 @@ async function resendVerification() {
 
 /* =========================================================
    SESSION CHECK
-   IMPORTANT:
-   This no longer redirects automatically.
 ========================================================= */
 
 async function checkSession() {
+
   if (!supabaseClient) {
     return null;
   }
@@ -1233,6 +1489,7 @@ async function checkSession() {
     await supabaseClient.auth.getSession();
 
   if (error) {
+
     console.error(
       "Session error:",
       error
@@ -1248,12 +1505,8 @@ async function checkSession() {
     return null;
   }
 
-  /*
-    Recover profile data silently,
-    but stay on the homepage.
-  */
-
   try {
+
     await loadOrCreateAuthenticatedProfile(
       session.user
     );
@@ -1261,6 +1514,7 @@ async function checkSession() {
     return session.user;
 
   } catch (error) {
+
     console.error(
       "Session profile recovery error:",
       error
@@ -1272,11 +1526,10 @@ async function checkSession() {
 
 /* =========================================================
    AUTH STATE
-   IMPORTANT:
-   Never redirect automatically from here.
 ========================================================= */
 
 function setupAuthListener() {
+
   if (!supabaseClient) {
     return;
   }
@@ -1286,25 +1539,30 @@ function setupAuthListener() {
       event,
       session
     ) => {
+
       console.log(
         "Expo Go auth event:",
         event
       );
 
+      /*
+        IMPORTANT:
+        Never redirect automatically here.
+      */
+
       if (
         event === "SIGNED_IN" &&
         session?.user
       ) {
-        /*
-          Only synchronize the profile.
-          Do NOT redirect.
-        */
 
         try {
+
           await loadOrCreateAuthenticatedProfile(
             session.user
           );
+
         } catch (error) {
+
           console.error(
             "Auth profile recovery error:",
             error
@@ -1320,80 +1578,140 @@ function setupAuthListener() {
 ========================================================= */
 
 document
-  .getElementById("employeeBtn")
+  .getElementById(
+    "employeeBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    () => {
+
       openAuthModal(
         "employee",
         "signup"
-      )
+      );
+    }
   );
 
 document
-  .getElementById("employerBtn")
+  .getElementById(
+    "employerBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    () => {
+
       openAuthModal(
         "employer",
         "signup"
-      )
+      );
+    }
   );
 
 document
-  .getElementById("bottomJoinBtn")
+  .getElementById(
+    "bottomJoinBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    () => {
+
       openAuthModal(
         null,
         "signup"
-      )
+      );
+    }
   );
 
 document
-  .getElementById("joinBtn")
+  .getElementById(
+    "joinBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    () => {
+
       openAuthModal(
         null,
         "signup"
-      )
+      );
+    }
   );
 
+/*
+  MAIN LOGIN BUTTON
+*/
+
 document
-  .getElementById("loginBtn")
+  .getElementById(
+    "loginBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    event => {
+
+      event.preventDefault();
+
       openAuthModal(
         null,
         "login"
-      )
+      );
+    }
   );
 
+/*
+  MOBILE LOGIN BUTTON
+*/
+
 document
-  .getElementById("mobileLoginBtn")
+  .getElementById(
+    "mobileLoginBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    event => {
+
+      event.preventDefault();
+
       openAuthModal(
         null,
         "login"
-      )
+      );
+
+      mobileNav?.classList.remove(
+        "active"
+      );
+
+      mobileMenuBtn?.classList.remove(
+        "active"
+      );
+    }
   );
 
+/*
+  MOBILE JOIN
+*/
+
 document
-  .getElementById("mobileJoinBtn")
+  .getElementById(
+    "mobileJoinBtn"
+  )
   ?.addEventListener(
     "click",
-    () =>
+    () => {
+
       openAuthModal(
         null,
         "signup"
-      )
+      );
+
+      mobileNav?.classList.remove(
+        "active"
+      );
+
+      mobileMenuBtn?.classList.remove(
+        "active"
+      );
+    }
   );
 
 /* =========================================================
@@ -1404,43 +1722,48 @@ document
   .querySelectorAll(
     'a[href="#how-it-works"], #mobileHowLink'
   )
-  .forEach(link => {
-    link.addEventListener(
-      "click",
-      event => {
-        const section =
-          document.getElementById(
-            "how-it-works"
-          );
+  .forEach(
+    link => {
 
-        if (section) {
-          event.preventDefault();
+      link.addEventListener(
+        "click",
+        event => {
 
-          section.scrollIntoView({
-            behavior: "smooth"
-          });
+          const section =
+            document.getElementById(
+              "how-it-works"
+            );
 
-          mobileNav?.classList.remove(
-            "active"
-          );
+          if (section) {
+
+            event.preventDefault();
+
+            section.scrollIntoView({
+              behavior:
+                "smooth"
+            });
+
+            mobileNav?.classList.remove(
+              "active"
+            );
+
+            mobileMenuBtn?.classList.remove(
+              "active"
+            );
+          }
         }
-      }
-    );
-  });
-
-const mobileMenuBtn =
-  document.getElementById(
-    "mobileMenuBtn"
+      );
+    }
   );
 
-const mobileNav =
-  document.getElementById(
-    "mobileNav"
-  );
+/* =========================================================
+   MOBILE MENU
+========================================================= */
 
 mobileMenuBtn?.addEventListener(
   "click",
   () => {
+
     mobileNav?.classList.toggle(
       "active"
     );
@@ -1458,30 +1781,46 @@ mobileMenuBtn?.addEventListener(
 authForm?.addEventListener(
   "submit",
   event => {
+
     event.preventDefault();
+
     createProfile();
   }
 );
 
 createProfileBtn?.addEventListener(
   "click",
-  createProfile
+  event => {
+
+    event.preventDefault();
+
+    createProfile();
+  }
 );
 
 continueProfileBtn?.addEventListener(
   "click",
-  createProfile
+  event => {
+
+    event.preventDefault();
+
+    createProfile();
+  }
 );
 
 document
-  .getElementById("closeModal")
+  .getElementById(
+    "closeModal"
+  )
   ?.addEventListener(
     "click",
     closeAuthModal
   );
 
 document
-  .getElementById("modalBackdrop")
+  .getElementById(
+    "modalBackdrop"
+  )
   ?.addEventListener(
     "click",
     closeAuthModal
@@ -1490,8 +1829,10 @@ document
 authModal?.addEventListener(
   "click",
   event => {
+
     if (
-      event.target === authModal
+      event.target ===
+      authModal
     ) {
       closeAuthModal();
     }
@@ -1501,7 +1842,10 @@ authModal?.addEventListener(
 document.addEventListener(
   "keydown",
   event => {
-    if (event.key === "Escape") {
+
+    if (
+      event.key === "Escape"
+    ) {
       closeAuthModal();
     }
   }
@@ -1512,11 +1856,21 @@ document.addEventListener(
 ========================================================= */
 
 async function createProfile() {
+
+  /*
+    This is the critical switch.
+    The button performs login whenever
+    the modal is currently in login mode.
+  */
+
   if (authMode === "login") {
+
     await login();
-  } else {
-    await signup();
+
+    return;
   }
+
+  await signup();
 }
 
 /* =========================================================
@@ -1524,8 +1878,11 @@ async function createProfile() {
 ========================================================= */
 
 async function initialize() {
+
   try {
+
     if (!window.supabase) {
+
       console.error(
         "Expo Go: Supabase library unavailable."
       );
@@ -1537,13 +1894,28 @@ async function initialize() {
       return;
     }
 
+    /*
+      Create auth fields before
+      checking/updating auth state.
+    */
+
     createAuthFields();
+
+    /*
+      Make sure the initial state
+      is signup.
+    */
+
+    authMode =
+      "signup";
+
+    updateAuthMode();
 
     setupAuthListener();
 
     /*
-      Recover session/profile silently.
-      No automatic redirect.
+      Recover existing session silently.
+      NEVER redirect from here.
     */
 
     await checkSession();
@@ -1553,11 +1925,16 @@ async function initialize() {
     );
 
   } catch (error) {
+
     console.error(
       "Expo Go initialization error:",
       error
     );
   }
 }
+
+/* =========================================================
+   START
+========================================================= */
 
 initialize();
