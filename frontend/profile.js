@@ -10,7 +10,7 @@ const SUPABASE_URL =
   "https://inhxlwsjlddhnpalbocl.supabase.co";
 
 const SUPABASE_ANON_KEY =
-  "sb_publishable_EoecvlHpO_r1ZJdJWl5Q_VEgr0dOw";
+  "sb_publishable_EoecvlHpO_r1ZJzJdJWl5Q_VEgr0dOw";
 
 let supabaseClient = null;
 let profile = null;
