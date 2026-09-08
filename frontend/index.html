@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Expo Go</title>
+  <meta
+    name="description"
+    content="Expo Go — intelligent employee and employer matching."
+  />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- Ambient background -->
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-three"></div>
+
+  <div class="grid-overlay"></div>
+
+  <!-- Floating particles -->
+  <div class="particles" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <a href="#" class="brand">
+      <span class="brand-mark">
+        <span></span>
+        <span></span>
+      </span>
+      <span class="brand-name">expo<span>go</span></span>
+    </a>
+
+    <div class="nav-actions">
+      <button class="nav-login" id="loginBtn">Log in</button>
+      <button class="nav-join" id="joinBtn">Get started</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <main class="hero">
+
+    <div class="hero-content">
+
+      <div class="eyebrow">
+        <span class="status-dot"></span>
+        Intelligent matching
+      </div>
+
+      <h1>
+        The right
+        <span>people.</span>
+        <br />
+        The right
+        <span>opportunities.</span>
+      </h1>
+
+      <p>
+        A smarter way for talent and employers to find each other.
+      </p>
+
+      <div class="hero-actions">
+        <button class="primary-btn" id="employeeBtn">
+          <span>I'm looking for work</span>
+          <strong>→</strong>
+        </button>
+
+        <button class="secondary-btn" id="employerBtn">
+          <span>I'm hiring</span>
+          <strong>→</strong>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Matching visual -->
+    <div class="match-visual">
+
+      <div class="orbit orbit-one"></div>
+      <div class="orbit orbit-two"></div>
+      <div class="orbit orbit-three"></div>
+
+      <div class="connection connection-one"></div>
+      <div class="connection connection-two"></div>
+      <div class="connection connection-three"></div>
+
+      <div class="profile-card profile-left">
+        <div class="avatar avatar-one">A</div>
+        <div>
+          <b>Alex</b>
+          <small>Product Designer</small>
+        </div>
+        <div class="mini-score">94%</div>
+      </div>
+
+      <div class="core-match">
+        <div class="core-ring">
+          <div class="core-inner">
+            <span>AI</span>
+          </div>
+        </div>
+
+        <div class="match-label">
+          <span>Match</span>
+          <strong>98%</strong>
+        </div>
+      </div>
+
+      <div class="profile-card profile-right">
+        <div class="avatar avatar-two">N</div>
+        <div>
+          <b>Nova Labs</b>
+          <small>Product Designer</small>
+        </div>
+        <div class="mini-score">98%</div>
+      </div>
+
+      <div class="floating-chip chip-one">
+        <span class="chip-icon">✦</span>
+        Skills
+      </div>
+
+      <div class="floating-chip chip-two">
+        <span class="chip-icon">⌁</span>
+        Experience
+      </div>
+
+      <div class="floating-chip chip-three">
+        <span class="chip-icon">◎</span>
+        Goals
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Bottom signal -->
+  <section class="signal">
+    <div class="signal-line"></div>
+    <span>Built around compatibility</span>
+    <div class="signal-line"></div>
+  </section>
+
+  <!-- Auth modal -->
+  <div class="modal hidden" id="authModal">
+
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+
+    <div class="auth-card">
+
+      <button class="close-btn" id="closeModal">×</button>
+
+      <div class="auth-logo">
+        <span class="brand-mark">
+          <span></span>
+          <span></span>
+        </span>
+      </div>
+
+      <div class="auth-heading">
+        <span class="eyebrow">Expo Go</span>
+        <h2 id="authTitle">Create your account</h2>
+        <p id="authSubtitle">Start building your professional profile.</p>
+      </div>
+
+      <div class="role-switch">
+        <button class="role-option active" data-role="employee">
+          Employee
+        </button>
+        <button class="role-option" data-role="employer">
+          Employer
+        </button>
+      </div>
+
+      <form id="authForm">
+
+        <div class="input-group">
+          <label>Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
+
+        <div class="input-group">
+          <label>Password</label>
+
+          <div class="password-wrap">
+            <input
+              type="password"
+              id="password"
+              placeholder="••••••••"
+              minlength="6"
+              required
+            />
+
+            <button type="button" id="togglePassword">
+              Show
+            </button>
+          </div>
+        </div>
+
+        <button class="submit-btn" type="submit">
+          Continue
+          <span>→</span>
+        </button>
+
+      </form>
+
+      <button class="reset-link" id="resetPassword">
+        Forgot password?
+      </button>
+
+      <div class="auth-status" id="authStatus"></div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
