@@ -3,9 +3,15 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const profileRoutes = require("./routes/profileRoutes");
+
 const app = express();
 
 const PORT = process.env.PORT || 5000;
+
+/* =========================================================
+   MIDDLEWARE
+   ========================================================= */
 
 app.use(
   cors({
@@ -28,7 +34,6 @@ app.get("/", (req, res) => {
   });
 });
 
-
 /* =========================================================
    API HEALTH
    ========================================================= */
@@ -41,31 +46,11 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-
 /* =========================================================
-   PROFILE ROUTES
+   PROFILE API
    ========================================================= */
 
-app.get("/api/profiles", async (req, res) => {
-  try {
-    const role = req.query.role;
-
-    res.json({
-      success: true,
-      role: role || "all",
-      profiles: []
-    });
-
-  } catch (error) {
-    console.error("Profiles error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Unable to load profiles."
-    });
-  }
-});
-
+app.use("/api/profiles", profileRoutes);
 
 /* =========================================================
    MATCHING ROUTE
@@ -98,7 +83,6 @@ app.post("/api/match", async (req, res) => {
   }
 });
 
-
 /* =========================================================
    404
    ========================================================= */
@@ -109,7 +93,6 @@ app.use((req, res) => {
     message: "Expo Go API route not found."
   });
 });
-
 
 /* =========================================================
    SERVER
